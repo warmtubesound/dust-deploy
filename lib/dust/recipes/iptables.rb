@@ -74,6 +74,7 @@ class Iptables < Thor
         chain_rules.each do |rule|
 
           # set default variables
+
           rule['ip-version'] ||= [4, 6]
           rule['jump'] ||= ['ACCEPT']
 
@@ -83,14 +84,10 @@ class Iptables < Thor
           # convert non-array variables to array, so we won't get hickups when using .each and .combine
           rule.each { |k, v| rule[k] = [ rule[k] ] if rule[k].class != Array }
 
-          # get and remove ip-version, since this is not a real iptables argument
-          ipv = rule.delete 'ip-version'
+          next unless rule['ip-version'].include? 4 if ipv4
+          next unless rule['ip-version'].include? 6 if ipv6
 
-          ipv.each do |ver|
-            next unless ver == 6 if ipv6
-            next unless ver == 4 if ipv4
-            parse_rule(rule).each { |r| iptables_script += "-A #{chain.upcase} #{r.join ' '}\n" }
-          end
+          parse_rule(rule).each { |r| iptables_script += "-A #{chain.upcase} #{r.join ' '}\n" }
         end
       end
 
@@ -156,7 +153,10 @@ puts iptables_script
   def parse_rule r
     with_dashes = {}
     result = []
-    r.each { |k, v| with_dashes[k] = r[k].map { |value| "--#{k} #{value}" } }
+    r.each do |k, v|
+      # skip ip-version, since its not iptables option
+      with_dashes[k] = r[k].map { |value| "--#{k} #{value}" } unless k == 'ip-version'
+    end
     with_dashes.values.each { |a| result = result.combine a }
     result
   end
