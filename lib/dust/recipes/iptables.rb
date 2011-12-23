@@ -87,7 +87,11 @@ class Iptables < Thor
           next unless rule['ip-version'].include? 4 if ipv4
           next unless rule['ip-version'].include? 6 if ipv6
 
-          parse_rule(rule).each { |r| iptables_script += "-A #{chain.upcase} #{r.join ' '}\n" }
+          parse_rule(rule).each do |r|
+            # TODO: parse nicer output
+            ::Dust.print_msg "adding rule: '#{r.join ' ' }'\n", 2
+            iptables_script += "-A #{chain.upcase} #{r.join ' '}\n"
+          end
         end
       end
 
@@ -115,7 +119,7 @@ class Iptables < Thor
       target = "/etc/#{iptables}" if node.uses_emerge? true
       target = "/etc/sysconfig/#{iptables}" if node.uses_rpm? true
 
-puts iptables_script
+#puts iptables_script
 #      node.write target, iptables_script, true
 #
 #      node.chmod '700', target if node.uses_apt? true or node.uses_emerge? true
