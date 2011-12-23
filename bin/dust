@@ -103,6 +103,7 @@ module  Dust
         # runs the method with the recipe name, defined and included in recipe/*.rb
         # call recipes for each recipe that is defined for this node
         recipes.each do |recipe, ingredients|
+          ::Dust.print_recipe recipe
           send recipe, context, server, ingredients, options
           puts
         end
