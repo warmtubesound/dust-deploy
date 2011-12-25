@@ -1,6 +1,6 @@
 class Aliases < Thor
   desc 'aliases:deploy', 'installs email aliases'
-  def deploy node, ingredients
+  def deploy node, ingredients, options
     template_path = "./templates/#{ File.basename(__FILE__).chomp( File.extname(__FILE__) ) }"
 
     return unless node.package_installed? 'postfix'
