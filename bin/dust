@@ -70,31 +70,13 @@ module  Dust
     # run specified recipes in the given context
     def run_recipes context
       @nodes.each do |node|
-        recipes =  {}
-
-         # skip this node if there are no recipes found
+        # skip this node if there are no recipes found
         next unless node['recipes']
-
-        # generate list of recipes for this node
-        node['recipes'].each do |recipe, ingredients|
-
-          # in case --recipes was set, skip unwanted recipes
-          next unless options[:recipes].include?(recipe) if options[:recipes]
-
-          # skip disabled recipes
-          next if ingredients == 'disabled'
-
-          # check if method and thor task actually exist
-          k = Thor::Util.find_by_namespace recipe
-          next unless k
-          next unless k.method_defined? context
-
-          recipes[recipe] = ingredients
-        end
+          
+        recipes = generate_recipes node, context
 
         # skip this node unless we're actually having recipes to cook
         next if recipes.empty?
-
 
         # connect to server
         server = Server.new node
@@ -111,6 +93,28 @@ module  Dust
         server.disconnect
       end
     end
+    
+    # generate list of recipes for this node
+    def generate_recipes node, context
+      recipes = {}  
+      node['recipes'].each do |recipe, ingredients|
+      
+        # in case --recipes was set, skip unwanted recipes
+        next unless options[:recipes].include?(recipe) if options[:recipes]
+      
+        # skip disabled recipes
+        next if ingredients == 'disabled'
+      
+        # check if method and thor task actually exist
+        k = Thor::Util.find_by_namespace recipe
+        next unless k
+        next unless k.method_defined? context
+      
+        recipes[recipe] = ingredients
+      end
+      recipes
+    end
+    
 
     # overwrite thorfiles to look for tasks in the recipes directories
     def thorfiles(relevant_to=nil, skip_lookup=false)
