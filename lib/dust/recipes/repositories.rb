@@ -83,6 +83,10 @@ class Repositories < Thor
     else
       ::Dust.print_failed 'os not supported'
     end
+
+    # fetch new stuff
+    puts
+    node.update_repos
   end
 end
 

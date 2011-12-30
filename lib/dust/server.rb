@@ -202,7 +202,7 @@ module Dust
     def update_repos quiet=false, indent=1
       Dust.print_msg('updating system repositories', indent) unless quiet
       if uses_apt? true
-        Dust.print_result exec('DEBIAN_FRONTEND=noninteractive aptitude update')[:exit_code], quiet
+        Dust.print_result exec('aptitude update')[:exit_code], quiet
       elsif uses_emerge? true
         Dust.print_result exec('emerge --sync')[:exit_code], quiet
       elsif uses_rpm? true
