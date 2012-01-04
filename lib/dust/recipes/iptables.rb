@@ -122,11 +122,10 @@ class Iptables < Thor
       target = "/etc/#{iptables}" if node.uses_emerge? true
       target = "/etc/sysconfig/#{iptables}" if node.uses_rpm? true
 
-#puts iptables_script
-#      node.write target, iptables_script, true
-#
-#      node.chmod '700', target if node.uses_apt? true or node.uses_emerge? true
-#      node.chmod '600', target if node.uses_rpm? true
+      node.write target, iptables_script, true
+
+      node.chmod '700', target if node.uses_apt? true or node.uses_emerge? true
+      node.chmod '600', target if node.uses_rpm? true
 
       if options.restart?
         ::Dust.print_msg 'applying ipv4 rules' if ipv4
