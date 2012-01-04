@@ -77,29 +77,25 @@ class Iptables < Thor
       # allow related outgoing packets
       iptables_script += "-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n"
 
+      # map rules to iptables strings
+      rules.each do |chain, chain_rules|
+        ::Dust.print_msg "#{::Dust.pink}#{chain.upcase}#{::Dust.none}\n", 2
+        chain_rules.each do |name, rule|
+          # set default variables
+          rule['jump'] ||= ['ACCEPT']
 
-      rules.each do |chain|
-        chain.each do |name, chain_rules|
-          ::Dust.print_msg "#{::Dust.pink}#{name.upcase}#{::Dust.none}\n", 2
+          # if we want to use ports, we're going to need a protocol. defaulting to tcp
+          rule['protocol'] ||= ['tcp'] if rule['dport'] or rule['sport']
 
-          chain_rules.each do |rule|
+          # convert non-array variables to array, so we won't get hickups when using .each and .combine
+          rule.each { |k, v| rule[k] = [ rule[k] ] if rule[k].class != Array }
 
-            # set default variables
-            rule['jump'] ||= ['ACCEPT']
+          next unless check_ipversion rule, ipv
 
-            # if we want to use ports, we're going to need a protocol. defaulting to tcp
-            rule['protocol'] ||= ['tcp'] if rule['dport'] or rule['sport']
-
-            # convert non-array variables to array, so we won't get hickups when using .each and .combine
-            rule.each { |k, v| rule[k] = [ rule[k] ] if rule[k].class != Array }
-
-            next unless check_ipversion rule, ipv
-
-            parse_rule(rule).each do |r|
-              # TODO: parse nicer output
-              ::Dust.print_msg "#{::Dust.grey 0}adding rule: '#{r.join ' ' }'#{::Dust.none}\n", 3
-              iptables_script += "-A #{name.upcase} #{r.join ' '}\n"
-            end
+          parse_rule(rule).each do |r|
+            # TODO: parse nicer output
+            ::Dust.print_msg "#{name}:#{::Dust.grey 0} '#{r.join ' ' }'#{::Dust.none}\n", 3
+            iptables_script += "-A #{chain.upcase} #{r.join ' '}\n"
           end
         end
       end
