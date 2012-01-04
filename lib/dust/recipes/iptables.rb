@@ -166,6 +166,8 @@ class Iptables < Thor
           return false unless IPAddress(addr).send "ipv#{ipv}?"
         end
       end
+      # return false if this ip version was manually disabled
+      return false unless rule['ip-version'].include? ipv if rule['ip-version']
     end
     true
   end
@@ -174,9 +176,23 @@ class Iptables < Thor
   def parse_rule r
     with_dashes = {}
     result = []
-    r.each { |k, v| with_dashes[k] = r[k].map { |value| "--#{k} #{value}" } }
+
+    r.each do |k, v|
+      # skip ip-version, since its not iptables option
+      with_dashes[k] = r[k].map { |value| "--#{k} #{value}" } unless k == 'ip-version'
+    end
     with_dashes.values.each { |a| result = result.combine a }
-    result
+
+    # make sure the options are sorted in a way that works.
+    # protocol and match first, jump last
+    sorted = []
+    result.each do |r|
+      r = r.sort_by { |x| if x.include? '--match' then -1 else 1 end }
+      r = r.sort_by { |x| if x.include? '--protocol' then -1 else 1 end }
+      sorted.push(r.sort_by { |x| if x.include? '--jump' then 1 else -1 end })
+    end
+
+    sorted
   end
 end
 
