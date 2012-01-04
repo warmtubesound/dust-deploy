@@ -184,12 +184,15 @@ class Iptables < Thor
     with_dashes.values.each { |a| result = result.combine a }
 
     # make sure the options are sorted in a way that works.
-    # protocol and match first, jump last
     sorted = []
     result.each do |r|
+      # bring to the front
       r = r.sort_by { |x| if x.include? '--match' then -1 else 1 end }
       r = r.sort_by { |x| if x.include? '--protocol' then -1 else 1 end }
-      sorted.push(r.sort_by { |x| if x.include? '--jump' then 1 else -1 end })
+      # shift to the end
+      r = r.sort_by { |x| if x.include? '--jump' then 1 else -1 end }
+      r = r.sort_by { |x| if x.include? '--to-port' then 1 else -1 end }
+      sorted.push r
     end
 
     sorted
