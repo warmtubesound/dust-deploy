@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.2.1
+------------
+
+fixes small iptables issue when using --jump REDIRECT and --to-port
+
+
 0.2.0
 ------------
 
