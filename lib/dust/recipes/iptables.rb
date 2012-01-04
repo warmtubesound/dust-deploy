@@ -69,28 +69,31 @@ class Iptables < Thor
       iptables_script += "-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n"
 
 
-      # map rules to iptables strings
-      rules.each do |chain, chain_rules|
-        chain_rules.each do |rule|
+      rules.each do |chain|
+        chain.each do |name, chain_rules|
+          ::Dust.print_msg "#{::Dust.pink}#{name.upcase}#{::Dust.none}\n", 2
 
-          # set default variables
+          chain_rules.each do |rule|
 
-          rule['ip-version'] ||= [4, 6]
-          rule['jump'] ||= ['ACCEPT']
+            # set default variables
 
-          # we're going to need a protocol, if we want to use ports, defaulting to tcp
-          rule['protocol'] ||= ['tcp'] if rule['dport'] or rule['sport']
+            rule['ip-version'] ||= [4, 6]
+            rule['jump'] ||= ['ACCEPT']
 
-          # convert non-array variables to array, so we won't get hickups when using .each and .combine
-          rule.each { |k, v| rule[k] = [ rule[k] ] if rule[k].class != Array }
+            # if we want to use ports, we're going to need a protocol. defaulting to tcp
+            rule['protocol'] ||= ['tcp'] if rule['dport'] or rule['sport']
 
-          next unless rule['ip-version'].include? 4 if ipv4
-          next unless rule['ip-version'].include? 6 if ipv6
+            # convert non-array variables to array, so we won't get hickups when using .each and .combine
+            rule.each { |k, v| rule[k] = [ rule[k] ] if rule[k].class != Array }
 
-          parse_rule(rule).each do |r|
-            # TODO: parse nicer output
-            ::Dust.print_msg "adding rule: '#{r.join ' ' }'\n", 2
-            iptables_script += "-A #{chain.upcase} #{r.join ' '}\n"
+            next unless rule['ip-version'].include? 4 if ipv4
+            next unless rule['ip-version'].include? 6 if ipv6
+
+            parse_rule(rule).each do |r|
+              # TODO: parse nicer output
+              ::Dust.print_msg "#{::Dust.grey 0}adding rule: '#{r.join ' ' }'#{::Dust.none}\n", 3
+              iptables_script += "-A #{name.upcase} #{r.join ' '}\n"
+            end
           end
         end
       end
