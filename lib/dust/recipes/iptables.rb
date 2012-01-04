@@ -1,3 +1,5 @@
+require 'ipaddress'
+
 class Iptables < Thor
   desc 'iptables:deploy', 'configures iptables firewall'
   def deploy node, rules, options
@@ -17,8 +19,15 @@ class Iptables < Thor
 
 
     [ 'iptables', 'ip6tables' ].each do |iptables|
-      ipv4 = iptables == 'iptables'
-      ipv6 = iptables == 'ip6tables'
+      if iptables == 'iptables'
+        ipv = 4
+        ipv4 = true
+        ipv6 = false
+      elsif iptables == 'ip6tables'
+        ipv = 6
+        ipv4 = false
+        ipv6 = true
+      end
 
       ::Dust.print_msg "configuring and deploying ipv4 rules\n" if ipv4
       ::Dust.print_msg "configuring and deploying ipv6 rules\n" if ipv6
@@ -76,8 +85,6 @@ class Iptables < Thor
           chain_rules.each do |rule|
 
             # set default variables
-
-            rule['ip-version'] ||= [4, 6]
             rule['jump'] ||= ['ACCEPT']
 
             # if we want to use ports, we're going to need a protocol. defaulting to tcp
@@ -86,8 +93,7 @@ class Iptables < Thor
             # convert non-array variables to array, so we won't get hickups when using .each and .combine
             rule.each { |k, v| rule[k] = [ rule[k] ] if rule[k].class != Array }
 
-            next unless rule['ip-version'].include? 4 if ipv4
-            next unless rule['ip-version'].include? 6 if ipv6
+            next unless check_ipversion rule, ipv
 
             parse_rule(rule).each do |r|
               # TODO: parse nicer output
@@ -155,14 +161,24 @@ class Iptables < Thor
 
   private 
 
+  # check if source and destination ip (if given)
+  # are valid ips for this ip version
+  def check_ipversion rule, ipv
+    ['source', 'destination', 'to-source'].each do |attr|
+      if rule[attr]
+        rule[attr].each do |addr|
+          return false unless IPAddress(addr).send "ipv#{ipv}?"
+        end
+      end
+    end
+    true
+  end
+
   # map iptables options
   def parse_rule r
     with_dashes = {}
     result = []
-    r.each do |k, v|
-      # skip ip-version, since its not iptables option
-      with_dashes[k] = r[k].map { |value| "--#{k} #{value}" } unless k == 'ip-version'
-    end
+    r.each { |k, v| with_dashes[k] = r[k].map { |value| "--#{k} #{value}" } }
     with_dashes.values.each { |a| result = result.combine a }
     result
   end
