@@ -50,33 +50,6 @@ class Iptables < Thor
                      ":OUTPUT DROP [0:0]\n"
       end
 
-      # allow localhost
-      iptables_script += "-A INPUT -i lo -j ACCEPT\n"
-
-      # drop invalid packets
-      iptables_script += "-A INPUT -m state --state INVALID -j DROP\n"
-
-      # allow related packets
-      iptables_script += "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n"
-
-      # drop tcp packets with the syn bit set if the tcp connection is already established
-      iptables_script += "-A INPUT -p tcp --tcp-flags SYN SYN -m state --state ESTABLISHED -j DROP\n" # if ipv4
-
-      # drop icmp timestamps
-      iptables_script += "-A INPUT -p icmp --icmp-type timestamp-request -j DROP\n" if ipv4
-      iptables_script += "-A INPUT -p icmp --icmp-type timestamp-reply -j DROP\n" if ipv4
-
-      # allow other icmp packets
-      iptables_script += "-A INPUT -p icmpv6 -j ACCEPT\n" if ipv6
-      iptables_script += "-A INPUT -p icmp -j ACCEPT\n"
-
-
-      # drop invalid outgoing packets
-      iptables_script += "-A OUTPUT -m state --state INVALID -j DROP\n"
-
-      # allow related outgoing packets
-      iptables_script += "-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n"
-
       # map rules to iptables strings
       rules.each do |chain, chain_rules|
         ::Dust.print_msg "#{::Dust.pink}#{chain.upcase}#{::Dust.none}\n", 2
@@ -192,6 +165,10 @@ class Iptables < Thor
       # shift to the end
       r = r.sort_by { |x| if x.include? '--jump' then 1 else -1 end }
       r = r.sort_by { |x| if x.include? '--to-port' then 1 else -1 end }
+      r = r.sort_by { |x| if x.include? '--to-destination' then 1 else -1 end }
+      r = r.sort_by { |x| if x.include? '--to-source' then 1 else -1 end }
+      r = r.sort_by { |x| if x.include? '--ttl-set' then 1 else -1 end }
+      r = r.sort_by { |x| if x.include? '--clamp-mss-to-pmtu' then 1 else -1 end }
       sorted.push r
     end
 
