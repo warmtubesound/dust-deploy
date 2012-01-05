@@ -199,14 +199,14 @@ module Dust
       end
     end
 
-    def remove_package package, quiet=false, indent=1, env=""
+    def remove_package package, quiet=false, indent=1
       return Dust.print_ok "package #{package} not installed", indent + 1 unless package_installed? package, true
 
       Dust.print_msg("removing #{package}", indent + 1) unless quiet
       if uses_apt? true
         Dust.print_result exec("DEBIAN_FRONTEND=noninteractive aptitude purge -y #{package}")[:exit_code], quiet
       elsif uses_emerge? true
-        Dust.print_result exec("#{env} emerge --unmerge #{package}")[:exit_code], quiet
+        Dust.print_result exec("emerge --unmerge #{package}")[:exit_code], quiet
       elsif uses_rpm? true
         Dust.print_result exec("yum erase -y #{package}")[:exit_code], quiet
       else
