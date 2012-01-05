@@ -172,6 +172,7 @@ class Iptables < Thor
       r = r.sort_by { |x| if x.include? '--to-source' then 1 else -1 end }
       r = r.sort_by { |x| if x.include? '--ttl-set' then 1 else -1 end }
       r = r.sort_by { |x| if x.include? '--clamp-mss-to-pmtu' then 1 else -1 end }
+      r = r.sort_by { |x| if x.include? '--reject-with' then 1 else -1 end }
       sorted.push r
     end
 
