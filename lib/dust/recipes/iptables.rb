@@ -73,13 +73,6 @@ class Iptables < Thor
         end
       end
 
-      # deny the rest incoming
-      iptables_script += "-A INPUT -p tcp -j REJECT --reject-with tcp-reset\n"
-      iptables_script += "-A INPUT -j REJECT --reject-with icmp-port-unreachable\n" if ipv4
-
-      # allow everything out
-      iptables_script += "-A OUTPUT -j ACCEPT\n"
-
       # put commit statement for rpm machines
       iptables_script += "COMMIT\n" if node.uses_rpm? true
 
