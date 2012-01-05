@@ -151,8 +151,18 @@ class Iptables < Thor
     result = []
 
     r.each do |k, v|
-      # skip ip-version, since its not iptables option
-      with_dashes[k] = r[k].map { |value| "--#{k} #{value}" } unless k == 'ip-version'
+      next if k == 'ip-version' # skip ip-version, since its not iptables option
+      with_dashes[k] = r[k].map do |v|
+        value = v.to_s
+        if value.start_with? '!', '! '
+          # map '--key ! value' to '! --key value'
+          value.slice! '!' 
+          value.lstrip!
+          "! --#{k} #{value}"
+        else
+          "--#{k} #{value}"
+        end
+      end
     end
     with_dashes.values.each { |a| result = result.combine a }
 
