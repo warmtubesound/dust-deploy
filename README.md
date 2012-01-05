@@ -203,6 +203,7 @@ almost all functions understand the quiet=true and indend=integer arguments
 #### get_system_users quiet=false
 #### package_installed? packages, quiet=false, indent=1
 #### install_package package, quiet=false, indent=1, env=""
+#### remove_package package, quiet=false, indent=1
 #### update_repos quiet=false, indent=1
 #### system_update quiet=false, indent=1
 #### uses_apt? quiet=false, indent=1
