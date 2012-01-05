@@ -15,6 +15,7 @@ class SshAuthorizedKeys < Thor
 
       # create the authorized_keys hash for this user
       ssh_users.each do |ssh_user|
+        users[ssh_user]['name'] ||= ssh_user
         ::Dust.print_msg "adding user #{users[ssh_user]['name']}", 2
         users[ssh_user]['keys'].each do |key|
           authorized_keys += "#{key}"
