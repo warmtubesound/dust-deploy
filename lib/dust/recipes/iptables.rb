@@ -133,7 +133,7 @@ class Iptables < Thor
   # check if source and destination ip (if given)
   # are valid ips for this ip version
   def check_ipversion rule, ipv
-    ['source', 'destination', 'to-source'].each do |attr|
+    ['source', 'src', 'destination', 'dest', 'to-source'].each do |attr|
       if rule[attr]
         rule[attr].each do |addr|
           return false unless IPAddress(addr).send "ipv#{ipv}?"
