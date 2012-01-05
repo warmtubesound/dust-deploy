@@ -36,18 +36,20 @@ class Iptables < Thor
 
       # default policy for chains
       if node.uses_apt? true or node.uses_emerge? true
-        iptables_script += "-P INPUT DROP\n" +
-                     "-P OUTPUT DROP\n" +
-                     "-P FORWARD DROP\n" +
-                     "-F\n"
+        iptables_script += rules['input'] ? "-P INPUT DROP\n" : "-P INPUT ACCEPT\n"
+        iptables_script += rules['output'] ? "-P OUTPUT DROP\n" : "-P OUTPUT ACCEPT\n"
+        iptables_script += rules['forward'] ? "-P FORWARD DROP\n" : "-P FORWARD ACCEPT\n"
+
+        iptables_script += "-F\n"
         iptables_script += "-F -t nat\n" if ipv4
         iptables_script += "-X\n"
 
       elsif node.uses_rpm? true
-        iptables_script += "*filter\n" +
-                     ":INPUT DROP [0:0]\n" +
-                     ":FORWARD DROP [0:0]\n" +
-                     ":OUTPUT DROP [0:0]\n"
+        iptables_script += "*filter\n"
+
+        iptables_script += rules['input'] ? ":INPUT DROP [0:0]\n" : ":INPUT ACCEPT [0:0]\n"
+        iptables_script += rules['output'] ? ":OUTPUT DROP [0:0]\n" : ":OUTPUT ACCEPT [0:0]\n"
+        iptables_script += rules['forward'] ? ":FORWARD DROP [0:0]\n" : ":FORWARD ACCEPT [0:0]\n"
       end
 
       # map rules to iptables strings
