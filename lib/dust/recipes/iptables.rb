@@ -53,7 +53,7 @@ class Iptables < Thor
       # map rules to iptables strings
       rules.each do |chain, chain_rules|
         ::Dust.print_msg "#{::Dust.pink}#{chain.upcase}#{::Dust.none}\n", 2
-        chain_rules.each do |name, rule|
+        chain_rules.sort.each do |name, rule|
           # set default variables
           rule['jump'] ||= ['ACCEPT']
 
