@@ -1,6 +1,23 @@
 Changelog
 =============
 
+0.2.2
+------------
+
+-  iptables will now sort rules before applying. thus enabling you to set the order of the rules.
+
+    recipes:
+      iptables:
+        forward:
+          1invalid: { match: state, state: INVALID, jump: DROP }
+          2valid: { jump: ACCEPT }
+
+-  removed all predefined iptables rules, you have (and can) do anything by yourself now
+-  small fixes and improvements for iptables recipes
+-  if you dont specify a chain, it will be set to ACCEPT per default
+-  dust list is now the default when launching dust without an argument
+
+
 0.2.1
 ------------
 
