@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.2.3
+------------
+
+-  improved iptables rule sorting, several minor improvements
+
+
 0.2.2
 ------------
 
