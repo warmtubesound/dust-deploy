@@ -7,7 +7,7 @@ class Debsecan < Thor
       ::Dust.print_msg 'configuring debsecan'
 
       # if config is simply set to "true", use defaults
-      config = {} unless config.class == Hash
+      config = {} unless config.is_a? Hash
 
       # setting default config variables (unless already set)
       config['report'] ||= false

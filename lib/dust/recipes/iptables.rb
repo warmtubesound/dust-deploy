@@ -63,7 +63,7 @@ class Iptables < Thor
           rule['protocol'] ||= ['tcp'] if rule['dport'] or rule['sport']
 
           # convert non-array variables to array, so we won't get hickups when using .each and .combine
-          rule.each { |k, v| rule[k] = [ rule[k] ] if rule[k].class != Array }
+          rule.each { |k, v| rule[k] = [ rule[k] ] unless rule[k].is_a? Array }
 
           next unless check_ipversion rule, ipv
 

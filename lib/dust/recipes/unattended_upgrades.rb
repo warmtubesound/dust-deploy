@@ -6,7 +6,7 @@ class UnattendedUpgrades < Thor
     return unless node.uses_apt? 
     node.install_package 'unattended-upgrades'
 
-    config = {} unless config.class == Hash
+    config = {} unless config.is_a? Hash
 
     # set defaults for non-set config
     config['enable'] ||= 1

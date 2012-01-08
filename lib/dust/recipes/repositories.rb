@@ -11,7 +11,7 @@ class Repositories < Thor
         puts
 
         # if repo is present but not a hash use defaults
-        repo = {} unless repo.class == Hash
+        repo = {} unless repo.is_a? Hash
 
         # setting defaults
         repo['url'] ||= 'http://ftp.debian.org/debian/' if node.is_debian? true
