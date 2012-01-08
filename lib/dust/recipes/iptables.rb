@@ -164,17 +164,30 @@ class Iptables < Thor
     # make sure the options are sorted in a way that works.
     sorted = []
     result.each do |r|
-      # bring to the front
-      r = r.sort_by { |x| if x.include? '--match' then -1 else 1 end }
-      r = r.sort_by { |x| if x.include? '--protocol' then -1 else 1 end }
-      # shift to the end
-      r = r.sort_by { |x| if x.include? '--jump' then 1 else -1 end }
-      r = r.sort_by { |x| if x.include? '--to-port' then 1 else -1 end }
-      r = r.sort_by { |x| if x.include? '--to-destination' then 1 else -1 end }
-      r = r.sort_by { |x| if x.include? '--to-source' then 1 else -1 end }
-      r = r.sort_by { |x| if x.include? '--ttl-set' then 1 else -1 end }
-      r = r.sort_by { |x| if x.include? '--clamp-mss-to-pmtu' then 1 else -1 end }
-      r = r.sort_by { |x| if x.include? '--reject-with' then 1 else -1 end }
+      # sort rules so it makes sense
+      r = r.sort_by do |x|
+        if x.include? '--match'
+          -1
+        elsif x.include? '--protocol'
+          -2
+        elsif x.include? '--jump'
+          1
+        elsif x.include? '--to-port'
+          2
+        elsif x.include? '--to-destination'
+          3
+        elsif x.include? '--to-source'
+          4
+        elsif x.include? '--ttl-set'
+          5
+        elsif x.include? '--clamp-mss-to-pmtu'
+          6
+        elsif x.include? '--reject-with'
+          7
+        else
+          0
+        end
+      end
       sorted.push r
     end
 
