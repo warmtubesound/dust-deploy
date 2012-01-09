@@ -189,14 +189,18 @@ module Dust
 
       Dust.print_msg("installing #{package}", indent + 1) unless quiet
       if uses_apt? true
-        Dust.print_result exec("DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}")[:exit_code], quiet
+        exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
       elsif uses_emerge? true
-        Dust.print_result exec("#{env} emerge #{package}")[:exit_code], quiet
+        exec "#{env} emerge #{package}"
       elsif uses_rpm? true
-        Dust.print_result exec("yum install -y #{package}; rpm -q #{package}")[:exit_code], quiet
+        exec "yum install -y #{package}"
       else
-        Dust.print_result false, quiet
+        Dust.print_failed 'install_package only supports apt, emerge and rpm systems at the moment'
+        return false
       end
+
+      # check if package actually was installed
+      Dust.print_result package_installed?(package, true)
     end
 
     def remove_package package, quiet=false, indent=1
