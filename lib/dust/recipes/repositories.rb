@@ -58,7 +58,6 @@ class Repositories < Thor
           end
 
           ::Dust.print_result node.write('/etc/apt/sources.list', sources, :quiet => true)
-          next
 
         else
           # add url to sources.list
