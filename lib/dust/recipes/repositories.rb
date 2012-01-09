@@ -7,8 +7,8 @@ class Repositories < Thor
       node.rm '/etc/apt/sources.list.d/*.list', :quiet => true
       ::Dust.print_ok 
 
+      puts
       repos.each do |name, repo|
-        puts
 
         # if repo is present but not a hash use defaults
         repo = {} unless repo.is_a? Hash
