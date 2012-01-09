@@ -25,11 +25,13 @@ module Dust
   def self.print_ok string='', options={:quiet => false, :indent => 1}
     options[:indent] = 0 if string.empty?
     print_msg "#{string} #{blue}[ ok ]#{none}\n", options
+    true
   end
 
   def self.print_failed string='', options={:quiet => false, :indent => 1}
     options[:indent] = 0 if string.empty?
     print_msg "#{string} #{red}[ failed ]#{none}\n", options
+    false
   end
 
   def self.print_warning string='', options={:quiet => false, :indent => 1}
