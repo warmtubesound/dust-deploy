@@ -1,7 +1,7 @@
 class Debsecan < Thor
   desc 'debsecan:deploy', 'installs and configures debian security package "debsecan"'
   def deploy node, config, options
-    if node.is_os? ['debian', 'ubuntu'], true
+    if node.is_os? ['debian', 'ubuntu'], :quiet => true
       node.install_package 'debsecan'
 
       ::Dust.print_msg 'configuring debsecan'
@@ -34,7 +34,7 @@ class Debsecan < Thor
                      "# built-in default.\n" +
                      "SOURCE=#{config['source']}\n\n"
 
-      node.write '/etc/default/debsecan', config_file, true
+      node.write '/etc/default/debsecan', config_file, :quiet => true
       ::Dust.print_ok
     else
       ::Dust.print_failed 'os not supported'

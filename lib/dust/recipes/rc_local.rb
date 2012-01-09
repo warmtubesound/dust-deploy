@@ -7,7 +7,7 @@ class RcLocal < Thor
 
       rc = ''
       config.each do |cmd|
-        ::Dust.print_msg "adding command: #{cmd}", 2
+        ::Dust.print_msg "adding command: #{cmd}", :indent => 2
         rc += "#{cmd}\n"
         ::Dust.print_ok
       end

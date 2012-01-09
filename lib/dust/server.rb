@@ -23,13 +23,17 @@ module Dust
       Dust.print_hostname @attr['hostname']
       begin
         # connect to proxy if given
-        proxy = @attr.has_key?('proxy') ? Net::SSH::Proxy::SOCKS5.new( @attr['proxy'].split(':')[0],
-                                                                       @attr['proxy'].split(':')[1] ) : nil
- 
-        @ssh = Net::SSH.start(@attr['fqdn'], @attr['user'],
+        if @attr['proxy']
+          host, port = @attr['proxy'].split ':'
+          proxy = Net::SSH::Proxy::SOCKS5.new host, port
+        else
+          proxy = nil
+        end
+
+        @ssh = Net::SSH.start @attr['fqdn'], @attr['user'],
                               { :password => @attr['password'],
                                 :port => @attr['port'],
-                                :proxy => proxy } )
+                                :proxy => proxy }
       rescue Exception
         error_message = " - coudln't connect to #{@attr['fqdn']}"
         error_message += " (via socks5 proxy #{@attr['proxy']})" if proxy
@@ -45,31 +49,18 @@ module Dust
     end
   
     def exec command
-      stdout = ""
-      stderr = ""
+      stdout = ''
+      stderr = ''
       exit_code = nil
       exit_signal = nil
   
       @ssh.open_channel do |channel|
-        channel.exec(command) do |ch, success|
-          unless success
-            abort "FAILED: couldn't execute command (ssh.channel.exec)"
-          end
-          channel.on_data do |ch, data|
-            stdout += data
-          end
-  
-          channel.on_extended_data do |ch, type, data|
-            stderr += data
-          end
-  
-          channel.on_request("exit-status") do |ch, data|
-            exit_code = data.read_long
-          end
-  
-          channel.on_request("exit-signal") do |ch, data|
-            exit_signal = data.read_long
-          end
+        channel.exec command do |ch, success|
+          abort "FAILED: couldn't execute command (ssh.channel.exec)" unless success
+          channel.on_data { |ch, data| stdout += data }
+          channel.on_extended_data { |ch, type, data| stderr += data }
+          channel.on_request('exit-status') { |ch, data| exit_code = data.read_long }
+          channel.on_request('exit-signal') { |ch, data| exit_signal = data.read_long }
         end
       end
   
@@ -77,86 +68,82 @@ module Dust
   
       { :stdout => stdout, :stderr => stderr, :exit_code => exit_code, :exit_signal => exit_signal }
     end
-  
-    def write target, text, quiet=false, indent=1
-      Dust.print_msg("deploying #{File.basename(target)}", indent) unless quiet
+ 
+
+    def write target, text, options={:quiet => false, :indent => 1}
+      Dust.print_msg "deploying #{File.basename target}", options
 
       # escape $ signs and \ at the end of line
-      text.gsub!('$','\$')
-      text.gsub!(/\\$/, '\\\\\\')
+      text.gsub! '$','\$'
+      text.gsub! /\\$/, '\\\\\\'
 
+      # note: ` (backticks) somehow cannot be escaped.. don't use them
+      # in bash, use $(cmd) instead of `cmd` as a workaround
       if exec("cat << EOF > #{target}\n#{text}\nEOF")[:exit_code] != 0
-        return Dust.print_result(false, quiet)
+        return Dust.print_failed '', options
       end
 
-      Dust.print_ok unless quiet
-      restorecon(target, quiet, indent) # restore SELinux labels
+      Dust.print_ok '', options
+      restorecon target, options # restore SELinux labels
     end
 
-    def append target, text, quiet=false, indent=1
-      Dust.print_msg("appending to #{File.basename(target)}", indent) unless quiet
-      Dust.print_result( exec("cat << EOF >> #{target}\n#{text}\nEOF")[:exit_code], quiet )
+    def append target, text, options={:quiet => false, :indent => 1}
+      Dust.print_msg "appending to #{File.basename target}", options
+      Dust.print_result exec("cat << EOF >> #{target}\n#{text}\nEOF")[:exit_code], options
     end
  
-    def scp source, destination, quiet=false, indent=1
-      Dust.print_msg("deploying #{File.basename(source)}", indent) unless quiet
-      @ssh.scp.upload!(source, destination)
-      Dust.print_result(true, quiet)
-      restorecon(destination, quiet, indent) # restore SELinux labels
+    def scp source, destination, options={:quiet => false, :indent => 1}
+      Dust.print_msg "deploying #{File.basename(source)}", options
+      @ssh.scp.upload! source, destination
+      Dust.print_ok '', options
+      restorecon destination, options # restore SELinux labels
     end
   
-    def symlink source, destination, quiet=false, indent=1
-      Dust.print_msg("symlinking #{File.basename(source)} to '#{destination}'", indent) unless quiet
-      if exec("ln -s #{source} #{destination}")[:exit_code] != 0
-        return Dust.print_result(false, quiet)
-      end
-
-      Dust.print_ok unless quiet
-      restorecon(destination, quiet, indent) # restore SELinux labels
+    def symlink source, destination, options={:quiet => false, :indent => 1}
+      Dust.print_msg "symlinking #{File.basename(source)} to '#{destination}'", options
+      Dust.print_result exec("ln -s #{source} #{destination}")[:exit_code], options
+      restorecon destination, options # restore SELinux labels
     end
   
-    def chmod mode, file, quiet=false, indent=1
-      Dust.print_msg("setting mode of #{File.basename(file)} to #{mode}", indent) unless quiet
-      Dust.print_result( exec("chmod -R #{mode} #{file}")[:exit_code], quiet )
+    def chmod mode, file, options={:quiet => false, :indent => 1}
+      Dust.print_msg "setting mode of #{File.basename(file)} to #{mode}", options
+      Dust.print_result exec("chmod -R #{mode} #{file}")[:exit_code], options
     end
 
-    def chown user, file, quiet=false, indent=1
-      Dust.print_msg("setting owner of #{File.basename(file)} to #{user}", indent) unless quiet
-      Dust.print_result( exec("chown -R #{user} #{file}")[:exit_code], quiet )
+    def chown user, file, options={:quiet => false, :indent => 1}
+      Dust.print_msg "setting owner of #{File.basename(file)} to #{user}", options
+      Dust.print_result exec("chown -R #{user} #{file}")[:exit_code], options
     end
 
-    def rm file, quiet=false, indent=1
-      Dust.print_msg("deleting #{file}", indent) unless quiet
-      Dust.print_result( exec("rm -rf #{file}")[:exit_code], quiet)
+    def rm file, options={:quiet => false, :indent => 1}
+      Dust.print_msg "deleting #{file}", options
+      Dust.print_result exec("rm -rf #{file}")[:exit_code], options
     end
 
-    def mkdir dir, quiet=false, indent=1
-      return true if dir_exists? dir, true
-      Dust.print_msg("creating directory #{dir}", indent) unless quiet
-      if exec("mkdir -p #{dir}")[:exit_code] != 0
-        return Dust.print_result(false, quiet)
-      end
+    def mkdir dir, options={:quiet => false, :indent => 1}
+      return true if dir_exists? dir, :quiet => true
 
-      Dust.print_ok unless quiet
-      restorecon(dir, quiet, indent) # restore SELinux labels
+      Dust.print_msg "creating directory #{dir}", options
+      Dust.print_result exec("mkdir -p #{dir}")[:exit_code], options
+      restorecon dir, options # restore SELinux labels
     end
 
     # check if restorecon (selinux) is available
     # if so, run it on "path" recursively
-    def restorecon path, quiet=false, indent=1
+    def restorecon path, options={:quiet => false, :indent => 1}
 
       # if restorecon is not installed, just return true
-      ret = exec('which restorecon')
+      ret = exec 'which restorecon'
       return true unless ret[:exit_code] == 0
 
-      Dust.print_msg("restoring selinux labels for #{path}", indent) unless quiet
-      Dust.print_result( exec("#{ret[:stdout].chomp} -R #{path}")[:exit_code], quiet )
+      Dust.print_msg "restoring selinux labels for #{path}", options
+      Dust.print_result exec("#{ret[:stdout].chomp} -R #{path}")[:exit_code], options
     end
  
-    def get_system_users quiet=false
-      Dust.print_msg("getting all system users", indent) unless quiet
-      ret = exec('getent passwd |cut -d: -f1')
-      Dust.print_result ret[:exit_code]
+    def get_system_users options={:quiet => false, :indent => 1} 
+      Dust.print_msg "getting all system users", options
+      ret = exec 'getent passwd |cut -d: -f1'
+      Dust.print_result ret[:exit_code], options
 
       users = []
       ret[:stdout].each do |user|
@@ -166,218 +153,216 @@ module Dust
     end
 
     # checks if one of the packages is installed
-    def package_installed? packages, quiet=false, indent=1
-      packages = [ packages ] if packages.class == String
+    def package_installed? packages, options={:quiet => false, :indent => 1}
+      packages = [ packages ] if packages.is_a? String
 
-      Dust.print_msg("checking if #{packages.join(' or ')} is installed", indent) unless quiet
+      Dust.print_msg "checking if #{packages.join(' or ')} is installed", options
 
       packages.each do |package|
-        if uses_apt? true
-          return Dust.print_result(true, quiet) unless exec("dpkg -s #{package} |grep 'install ok'")[:stdout].empty?
-        elsif uses_emerge? true
-          return Dust.print_result(true, quiet) unless exec("qlist -I #{package}")[:stdout].empty?
-        elsif uses_rpm? true
-          return Dust.print_result(true, quiet) if exec("rpm -q #{package}")[:exit_code] == 0
+        if uses_apt? :quiet => true
+          Dust.print_ok '', options unless exec("dpkg -s #{package} |grep 'install ok'")[:stdout].empty?
+          return true
+        elsif uses_emerge? :quiet => true
+          Dust.print_ok '', options unless exec("qlist -I #{package}")[:stdout].empty?
+          return true
+        elsif uses_rpm? :quiet => true
+          Dust.print_ok '', options if exec("rpm -q #{package}")[:exit_code] == 0
+          return true
         end
       end
 
-      Dust.print_result(false, quiet)
+      Dust.print_failed '', options
     end
  
-    def install_package package, quiet=false, indent=1, env=""
-      return true if package_installed? package, quiet, indent
+    def install_package package, options={:quiet => false, :indent => 1, :env => ''}
+      return true if package_installed? package, options
 
-      Dust.print_msg("installing #{package}", indent + 1) unless quiet
-      if uses_apt? true
+      Dust.print_msg "installing #{package}", {:quiet => options[:quiet], :indent => options[:indent] + 1}
+      if uses_apt? :quiet => true
         exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
-      elsif uses_emerge? true
-        exec "#{env} emerge #{package}"
-      elsif uses_rpm? true
+      elsif uses_emerge? :quiet => true
+        exec "#{options[:env]} emerge #{package}"
+      elsif uses_rpm? :quiet => true
         exec "yum install -y #{package}"
       else
         Dust.print_failed 'install_package only supports apt, emerge and rpm systems at the moment'
-        return false
       end
 
       # check if package actually was installed
-      Dust.print_result package_installed?(package, true)
+      Dust.print_result package_installed? package, :quiet => true
     end
 
-    def remove_package package, quiet=false, indent=1
-      return Dust.print_ok "package #{package} not installed", indent + 1 unless package_installed? package, true
+    def remove_package package, options={:quiet => false, :indent => 1}
+      unless package_installed? package, :quiet => true
+        return Dust.print_ok "package #{package} not installed", options
+      end
 
-      Dust.print_msg("removing #{package}", indent + 1) unless quiet
-      if uses_apt? true
-        Dust.print_result exec("DEBIAN_FRONTEND=noninteractive aptitude purge -y #{package}")[:exit_code], quiet
-      elsif uses_emerge? true
-        Dust.print_result exec("emerge --unmerge #{package}")[:exit_code], quiet
-      elsif uses_rpm? true
-        Dust.print_result exec("yum erase -y #{package}")[:exit_code], quiet
+      Dust.print_msg "removing #{package}", options
+      if uses_apt? :quiet => true
+        Dust.print_result exec("DEBIAN_FRONTEND=noninteractive aptitude purge -y #{package}")[:exit_code], options
+      elsif uses_emerge? :quiet => true
+        Dust.print_result exec("emerge --unmerge #{package}")[:exit_code], options
+      elsif uses_rpm? :quiet => true
+        Dust.print_result exec("yum erase -y #{package}")[:exit_code], options
       else
-        Dust.print_result false, quiet
+        Dust.print_failed '', options
       end
     end
 
-    def update_repos quiet=false, indent=1
-      Dust.print_msg('updating system repositories', indent) unless quiet
-      if uses_apt? true
-        Dust.print_result exec('aptitude update')[:exit_code], quiet
-      elsif uses_emerge? true
-        Dust.print_result exec('emerge --sync')[:exit_code], quiet
-      elsif uses_rpm? true
-        Dust.print_result exec('yum check-update')[:exit_code], quiet
-      else
-        Dust.print_result false, quiet
-      end
+    def update_repos options={:quiet => false, :indent => 1}
+      Dust.print_msg 'updating system repositories', options
 
+      if uses_apt? :quiet => true
+        Dust.print_result exec('aptitude update')[:exit_code], options
+      elsif uses_emerge? :quiet => true
+        Dust.print_result exec('emerge --sync')[:exit_code], options
+      elsif uses_rpm? :quiet => true
+        Dust.print_result exec('yum check-update')[:exit_code], options
+      else
+        Dust.print_failed '', options
+      end
     end
 
-    def system_update quiet=false, indent=1
-      Dust.print_msg('installing system updates', indent) unless quiet
+    def system_update options={:quiet => false, :indent => 1}
+      Dust.print_msg 'installing system updates', options
 
-      if uses_apt? true
-        Dust.print_result exec('DEBIAN_FRONTEND=noninteractive aptitude full-upgrade -y')[:exit_code], quiet
-      elsif uses_emerge? true
-        Dust.print_result exec('emerge -uND @world')[:exit_code], quiet
-      elsif uses_rpm? true
-        Dust.print_result exec('yum upgrade -y')[:exit_code], quiet
+      if uses_apt? :quiet => true
+        Dust.print_result exec('DEBIAN_FRONTEND=noninteractive aptitude full-upgrade -y')[:exit_code], options
+      elsif uses_emerge? :quiet => true
+        Dust.print_result exec('emerge -uND @world')[:exit_code], options
+      elsif uses_rpm? :quiet => true
+        Dust.print_result exec('yum upgrade -y')[:exit_code], options
       else
-        Dust.print_result false, quiet
+        Dust.print_failed '', options
       end
     end
 
     # determining the system packet manager has to be done without facter
     # because it's used to find out whether facter is installed / install facter
-    def uses_apt? quiet=false, indent=1
-      Dust.print_msg("determining whether node uses apt", indent) unless quiet
-      Dust.print_result exec('test -e /etc/debian_version')[:exit_code] == 0, quiet
+    def uses_apt? options={:quiet => false, :indent => 1}
+      Dust.print_msg 'determining whether node uses apt', options
+      Dust.print_result exec('test -e /etc/debian_version')[:exit_code], options
     end
 
-    def uses_rpm? quiet=false, indent=1
-      Dust.print_msg("determining whether node uses rpm", indent) unless quiet
-      Dust.print_result exec('test -e /etc/redhat-release')[:exit_code] == 0, quiet
+    def uses_rpm? options={:quiet => false, :indent => 1}
+      Dust.print_msg 'determining whether node uses rpm', options
+      Dust.print_result exec('test -e /etc/redhat-release')[:exit_code], options
     end
 
-    def uses_emerge? quiet=false, indent=1
-      Dust.print_msg("determining whether node uses emerge", indent) unless quiet
-      Dust.print_result exec('test -e /etc/gentoo-release')[:exit_code] == 0, quiet
+    def uses_emerge? options={:quiet => false, :indent => 1}
+      Dust.print_msg 'determining whether node uses emerge', options
+      Dust.print_result exec('test -e /etc/gentoo-release')[:exit_code], options
     end
   
-    def is_os? os_list, quiet=false, indent=1
-      Dust.print_msg("checking if this machine runs #{os_list.join(' or ')}", indent) unless quiet
-      collect_facts quiet, indent unless @attr['operatingsystem']
+    def is_os? os_list, options={:quiet => false, :indent => 1}
+      Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options
+      collect_facts options unless @attr['operatingsystem']
 
       os_list.each do |os|
-        return Dust.print_result(true, quiet) if @attr['operatingsystem'].downcase == os.downcase
+        return Dust.print_ok '', options if @attr['operatingsystem'].downcase == os.downcase
       end
-      Dust.print_result(false, quiet)
+
+      Dust.print_failed '', options
     end
   
-    def is_debian? quiet=false, indent=1
-      is_os? [ 'debian' ], quiet, indent
+    def is_debian? options={:quiet => false, :indent => 1}
+      is_os? ['debian'], options
     end
   
-    def is_ubuntu? quiet=false, indent=1
-      is_os? [ 'ubuntu' ], quiet, indent
+    def is_ubuntu? options={:quiet => false, :indent => 1}
+      is_os? ['ubuntu'], options
     end
   
-    def is_gentoo? quiet=false, indent=1
-      is_os? [ 'gentoo' ], quiet, indent
+    def is_gentoo? options={:quiet => false, :indent => 1}
+      is_os? ['gentoo'], options
     end
   
-    def is_centos? quiet=false, indent=1
-      is_os? [ 'centos' ], quiet, indent
+    def is_centos? options={:quiet => false, :indent => 1}
+      is_os? ['centos'], options
     end
   
-    def is_scientific? quiet=false, indent=1
-      is_os? [ 'scientific' ], quiet, indent
+    def is_scientific? options={:quiet => false, :indent => 1}
+      is_os? ['scientific'], options
     end
 
-    def is_fedora? quiet=false, indent=1
-      is_os? [ 'fedora' ], quiet, indent
+    def is_fedora? options={:quiet => false, :indent => 1}
+      is_os? ['fedora'], options
     end
   
-    def is_executable? file, quiet=false, indent=1
-      Dust.print_msg("checking if file #{file} exists and is executeable", indent) unless quiet
-      Dust.print_result( exec("test -x $(which #{file})")[:exit_code], quiet )
+    def is_executable? file, options={:quiet => false, :indent => 1}
+      Dust.print_msg "checking if file #{file} exists and is executeable", options
+      Dust.print_result exec("test -x $(which #{file})")[:exit_code], options
     end
   
-    def file_exists? file, quiet=false, indent=1
-      Dust.print_msg("checking if file #{file} exists", indent) unless quiet
-      Dust.print_result( exec("test -e #{file}")[:exit_code], quiet )
+    def file_exists? file, options={:quiet => false, :indent => 1}
+      Dust.print_msg "checking if file #{file} exists", options
+      Dust.print_result exec("test -e #{file}")[:exit_code], options
     end
 
-    def dir_exists? dir, quiet=false, indent=1
-      Dust.print_msg("checking if directory #{dir} exists", indent) unless quiet
-      Dust.print_result( exec("test -d #{dir}")[:exit_code], quiet )
+    def dir_exists? dir, options={:quiet => false, :indent => 1}
+      Dust.print_msg "checking if directory #{dir} exists", options
+      Dust.print_result exec("test -d #{dir}")[:exit_code], options
     end
  
-    def autostart_service service, quiet=false, indent=1
-      Dust.print_msg("autostart #{service} on boot", indent) unless quiet
-      if uses_rpm? true
-        Dust.print_result( exec("chkconfig #{service} on")[:exit_code], quiet )
-      elsif uses_apt? true
-        Dust.print_result( exec("update-rc.d #{service} defaults")[:exit_code], quiet )
-      elsif uses_emerge? true
-        Dust.print_result( exec("rc-update add #{service} default")[:exit_code], quiet )
+    def autostart_service service, options={:quiet => false, :indent => 1}
+      Dust.print_msg "autostart #{service} on boot", options
+      if uses_rpm? :quiet => true
+        Dust.print_result exec("chkconfig #{service} on")[:exit_code], options
+      elsif uses_apt? :quiet => true
+        Dust.print_result exec("update-rc.d #{service} defaults")[:exit_code], options
+      elsif uses_emerge? :quiet => true
+        Dust.print_result exec("rc-update add #{service} default")[:exit_code], options
       end
     end
  
-    def restart_service service, quiet=false, indent=1
-      Dust.print_msg("restarting #{service}", indent) unless quiet 
-      Dust.print_result( exec("/etc/init.d/#{service} restart")[:exit_code], quiet )
+    def restart_service service, options={:quiet => false, :indent => 1}
+      Dust.print_msg "restarting #{service}", options
+      Dust.print_result exec("/etc/init.d/#{service} restart")[:exit_code], options
     end
   
-    def reload_service service, quiet=false, indent=1
-      Dust.print_msg("reloading #{service}", indent) unless quiet
-      Dust.print_result( exec("/etc/init.d/#{service} reload")[:exit_code], quiet )
+    def reload_service service, options={:quiet => false, :indent => 1}
+      Dust.print_msg "reloading #{service}", options
+      Dust.print_result exec("/etc/init.d/#{service} reload")[:exit_code], options
     end
   
-    def qm_list name, quiet=false, indent=1
-      if name
-        Dust.print_msg("looking for a vm with name #{name}", indent) unless quiet
-        ret = exec("qm list |grep #{name}")
-      else
-        Dust.print_msg("looking for vms", indent) unless quiet
-        ret = exec('qm list |grep -v VMID')
-      end 
-  
-      if Dust.print_result(ret[:exit_code], quiet)
-        return "\t#{ret[:stdout].gsub(/\n/, "\n\t")}"
-      end
-  
-      return ''
-    end
-
     # check whether a user exists on this node
-    def user_exists? user, quiet=false, indent=1
-      Dust.print_msg "checking if user #{user} exists", indent unless quiet
-      Dust.print_result( exec("id #{user}")[:exit_code], quiet )
+    def user_exists? user, options={:quiet => false, :indent => 1}
+      Dust.print_msg "checking if user #{user} exists", options
+      Dust.print_result exec("id #{user}")[:exit_code], options
     end
 
     # create a user
-    def create_user user, home=nil, shell=nil, quiet=false, indent=1
-      return true if user_exists? user, quiet, indent
+    def create_user user, options={:home => nil, :shell => nil, :quiet => false, :indent => 1}
+      return true if user_exists? user, options
 
-      Dust.print_msg "creating user #{user}", indent + 1 unless quiet
+      Dust.print_msg "creating user #{user}", {:quiet => options[:quiet], :indent => options[:indent] + 1}
       cmd = "useradd #{user} -m"
-      cmd += " -d #{home}" if home
-      cmd += " -s #{home}" if shell
-      Dust.print_result( exec(cmd)[:exit_code], quiet ) 
+      cmd += " -d #{options[:home]}" if options[:home]
+      cmd += " -s #{options[:shell]}" if options[:shell]
+      Dust.print_result exec(cmd)[:exit_code], options
     end
 
-    def collect_facts quiet=false, indent=1
-      Dust.print_msg "collecting additional system facts\n" unless quiet
+    # collect additional system facts using puppets facter
+    def collect_facts options={:quiet => false, :indent => 1}
 
-      # collect system facts using puppets facter
-      install_package 'lsb-release', false, 2 if uses_apt?(true) and not package_installed?('lsb-release', true)
-      install_package 'facter', false, 2 unless package_installed? 'facter', true
+      # check if lsb-release (on apt systems) and facter are installed
+      # and install them if not
+      if uses_apt? :quiet => true and not package_installed? 'lsb-release', :quiet => true
+        install_package 'lsb-release', :quiet => false
+      end
 
-      Dust.print_msg 'running facter', 2 unless quiet
+      unless package_installed? 'facter', :quiet => true
+        install_package 'facter', :quiet => false
+      end
+
+      Dust.print_msg "collecting additional system facts (using facter)", options
+
+      # run facter with -y for yaml output, and merge results into @attr
       ret = exec 'facter -y'
       @attr.merge! YAML.load ret[:stdout]
-      Dust.print_result ret[:exit_code], quiet
-      puts unless quiet
+
+      Dust.print_result ret[:exit_code], options
+      puts unless options[:quiet]
     end
 
     private

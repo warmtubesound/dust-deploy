@@ -16,7 +16,7 @@ class MemoryLimit < Thor
     max_mem = system_mem - threshold if max_mem > threshold
 
     ::Dust.print_msg "setting max memory for a process to #{max_mem} kb"
-    node.write '/etc/security/limits.d/00-memory-limit', "*          hard    as        #{max_mem}", true
+    node.write '/etc/security/limits.d/00-memory-limit', "*          hard    as        #{max_mem}", :quiet => true
     ::Dust.print_ok
 
   end

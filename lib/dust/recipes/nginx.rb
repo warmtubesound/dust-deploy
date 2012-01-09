@@ -12,7 +12,7 @@ class Nginx < Thor
 
     # remove old sites that may be present
     ::Dust.print_msg 'deleting old sites in /etc/nginx/sites-*'
-    node.rm '/etc/nginx/sites-*/*', true
+    node.rm '/etc/nginx/sites-*/*', :quiet => true
     ::Dust.print_ok
 
     sites.each do |state, site|
@@ -29,13 +29,13 @@ class Nginx < Thor
 
       # skip to next site if template wasn't found
       else
-        ::Dust.print_failed "couldn't find template for #{site}", 2
+        ::Dust.print_failed "couldn't find template for #{site}", :indent => 2
         next
       end
 
       # symlink to sites-enabled if this is listed as an enabled site
       if state == 'sites-enabled'
-        ::Dust.print_msg "enabling #{site}", 2
+        ::Dust.print_msg "enabling #{site}", :indent => 2
         ::Dust.print_result( node.exec("cd /etc/nginx/sites-enabled && ln -s ../sites-available/#{site} #{site}")[:exit_code] )
       end
     end

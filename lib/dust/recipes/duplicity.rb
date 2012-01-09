@@ -34,14 +34,14 @@ class Duplicity < Thor
       node.install_package 'ncftp' if config['backend'].include? 'ftp://'
       
       # scp backend on centos needs python-pexpect
-      node.install_package 'python-pexpect' if config['backend'].include? 'scp://' and node.uses_rpm? true
+      node.install_package 'python-pexpect' if config['backend'].include? 'scp://' and node.uses_rpm? :quiet => true
 
       # add hostkey to known_hosts
       if config['hostkey']
         ::Dust.print_msg 'checking if ssh key is in known_hosts'
         unless ::Dust.print_result node.exec("grep -q '#{config['hostkey']}' ~/.ssh/known_hosts")[:exit_code] == 0
-          node.mkdir '~/.ssh', false, 2
-          node.append '~/.ssh/known_hosts', config['hostkey'], false, 2
+          node.mkdir '~/.ssh', :indent => 2
+          node.append '~/.ssh/known_hosts', config['hostkey'], :indent => 2
         end
       end
 
@@ -51,7 +51,7 @@ class Duplicity < Thor
       # adjust and upload cronjob
       template = ERB.new File.read("#{template_path}/cronjob.erb"), nil, '%<>'
       ::Dust.print_msg "adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n"
-      config['options'].each { |option| ::Dust.print_ok "adding option: #{option}", 2 }
+      config['options'].each { |option| ::Dust.print_ok "adding option: #{option}", :indent => 2 }
       node.write cronjob_path, template.result(binding)
  
       # making cronjob executeable
@@ -90,9 +90,9 @@ class Duplicity < Thor
       ::Dust.print_result( (ret[:exit_code] == 0 and ret[:stdout].length > 0) )
 
       if options.long?
-        ::Dust.print_msg "#{::Dust.black}#{ret[:stdout]}#{::Dust.none}", 0
+        ::Dust.print_msg "#{::Dust.black}#{ret[:stdout]}#{::Dust.none}", :indent => 0
       else
-        ::Dust.print_msg "\t#{::Dust.black}#{ret[:stdout].sub(/^\s+([a-zA-Z]+)\s+(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+\s+\d+)\s+(\d+)$/, 'Last backup: \1 (\3 sets) on \2')}#{::Dust.none}", 0
+        ::Dust.print_msg "\t#{::Dust.black}#{ret[:stdout].sub(/^\s+([a-zA-Z]+)\s+(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+\s+\d+)\s+(\d+)$/, 'Last backup: \1 (\3 sets) on \2')}#{::Dust.none}", :indent => 0
       end
 
       puts
@@ -103,7 +103,7 @@ class Duplicity < Thor
   # removes all duplicity cronjobs
   def remove_duplicity_cronjobs node
     ::Dust.print_msg 'deleting old duplicity cronjobs'
-    node.rm '/etc/cron.*/duplicity*', true
+    node.rm '/etc/cron.*/duplicity*', :quiet => true
     ::Dust.print_ok
   end
 

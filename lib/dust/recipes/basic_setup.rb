@@ -6,28 +6,28 @@ class BasicSetup < Thor
     # install some basic packages
     ::Dust.print_msg "installing basic packages\n"
 
-    node.install_package 'screen', false, 2
-    node.install_package 'rsync', false, 2
-    node.install_package 'psmisc', false, 2 if node.uses_apt? true
+    node.install_package 'screen', :indent => 2
+    node.install_package 'rsync', :indent => 2
+    node.install_package 'psmisc', :indent => 2 if node.uses_apt? :quiet => true
 
-    if node.uses_rpm? true
-      node.install_package 'vim-enhanced', false, 2
+    if node.uses_rpm? :quiet => true
+      node.install_package 'vim-enhanced', :indent => 2
     else
-      node.install_package 'vim', false, 2
+      node.install_package 'vim', :indent => 2
     end
 
-    if node.uses_apt? true
-      node.install_package 'git-core', false, 2
+    if node.uses_apt? :quiet => true
+      node.install_package 'git-core', :indent => 2
     else
-      node.install_package 'git', false, 2
+      node.install_package 'git', :indent => 2
     end
     puts
     
     # deploy basic configuration for root user
-    ::Dust.print_msg "deploying configuration files for root\n", 1
+    ::Dust.print_msg "deploying configuration files for root\n"
     Dir["#{template_path}/.*"].each do |file|
-      next unless File.file?(file)
-      node.scp file, "/root/#{File.basename(file)}", false, 2
+      next unless File.file? file
+      node.scp file, "/root/#{File.basename file}", :indent => 2
     end
 
   end

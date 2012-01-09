@@ -12,45 +12,53 @@ module Dust
 
   $stdout.sync = true # autoflush
 
-  def self.print_result ret, quiet=false
+  def self.print_result ret, options={:quiet => false, :indent => 1}
     if ret == 0 or ret == true
-      print_ok unless quiet
+      print_ok '', options
       return true
     else
-      print_failed unless quiet
+      print_failed '', options
       return false
     end
   end
 
-  def self.print_ok string="", level=0
-    print_msg "#{string} #{blue}[ ok ]#{none}\n", level
+  def self.print_ok string='', options={:quiet => false, :indent => 1}
+    options[:indent] = 0 if string.empty?
+    print_msg "#{string} #{blue}[ ok ]#{none}\n", options
   end
 
-  def self.print_failed string="", level=0
-    print_msg "#{string} #{red}[ failed ]#{none}\n", level
+  def self.print_failed string='', options={:quiet => false, :indent => 1}
+    options[:indent] = 0 if string.empty?
+    print_msg "#{string} #{red}[ failed ]#{none}\n", options
   end
 
-  def self.print_warning string="", level=0
-    print_msg "#{string} #{yellow}[ warning ]#{none}\n", level
+  def self.print_warning string='', options={:quiet => false, :indent => 1}
+    options[:indent] = 0 if string.empty?
+    print_msg "#{string} #{yellow}[ warning ]#{none}\n", options
   end
 
-  def self.print_hostname hostname, level=0
-    print_msg "\n[ #{blue}#{hostname}#{none} ]\n\n", level
+  def self.print_hostname hostname, options={:quiet => false, :indent => 0}
+    print_msg "\n[ #{blue}#{hostname}#{none} ]\n\n", options
   end
 
-  def self.print_recipe recipe, level=0
-    print_msg "#{green}|#{recipe}|#{none}\n", level
+  def self.print_recipe recipe, options={:quiet => false, :indent => 1}
+    print_msg "#{green}|#{recipe}|#{none}\n", options
   end
 
-  # indent according to level
-  # level 0
-  #  - level 1
-  #    - level 2
-  def self.print_msg string, level=1
-    if level == 0
+  # indent according to options[:indent]
+  # indent 0
+  #  - indent 1
+  #    - indent 2
+  def self.print_msg string, options={:quiet => false, :indent => 1}
+    # just return if in quiet mode
+    return if options[:quiet]
+
+    options[:indent] ||= 1
+
+    if options[:indent] == 0
       print string
     else
-      print ' ' + '  ' * (level - 1) + '- ' + string
+      print ' ' + '  ' * (options[:indent] - 1) + '- ' + string
     end
   end
 

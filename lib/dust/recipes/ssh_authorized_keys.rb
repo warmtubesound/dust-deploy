@@ -16,7 +16,7 @@ class SshAuthorizedKeys < Thor
       # create the authorized_keys hash for this user
       ssh_users.each do |ssh_user|
         users[ssh_user]['name'] ||= ssh_user
-        ::Dust.print_msg "adding user #{users[ssh_user]['name']}", 2
+        ::Dust.print_msg "adding user #{users[ssh_user]['name']}", :indent => 2
         users[ssh_user]['keys'].each do |key|
           authorized_keys += "#{key}"
           authorized_keys += " #{users[ssh_user]['name']}" if users[ssh_user]['name']
@@ -45,10 +45,10 @@ class SshAuthorizedKeys < Thor
       # remove authorized_keys files for all other users
       if options.cleanup?
         ::Dust.print_msg "deleting other authorized_keys files\n"
-        node.get_system_users(true).each do |user|
+        node.get_system_users(:quiet => true).each do |user|
           next if users.keys.include? user
-          if node.file_exists? "~#{user}/.ssh/authorized_keys", true
-            node.rm "~#{user}/.ssh/authorized_keys", 2
+          if node.file_exists? "~#{user}/.ssh/authorized_keys", :quiet => true
+            node.rm "~#{user}/.ssh/authorized_keys", :indent => 2
            end
         end
       end

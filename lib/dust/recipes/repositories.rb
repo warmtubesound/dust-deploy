@@ -4,7 +4,7 @@ class Repositories < Thor
 
     if node.uses_apt?
       :: Dust.print_msg 'deleting old repositories'
-      node.rm '/etc/apt/sources.list.d/*.list', true
+      node.rm '/etc/apt/sources.list.d/*.list', :quiet => true
       ::Dust.print_ok 
 
       repos.each do |name, repo|
@@ -14,8 +14,8 @@ class Repositories < Thor
         repo = {} unless repo.is_a? Hash
 
         # setting defaults
-        repo['url'] ||= 'http://ftp.debian.org/debian/' if node.is_debian? true
-        repo['url'] ||= 'http://archive.ubuntu.com/ubuntu/' if node.is_ubuntu? true
+        repo['url'] ||= 'http://ftp.debian.org/debian/' if node.is_debian? :quiet => true
+        repo['url'] ||= 'http://archive.ubuntu.com/ubuntu/' if node.is_ubuntu? :quiet => true
    
         repo['release'] ||= node['lsbdistcodename']
         repo['components'] ||= 'main'
@@ -33,10 +33,10 @@ class Repositories < Thor
                      "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n\n"
 
           # security
-          if node.is_debian? true
+          if node.is_debian? :quiet => true
             sources += "deb http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n" +
                        "deb-src http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n\n"
-          elsif node.is_ubuntu? true
+          elsif node.is_ubuntu? :quiet => true
             sources += "deb http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n" +
                        "deb-src http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n\n"
           end
@@ -46,18 +46,18 @@ class Repositories < Thor
                      "deb-src #{repo['url']} #{repo['release']}-updates #{repo['components']}\n\n"
 
           # proposed
-          if node.is_ubuntu? true
+          if node.is_ubuntu? :quiet => true
             sources += "deb #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n" +
                        "deb-src #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n\n"
           end
 
           # backports is enabled per default in ubuntu oneiric
-          if node.is_ubuntu? true
+          if node.is_ubuntu? :quiet => true
             sources += "deb #{repo['url']} #{repo['release']}-backports #{repo['components']}\n" +
                        "deb-src #{repo['url']} #{repo['release']}-backports #{repo['components']}\n\n"
           end
 
-          ::Dust.print_result node.write('/etc/apt/sources.list', sources, true)
+          ::Dust.print_result node.write('/etc/apt/sources.list', sources, :quiet => true)
           next
 
         else
@@ -67,7 +67,7 @@ class Repositories < Thor
           sources += "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n" if repo['source']
 
           ::Dust.print_msg "adding repository '#{name}' to sources"
-          ::Dust.print_result node.write("/etc/apt/sources.list.d/#{name}.list", sources, true)
+          ::Dust.print_result node.write("/etc/apt/sources.list.d/#{name}.list", sources, :quiet => true)
 
           # add the repository key
           if repo['key']

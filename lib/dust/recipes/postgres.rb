@@ -7,18 +7,20 @@ class Postgres < Thor
 
     return ::Dust.print_failed 'no version specified' unless config['version']
 
-    if node.uses_emerge? true
+    if node.uses_emerge? :quiet => true
       return unless node.package_installed? 'postgresql-server'
       config['data-dir'] ||= "/var/lib/postgresql/#{config['version']}/data"
       config['conf-dir'] ||= "/etc/postgresql-#{config['version']}"
       config['archive-dir'] ||= "/var/lib/postgresql/#{config['version']}/archive"
       config['service-name'] ||= "postgresql-#{config['version']}"
-    elsif node.uses_apt? true
+
+    elsif node.uses_apt? :quiet => true
       return unless node.package_installed? "postgresql-#{config['version']}"
       config['data-dir'] ||= "/var/lib/postgresql/#{config['version']}/#{config['cluster']}"
       config['conf-dir'] ||= "/etc/postgresql/#{config['version']}/#{config['cluster']}"
       config['archive-dir'] ||= "/var/lib/postgresql/#{config['version']}/#{config['cluster']}-archive"
       config['service-name'] ||= 'postgresql'
+
     else
       return 'os not supported'
     end
@@ -40,7 +42,7 @@ class Postgres < Thor
 
     # copy recovery.conf to either recovery.conf or recovery.done
     # depending on which file already exists.
-    if node.file_exists? "#{config['data-dir']}/recovery.conf", true
+    if node.file_exists? "#{config['data-dir']}/recovery.conf", :quiet => true
       deploy_file 'recovery.conf', "#{config['data-dir']}/recovery.conf", binding
     else
       deploy_file 'recovery.conf', "#{config['data-dir']}/recovery.done", binding
@@ -60,21 +62,21 @@ class Postgres < Thor
 
 
     # increase shm memory
-    if node.uses_apt? true
+    if node.uses_apt? :quiet => true
       ::Dust.print_msg "setting postgres sysctl keys\n"
-      node.collect_facts true
+      node.collect_facts :quiet => true
 
       # use half of system memory for shmmax
       shmmax = ::Dust.convert_size(node['memorysize']) * 1024 / 2
       shmall = shmmax / 4096 # shmmax/pagesize (pagesize = 4096)
 
-      ::Dust.print_msg "setting shmmax to: #{shmmax}", 2
+      ::Dust.print_msg "setting shmmax to: #{shmmax}", :indent => 2
       ::Dust.print_result node.exec("sysctl -w kernel.shmmax=#{shmmax}")[:exit_code]
-      ::Dust.print_msg "setting shmall to: #{shmall}", 2
+      ::Dust.print_msg "setting shmall to: #{shmall}", :indent => 2
       ::Dust.print_result node.exec("sysctl -w kernel.shmall=#{shmall}")[:exit_code]
-      ::Dust.print_msg 'setting overcommit memory to 2', 2
+      ::Dust.print_msg 'setting overcommit memory to 2', :indent => 2
       ::Dust.print_result node.exec('sysctl -w vm.overcommit_memory=2')[:exit_code]
-      ::Dust.print_msg 'setting swappiness to 0', 2
+      ::Dust.print_msg 'setting swappiness to 0', :indent => 2
       ::Dust.print_result node.exec('sysctl -w vm.swappiness=0')[:exit_code]
 
       file = ''
@@ -107,7 +109,7 @@ class Postgres < Thor
     elsif File.exists? "#{template_path}/#{file}.erb"
       ::Dust.print_msg "adjusting and deploying #{file}"
       template = ERB.new( File.read("#{template_path}/#{file}.erb"), nil, '%<>')
-      ::Dust.print_result node.write(target, template.result(binding), true)
+      ::Dust.print_result node.write(target, template.result(binding), :quiet => true)
 
     # file was not found, return
     else

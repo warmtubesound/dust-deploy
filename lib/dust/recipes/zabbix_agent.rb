@@ -10,11 +10,11 @@ class ZabbixAgent < Thor
     # configure node using erb template
     template = ERB.new File.read("#{template_path}/zabbix_agentd.conf.erb"), nil, '%<>'
     ::Dust.print_msg 'adjusting and deploying zabbix_agentd.conf'
-    node.write '/etc/zabbix/zabbix_agentd.conf', template.result(binding), true
+    node.write '/etc/zabbix/zabbix_agentd.conf', template.result(binding), :quiet => true
     ::Dust.print_ok
 
     # restart using new configuration
-    if node.uses_emerge? true
+    if node.uses_emerge? :quiet => true
       node.autostart_service 'zabbix-agentd'
       node.restart_service 'zabbix-agentd' if options.restart?
     else 
@@ -27,19 +27,19 @@ class ZabbixAgent < Thor
   # installs zabbix and its dependencies
   def install_zabbix node
 
-    if node.uses_apt? true
+    if node.uses_apt? :quiet => true
       return false unless node.install_package('zabbix-agent')
 
       # debsecan is needed for zabbix checks (security updates)
       return false unless node.install_package('debsecan')
 
-    elsif node.uses_emerge? true
+    elsif node.uses_emerge? :quiet => true
       return false unless node.install_package('zabbix', false, 1, "USE=agent")
 
       # glsa-check (part of gentoolkit) is needed for zabbix checks (security updates)
       return false unless node.install_package('gentoolkit')
 
-    elsif node.uses_rpm? true
+    elsif node.uses_rpm? :quiet => true
       return false unless node.install_package('zabbix-agent')
 
     else
@@ -67,7 +67,7 @@ class ZabbixAgent < Thor
 
     # if user was not found, create him
     unless ret
-      ::Dust.print_msg 'create zabbix user in postgres', 2
+      ::Dust.print_msg 'create zabbix user in postgres', :indent => 2
       ::Dust.print_result( node.exec('createuser -U postgres zabbix -RSD')[:exit_code] )
     end
 
