@@ -86,7 +86,7 @@ class Repositories < Thor
 
     # fetch new stuff
     puts
-    node.update_repos
+    node.update_repos if options.restart? or options.reload?
   end
 end
 
