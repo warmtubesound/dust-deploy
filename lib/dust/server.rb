@@ -363,7 +363,6 @@ module Dust
       @attr.merge! YAML.load ret[:stdout]
 
       Dust.print_result ret[:exit_code], options
-      puts unless options[:quiet]
     end
 
     private
