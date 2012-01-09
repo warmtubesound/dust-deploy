@@ -8,15 +8,15 @@ class BasicSetup < Thor
 
     node.install_package 'screen', :indent => 2
     node.install_package 'rsync', :indent => 2
-    node.install_package 'psmisc', :indent => 2 if node.uses_apt? :quiet => true
+    node.install_package 'psmisc', :indent => 2 if node.uses_apt?
 
-    if node.uses_rpm? :quiet => true
+    if node.uses_rpm?
       node.install_package 'vim-enhanced', :indent => 2
     else
       node.install_package 'vim', :indent => 2
     end
 
-    if node.uses_apt? :quiet => true
+    if node.uses_apt?
       node.install_package 'git-core', :indent => 2
     else
       node.install_package 'git', :indent => 2

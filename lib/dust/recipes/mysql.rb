@@ -5,7 +5,7 @@ class Mysql < Thor
   def deploy node, config, options
     template_path = "./templates/#{ File.basename(__FILE__).chomp( File.extname(__FILE__) ) }"
 
-    return unless node.uses_apt?
+    return unless node.uses_apt? :quiet=>false
     node.install_package 'mysql-server'
 
     ::Dust.print_msg "configuring mysql\n"

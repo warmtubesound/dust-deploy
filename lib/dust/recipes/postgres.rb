@@ -7,14 +7,14 @@ class Postgres < Thor
 
     return ::Dust.print_failed 'no version specified' unless config['version']
 
-    if node.uses_emerge? :quiet => true
+    if node.uses_emerge?
       return unless node.package_installed? 'postgresql-server'
       config['data-dir'] ||= "/var/lib/postgresql/#{config['version']}/data"
       config['conf-dir'] ||= "/etc/postgresql-#{config['version']}"
       config['archive-dir'] ||= "/var/lib/postgresql/#{config['version']}/archive"
       config['service-name'] ||= "postgresql-#{config['version']}"
 
-    elsif node.uses_apt? :quiet => true
+    elsif node.uses_apt?
       return unless node.package_installed? "postgresql-#{config['version']}"
       config['data-dir'] ||= "/var/lib/postgresql/#{config['version']}/#{config['cluster']}"
       config['conf-dir'] ||= "/etc/postgresql/#{config['version']}/#{config['cluster']}"
@@ -62,7 +62,7 @@ class Postgres < Thor
 
 
     # increase shm memory
-    if node.uses_apt? :quiet => true
+    if node.uses_apt?
       ::Dust.print_msg "setting postgres sysctl keys\n"
       node.collect_facts :quiet => true
 

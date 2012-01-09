@@ -80,7 +80,8 @@ module Dust
       # note: ` (backticks) somehow cannot be escaped.. don't use them
       # in bash, use $(cmd) instead of `cmd` as a workaround
       if exec("cat << EOF > #{target}\n#{text}\nEOF")[:exit_code] != 0
-        return Dust.print_failed '', options
+        Dust.print_failed '', options
+        return false
       end
 
       Dust.print_ok '', options
@@ -159,15 +160,12 @@ module Dust
       Dust.print_msg "checking if #{packages.join(' or ')} is installed", options
 
       packages.each do |package|
-        if uses_apt? :quiet => true
-          Dust.print_ok '', options unless exec("dpkg -s #{package} |grep 'install ok'")[:stdout].empty?
-          return true
-        elsif uses_emerge? :quiet => true
-          Dust.print_ok '', options unless exec("qlist -I #{package}")[:stdout].empty?
-          return true
-        elsif uses_rpm? :quiet => true
-          Dust.print_ok '', options if exec("rpm -q #{package}")[:exit_code] == 0
-          return true
+        if uses_apt?
+          return Dust.print_ok '', options unless exec("dpkg -s #{package} |grep 'install ok'")[:stdout].empty?
+        elsif uses_emerge?
+          return Dust.print_ok '', options unless exec("qlist -I #{package}")[:stdout].empty?
+        elsif uses_rpm?
+          return Dust.print_ok '', options if exec("rpm -q #{package}")[:exit_code] == 0
         end
       end
 
@@ -178,11 +176,11 @@ module Dust
       return true if package_installed? package, options
 
       Dust.print_msg "installing #{package}", {:quiet => options[:quiet], :indent => options[:indent] + 1}
-      if uses_apt? :quiet => true
+      if uses_apt?
         exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
-      elsif uses_emerge? :quiet => true
+      elsif uses_emerge?
         exec "#{options[:env]} emerge #{package}"
-      elsif uses_rpm? :quiet => true
+      elsif uses_rpm?
         exec "yum install -y #{package}"
       else
         Dust.print_failed 'install_package only supports apt, emerge and rpm systems at the moment'
@@ -198,11 +196,11 @@ module Dust
       end
 
       Dust.print_msg "removing #{package}", options
-      if uses_apt? :quiet => true
+      if uses_apt?
         Dust.print_result exec("DEBIAN_FRONTEND=noninteractive aptitude purge -y #{package}")[:exit_code], options
-      elsif uses_emerge? :quiet => true
+      elsif uses_emerge?
         Dust.print_result exec("emerge --unmerge #{package}")[:exit_code], options
-      elsif uses_rpm? :quiet => true
+      elsif uses_rpm?
         Dust.print_result exec("yum erase -y #{package}")[:exit_code], options
       else
         Dust.print_failed '', options
@@ -212,11 +210,11 @@ module Dust
     def update_repos options={:quiet => false, :indent => 1}
       Dust.print_msg 'updating system repositories', options
 
-      if uses_apt? :quiet => true
+      if uses_apt?
         Dust.print_result exec('aptitude update')[:exit_code], options
-      elsif uses_emerge? :quiet => true
+      elsif uses_emerge?
         Dust.print_result exec('emerge --sync')[:exit_code], options
-      elsif uses_rpm? :quiet => true
+      elsif uses_rpm?
         Dust.print_result exec('yum check-update')[:exit_code], options
       else
         Dust.print_failed '', options
@@ -226,11 +224,11 @@ module Dust
     def system_update options={:quiet => false, :indent => 1}
       Dust.print_msg 'installing system updates', options
 
-      if uses_apt? :quiet => true
+      if uses_apt?
         Dust.print_result exec('DEBIAN_FRONTEND=noninteractive aptitude full-upgrade -y')[:exit_code], options
-      elsif uses_emerge? :quiet => true
+      elsif uses_emerge?
         Dust.print_result exec('emerge -uND @world')[:exit_code], options
-      elsif uses_rpm? :quiet => true
+      elsif uses_rpm?
         Dust.print_result exec('yum upgrade -y')[:exit_code], options
       else
         Dust.print_failed '', options
@@ -239,53 +237,56 @@ module Dust
 
     # determining the system packet manager has to be done without facter
     # because it's used to find out whether facter is installed / install facter
-    def uses_apt? options={:quiet => false, :indent => 1}
+    def uses_apt? options={:quiet => true, :indent => 1}
       Dust.print_msg 'determining whether node uses apt', options
       Dust.print_result exec('test -e /etc/debian_version')[:exit_code], options
     end
 
-    def uses_rpm? options={:quiet => false, :indent => 1}
+    def uses_rpm? options={:quiet => true, :indent => 1}
       Dust.print_msg 'determining whether node uses rpm', options
       Dust.print_result exec('test -e /etc/redhat-release')[:exit_code], options
     end
 
-    def uses_emerge? options={:quiet => false, :indent => 1}
+    def uses_emerge? options={:quiet => true, :indent => 1}
       Dust.print_msg 'determining whether node uses emerge', options
       Dust.print_result exec('test -e /etc/gentoo-release')[:exit_code], options
     end
   
-    def is_os? os_list, options={:quiet => false, :indent => 1}
+    def is_os? os_list, options={:quiet => true, :indent => 1}
       Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options
       collect_facts options unless @attr['operatingsystem']
 
       os_list.each do |os|
-        return Dust.print_ok '', options if @attr['operatingsystem'].downcase == os.downcase
+        if @attr['operatingsystem'].downcase == os.downcase
+          return Dust.print_ok '', options
+        end
       end
 
       Dust.print_failed '', options
+      false
     end
   
-    def is_debian? options={:quiet => false, :indent => 1}
+    def is_debian? options={:quiet => true, :indent => 1}
       is_os? ['debian'], options
     end
   
-    def is_ubuntu? options={:quiet => false, :indent => 1}
+    def is_ubuntu? options={:quiet => true, :indent => 1}
       is_os? ['ubuntu'], options
     end
   
-    def is_gentoo? options={:quiet => false, :indent => 1}
+    def is_gentoo? options={:quiet => true, :indent => 1}
       is_os? ['gentoo'], options
     end
   
-    def is_centos? options={:quiet => false, :indent => 1}
+    def is_centos? options={:quiet => true, :indent => 1}
       is_os? ['centos'], options
     end
   
-    def is_scientific? options={:quiet => false, :indent => 1}
+    def is_scientific? options={:quiet => true, :indent => 1}
       is_os? ['scientific'], options
     end
 
-    def is_fedora? options={:quiet => false, :indent => 1}
+    def is_fedora? options={:quiet => true, :indent => 1}
       is_os? ['fedora'], options
     end
   
@@ -306,11 +307,11 @@ module Dust
  
     def autostart_service service, options={:quiet => false, :indent => 1}
       Dust.print_msg "autostart #{service} on boot", options
-      if uses_rpm? :quiet => true
+      if uses_rpm?
         Dust.print_result exec("chkconfig #{service} on")[:exit_code], options
-      elsif uses_apt? :quiet => true
+      elsif uses_apt?
         Dust.print_result exec("update-rc.d #{service} defaults")[:exit_code], options
-      elsif uses_emerge? :quiet => true
+      elsif uses_emerge?
         Dust.print_result exec("rc-update add #{service} default")[:exit_code], options
       end
     end
@@ -347,7 +348,7 @@ module Dust
 
       # check if lsb-release (on apt systems) and facter are installed
       # and install them if not
-      if uses_apt? :quiet => true and not package_installed? 'lsb-release', :quiet => true
+      if uses_apt? and not package_installed? 'lsb-release', :quiet => true
         install_package 'lsb-release', :quiet => false
       end
 

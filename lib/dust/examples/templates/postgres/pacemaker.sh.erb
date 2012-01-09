@@ -12,7 +12,7 @@ RECOVERY=$PG_DATA/recovery.conf
 RECOVERY_DONE=$PG_DATA/recovery.done
 
 # path to postgresql init script
-% if node.is_gentoo? true
+% if node.is_gentoo?
 PG_INIT=/etc/init.d/postgresql-<%= config['version'] %>
 % else
 PG_INIT=/etc/init.d/postgresql

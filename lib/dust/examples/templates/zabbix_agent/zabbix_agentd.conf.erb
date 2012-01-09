@@ -59,22 +59,22 @@ DebugLevel=3
 
 # Name of PID file
 
-% if node.uses_apt? true
+% if node.uses_apt?
 PidFile=/var/run/zabbix-agent/zabbix_agentd.pid
-% elsif node.uses_emerge? true
+% elsif node.uses_emerge?
 PidFile=/var/run/zabbix/zabbix_agentd.pid
-% elsif node.uses_rpm? true
+% elsif node.uses_rpm?
 PidFile=/var/run/zabbix/zabbix_agentd.pid
 % end
 
 # Name of log file.
 # If not set, syslog will be used
 
-% if node.uses_apt? true
+% if node.uses_apt?
 LogFile=/var/log/zabbix-agent/zabbix_agentd.log
-% elsif node.uses_emerge? true
+% elsif node.uses_emerge?
 LogFile=/var/log/zabbix/zabbix_agentd.log
-% elsif node.uses_emerge? true
+% elsif node.uses_emerge?
 LogFile=/var/log/zabbix/zabbix_agentd.log
 % end
 
@@ -91,17 +91,17 @@ Timeout=30
 # Note that shell command must not return empty string or EOL only
 
 # system updates
-% if node.uses_apt? true
+% if node.uses_apt?
 UserParameter=debian.updates,aptitude search '~U' |wc -l
 UserParameter=debian.security,debsecan --suite squeeze --only-fixed --format packages |wc -l
 
-% elsif node.uses_emerge? true
+% elsif node.uses_emerge?
 UserParameter=gentoo.security,glsa-check -t all 2>/dev/null | wc -l
 UserParameter=gentoo.updates,emerge -uNDp @world | grep ebuild|wc -l
 UserParameter=gentoo.portage,emerge --info| grep 'Timestamp of tree' | sed -e s/'Timestamp of tree':// -e 's/\n//' | xargs -I {} date --date={} +%s |xargs -I {} expr $(date +%s) - {}
 UserParameter=gentoo.config,find /etc/ -name '._cfg*' 2>/dev/null|wc -l
 
-% elsif node.uses_rpm? true
+% elsif node.uses_rpm?
 UserParameter=centos.updates,yum check-update -q |wc -l
 % end
 

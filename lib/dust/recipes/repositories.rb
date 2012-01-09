@@ -2,7 +2,7 @@ class Repositories < Thor
   desc 'repositories:deploy', 'configures package management repositories (aptitude, yum)'
   def deploy node, repos, options
 
-    if node.uses_apt?
+    if node.uses_apt? :quiet=>false
       :: Dust.print_msg 'deleting old repositories'
       node.rm '/etc/apt/sources.list.d/*.list', :quiet => true
       ::Dust.print_ok 
@@ -14,8 +14,8 @@ class Repositories < Thor
         repo = {} unless repo.is_a? Hash
 
         # setting defaults
-        repo['url'] ||= 'http://ftp.debian.org/debian/' if node.is_debian? :quiet => true
-        repo['url'] ||= 'http://archive.ubuntu.com/ubuntu/' if node.is_ubuntu? :quiet => true
+        repo['url'] ||= 'http://ftp.debian.org/debian/' if node.is_debian?
+        repo['url'] ||= 'http://archive.ubuntu.com/ubuntu/' if node.is_ubuntu?
    
         repo['release'] ||= node['lsbdistcodename']
         repo['components'] ||= 'main'
@@ -33,10 +33,10 @@ class Repositories < Thor
                      "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n\n"
 
           # security
-          if node.is_debian? :quiet => true
+          if node.is_debian?
             sources += "deb http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n" +
                        "deb-src http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n\n"
-          elsif node.is_ubuntu? :quiet => true
+          elsif node.is_ubuntu?
             sources += "deb http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n" +
                        "deb-src http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n\n"
           end
@@ -46,13 +46,13 @@ class Repositories < Thor
                      "deb-src #{repo['url']} #{repo['release']}-updates #{repo['components']}\n\n"
 
           # proposed
-          if node.is_ubuntu? :quiet => true
+          if node.is_ubuntu?
             sources += "deb #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n" +
                        "deb-src #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n\n"
           end
 
           # backports is enabled per default in ubuntu oneiric
-          if node.is_ubuntu? :quiet => true
+          if node.is_ubuntu?
             sources += "deb #{repo['url']} #{repo['release']}-backports #{repo['components']}\n" +
                        "deb-src #{repo['url']} #{repo['release']}-backports #{repo['components']}\n\n"
           end
@@ -77,7 +77,7 @@ class Repositories < Thor
         end
       end
 
-    elsif node.uses_rpm?
+    elsif node.uses_rpm? :quiet=>false
       ::Dust.print_failed 'rpm not yet supported'
 
     else

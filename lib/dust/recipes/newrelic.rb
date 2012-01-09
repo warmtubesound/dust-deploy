@@ -2,7 +2,7 @@ class Newrelic < Thor
   desc 'newrelic:deploy', 'installs and configures newrelic system monitoring'
   def deploy node, key, options
     return Dust.print_failed 'no key specified' unless key
-    return unless node.uses_apt?
+    return unless node.uses_apt? :quiet=>false
 
     ::Dust.print_msg 'updating repositories'
     ::Dust.print_result node.exec('aptitude update')[:exit_code]

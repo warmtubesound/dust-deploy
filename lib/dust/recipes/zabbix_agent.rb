@@ -27,19 +27,19 @@ class ZabbixAgent < Thor
   # installs zabbix and its dependencies
   def install_zabbix node
 
-    if node.uses_apt? :quiet => true
+    if node.uses_apt?
       return false unless node.install_package('zabbix-agent')
 
       # debsecan is needed for zabbix checks (security updates)
       return false unless node.install_package('debsecan')
 
-    elsif node.uses_emerge? :quiet => true
+    elsif node.uses_emerge?
       return false unless node.install_package('zabbix', false, 1, "USE=agent")
 
       # glsa-check (part of gentoolkit) is needed for zabbix checks (security updates)
       return false unless node.install_package('gentoolkit')
 
-    elsif node.uses_rpm? :quiet => true
+    elsif node.uses_rpm?
       return false unless node.install_package('zabbix-agent')
 
     else
@@ -54,7 +54,7 @@ class ZabbixAgent < Thor
   # TODO (not yet finished)
   desc 'zabbix_agent:postgres', 'configure postgres database for zabbix monitoring'
   def postgres node, ingredients, options
-    next unless node.uses_emerge?
+    next unless node.uses_emerge? :quiet=>false
     next unless node.package_installed?('postgresql-node')
 
     ::Dust.print_msg 'add zabbix system user to postgres group'

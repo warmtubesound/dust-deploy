@@ -34,7 +34,7 @@ class Duplicity < Thor
       node.install_package 'ncftp' if config['backend'].include? 'ftp://'
       
       # scp backend on centos needs python-pexpect
-      node.install_package 'python-pexpect' if config['backend'].include? 'scp://' and node.uses_rpm? :quiet => true
+      node.install_package 'python-pexpect' if config['backend'].include? 'scp://' and node.uses_rpm?
 
       # add hostkey to known_hosts
       if config['hostkey']

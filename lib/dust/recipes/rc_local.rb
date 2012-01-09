@@ -2,7 +2,7 @@ class RcLocal < Thor
   desc 'rc_local:deploy', 'configures custom startup script'
   def deploy node, config, options
 
-    if node.uses_apt? true
+    if node.uses_apt?
       ::Dust.print_msg "configuring custom startup script\n"
 
       rc = ''

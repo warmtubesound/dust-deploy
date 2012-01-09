@@ -1,7 +1,9 @@
 class Debsecan < Thor
   desc 'debsecan:deploy', 'installs and configures debian security package "debsecan"'
   def deploy node, config, options
-    if node.is_os? ['debian', 'ubuntu'], :quiet => true
+    node.collect_facts
+
+    if node.is_os? ['ubuntu', 'debian']
       node.install_package 'debsecan'
 
       ::Dust.print_msg 'configuring debsecan'
