@@ -1,6 +1,19 @@
 Changelog
 =============
 
+0.3.0
+------------
+
+refactoring was done, you may have to upgrade your recipes.
+-  options for all node.* functions having an options={:quiet => false, :indent => 1} paremeter now, instead of plain arguments
+-  adds 2 new dust options
+   -  dust exec 'command'  # executes a command on all servers
+   -  dust system_update   # runs a full system upgrade on all servers
+-  small adjustments and improvements
+
+if you encounter bugs, please report.
+
+
 0.2.3
 ------------
 
