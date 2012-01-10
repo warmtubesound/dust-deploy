@@ -225,14 +225,22 @@ module Dust
       Dust.print_msg 'installing system updates', options
 
       if uses_apt?
-        Dust.print_result exec('DEBIAN_FRONTEND=noninteractive aptitude full-upgrade -y')[:exit_code], options
+        ret = exec 'DEBIAN_FRONTEND=noninteractive aptitude full-upgrade -y'
       elsif uses_emerge?
-        Dust.print_result exec('emerge -uND @world')[:exit_code], options
+        ret = exec 'emerge -uND @world'
       elsif uses_rpm?
-        Dust.print_result exec('yum upgrade -y')[:exit_code], options
+        ret = exec 'yum upgrade -y'
       else
-        Dust.print_failed '', options
+        Dust.print_failed "\nsystem not (yet) supported", options
+        return false
       end
+     
+      Dust.print_result ret[:exit_code], options 
+
+      # display stderr and stdout
+      puts
+      puts "#{Dust.grey}#{ret[:stdout]}#{Dust.none}"
+      puts "#{Dust.red}#{ret[:stderr]}#{Dust.none}"
     end
 
     # determining the system packet manager has to be done without facter
