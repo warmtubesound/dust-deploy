@@ -28,19 +28,19 @@ class ZabbixAgent < Thor
   def install_zabbix node
 
     if node.uses_apt?
-      return false unless node.install_package('zabbix-agent')
+      return false unless node.install_package 'zabbix-agent'
 
       # debsecan is needed for zabbix checks (security updates)
-      return false unless node.install_package('debsecan')
+      return false unless node.install_package 'debsecan'
 
     elsif node.uses_emerge?
-      return false unless node.install_package('zabbix', false, 1, "USE=agent")
+      return false unless node.install_package 'zabbix', :env => 'USE=agent'
 
       # glsa-check (part of gentoolkit) is needed for zabbix checks (security updates)
-      return false unless node.install_package('gentoolkit')
+      return false unless node.install_package 'gentoolkit'
 
     elsif node.uses_rpm?
-      return false unless node.install_package('zabbix-agent')
+      return false unless node.install_package 'zabbix-agent'
 
     else
       ::Dust.print_msg 'os not supported'
