@@ -41,6 +41,48 @@ module  Dust
     end
 
 
+    desc 'system_update [server.yaml] [--filter key=value,vale2] [--proxy host:port]',
+         'perform a full system upgrade (using aptitude, emerge, yum)'
+
+    method_options :filter => :hash, :proxy => :string
+
+    def system_update yaml=''
+      return unless check_dust_dir
+      initialize_thorfiles
+      Dust.print_failed 'no servers match this filter' if load_servers(yaml).empty?
+
+      @nodes.each do |node|
+        # connect to server
+        server = Server.new node
+        next unless server.connect
+        server.system_update
+        server.disconnect
+      end
+    end
+
+
+    desc 'exec <command> [server.yaml] [--filter key=value,vale2] [--proxy host:port]',
+         'run a command on the server'
+
+    method_options :filter => :hash, :proxy => :string
+
+    def exec cmd, yaml=''
+      return unless check_dust_dir
+      initialize_thorfiles
+      Dust.print_failed 'no servers match this filter' if load_servers(yaml).empty?
+
+      @nodes.each do |node|
+        # connect to server
+        server = Server.new node
+        next unless server.connect
+        ret = server.exec cmd
+        puts "#{Dust.grey}#{ret[:stdout]}#{Dust.none}"
+        puts "#{Dust.red}#{ret[:stderr]}#{Dust.none}"
+        server.disconnect
+      end
+    end
+
+
     # creates directory skeleton for a dust setup
     desc 'new <name>', 'creates a dust directory skeleton for your network'
     def new name
