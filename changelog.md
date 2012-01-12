@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.3.1
+------------
+
+-  hacked in nat table support for rpm-like systems, no support for other tables yet though (like mangle)
+-  small adjustment in repositories recipe
+
+
 0.3.0
 ------------
 
