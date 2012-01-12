@@ -1,6 +1,7 @@
 class Repositories < Thor
   desc 'repositories:deploy', 'configures package management repositories (aptitude, yum)'
   def deploy node, repos, options
+    node.collect_facts
 
     if node.uses_apt? :quiet=>false
       :: Dust.print_msg 'deleting old repositories'
