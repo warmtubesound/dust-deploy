@@ -1,6 +1,14 @@
 Changelog
 =============
 
+0.3.2
+------------
+
+-  huge refactoring was done to the iptables recipe, no config changes needed on your side though.
+-  iptables now supports table support for rpm machines
+-  reduced verbosity for iptables recipe
+
+
 0.3.1
 ------------
 
