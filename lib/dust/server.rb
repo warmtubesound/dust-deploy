@@ -10,10 +10,6 @@ module Dust
     def initialize attr
       @attr = attr
   
-      # store fully qualified domain name
-      @attr['fqdn'] = @attr['hostname']
-      @attr['fqdn'] += '.' + @attr['domain'] if @attr['domain']
-  
       @attr['user'] ||= 'root'
       @attr['port'] ||= 22
       @attr['password'] ||= ''
@@ -35,7 +31,7 @@ module Dust
                                 :port => @attr['port'],
                                 :proxy => proxy }
       rescue Exception
-        error_message = " - coudln't connect to #{@attr['fqdn']}"
+        error_message = "coudln't connect to #{@attr['fqdn']}"
         error_message += " (via socks5 proxy #{@attr['proxy']})" if proxy
         Dust.print_failed error_message
         return false

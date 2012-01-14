@@ -5,6 +5,7 @@ require 'thor/runner'
 require 'thor/util'
 require 'yaml'
 require 'fileutils'
+require 'ipaddress'
 require 'dust'
 
 module  Dust
@@ -216,7 +217,12 @@ module  Dust
 
           # create a new field with the fully qualified domain name
           n['fqdn'] = hostname
-          n['fqdn'] += '.' + n['domain'] if n['domain']
+
+          # if hostname is a valid ip address, don't add domain
+          # so we can connect via ip address only
+          unless IPAddress.valid? hostname and n['domain']
+            n['fqdn'] += '.' + n['domain']
+          end
 
           # pass command line proxy option
           n['proxy'] = options[:proxy] if options[:proxy]
