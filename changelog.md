@@ -1,6 +1,14 @@
 Changelog
 =============
 
+0.3.3
+------------
+
+-  fixes iptables bug, DENY policy target only allowed for filter table
+-  if hostname is an ip, domain will be ignored while connecting.
+   this fixes a conncetion issue, when hostname is an ip address and domain is specified nonetheless
+
+
 0.3.2
 ------------
 
