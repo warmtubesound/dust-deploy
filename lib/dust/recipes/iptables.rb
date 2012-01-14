@@ -91,12 +91,12 @@ class Iptables < Thor
   # set the chain default policies to DROP/ACCEPT
   # according to whether chain is specified in config file
   def set_chain_policies table
-    ::Dust.print_msg "#{::Dust.pink}#{table}#{Dust.none} table\n", :indent => 2
-    ::Dust.print_msg "setting default policies\n", :indent => 3
+    #::Dust.print_msg "#{::Dust.pink}#{table}#{Dust.none} table\n", :indent => 2
+    #::Dust.print_msg "setting default policies\n", :indent => 3
     
     @tables['ipv' + @ip_version.to_s][table].each do |chain|
       policy = get_chain_policy table, chain
-      ::Dust.print_msg "#{table}/#{chain} -> #{policy}", :indent => 4
+      #::Dust.print_msg "#{table}/#{chain} -> #{policy}", :indent => 4
 
       if @node.uses_rpm?
         @script.concat ":#{chain.upcase} #{policy} [0:0]\n"
@@ -104,7 +104,7 @@ class Iptables < Thor
         @script.concat "--table #{table} --policy #{chain.upcase} #{policy}\n"
       end
       
-      ::Dust.print_ok
+      #::Dust.print_ok
     end
   end
 
@@ -126,14 +126,14 @@ class Iptables < Thor
       rules = get_rules_for_table chain_rules, table
       next if rules.empty?
       
-      ::Dust.print_msg "#{::Dust.pink}#{chain}#{::Dust.none} rules\n", :indent => 3
-      
+      #::Dust.print_msg "#{::Dust.pink}#{chain}#{::Dust.none} rules\n", :indent => 3
       rules.sort.each do |name, rule|
         next unless rule['table'].include? table
         next unless check_ip_version rule
         
-        ::Dust.print_msg "#{name}\n", :indent => 4
+        ::Dust.print_msg "adding rule: #{name}", :indent => 2
         generate_iptables_string chain, rule
+        ::Dust.print_ok
       end
     end
     @script.concat "COMMIT\n" if @node.uses_rpm?
@@ -161,7 +161,7 @@ class Iptables < Thor
   # generates the iptables string out of a rule
   def generate_iptables_string chain, rule
     parse_rule(rule).each do |r|
-      ::Dust.print_msg "#{::Dust.grey}#{r.join ' '}#{::Dust.none}\n", :indent => 5
+      #::Dust.print_msg "#{::Dust.grey}#{r.join ' '}#{::Dust.none}\n", :indent => 5
       @script.concat "--append #{chain.upcase} #{r.join ' '}\n"
     end
   end
