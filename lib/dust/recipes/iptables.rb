@@ -111,6 +111,8 @@ class Iptables < Thor
   # returns DROP if chain and table is specified in config file
   # ACCEPT if not
   def get_chain_policy table, chain
+    # only filter table supports DENY target
+    return 'ACCEPT' unless table == 'filter'
     return 'ACCEPT' unless @rules[chain.downcase]
 
     @rules[chain.downcase].values.each do |rule|
