@@ -7,15 +7,7 @@ recipes:
     sites-enabled: [ proxy ]
 
   iptables:
-    ports:
-      - [ 22, 80, 443 ]
-      - port: 53
-        protocol: tcp
-        source: 10.13.37.0/24
-        interface: eth1
-        ip-version: 4
-      - port: 53
-        protocol: udp
-        source: 10.13.37.0/24
-        interface: eth1
-        ip-version: 4
+    input:
+      - ssh: { dport: 22, match: state, state: NEW }
+      - http: { dport: [80, 443], match: state, state: NEW, source: 192.168.1.0/24 }
+      - dns: { dport: 53, protocol: udp }

@@ -4,7 +4,10 @@ group: mysql
 
 recipes:
   iptables:
-    ports: [ 22, 3306 ]
+    input:
+      - ssh: { dport: 22, match: state, state: NEW }
+      - mysql: { dport: 3306, match: state, state: NEW }
+
   rc_local: blockdev --setra 8192 /dev/vdc
   mysql:
     bind_address: 0.0.0.0

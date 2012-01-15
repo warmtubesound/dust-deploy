@@ -4,4 +4,5 @@ inherits: [ _default, _debian ]
 recipes:
   aliases: true
   iptables:
-    ports: [ 22, 25 ]
+    input:
+      - ports: { dport: [22, 25], match: state, state: NEW }

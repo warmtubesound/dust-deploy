@@ -8,14 +8,13 @@ recipes:
     dbuser: 'postgres:postgres'
 
   iptables:
-    ports:
-      - 22
-      - port: 5432
-        source: 10.13.37.0/24
-        interface: eth1
-        ip-version: 4
-      - port: [ 5404, 5405 ]
-        interface: eth1
-        protocol: udp
-
+    input:
+      - ssh: { dport: 22, match: state, state: NEW }
+      - postgres:
+          dport: 5432
+          match: state
+          state: new
+          in-interface: eth1
+          source: 10.0.0.0/8
+          
   rc_local: blockdev --setra 8192 /dev/vda
