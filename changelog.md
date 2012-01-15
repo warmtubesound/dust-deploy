@@ -1,6 +1,15 @@
 Changelog
 =============
 
+0.4.0
+------------
+
+switches to the new recipe superclass. please upgrade your recipes and templates
+-  quick hint: change node -> @node and config/ingredients -> @config, options -> @options
+-  the new system makes it easier to write recipes, and you can also use methods more easily, as configuration and node are class-wide private variables now.
+-  if you need more information, best have a look at the iptables recipe at https://github.com/kechagia/dust-deploy/blob/master/lib/dust/recipes/iptables.rb (or one of the others)
+
+
 0.3.3
 ------------
 
