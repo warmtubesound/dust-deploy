@@ -1,12 +1,11 @@
-class MemoryLimit < Thor
-  desc 'memory_limit:deploy', 'sets up system wide memory limit per process'
-  def deploy node, ingredients, options
-    template_path = "./templates/#{ File.basename(__FILE__).chomp( File.extname(__FILE__) ) }"
+class MemoryLimit < Recipe
 
-    node.collect_facts
+  desc 'memory_limit:deploy', 'sets up system wide memory limit per process'
+  def deploy
+    @node.collect_facts
 
     # get system memory (in kb)
-    system_mem = ::Dust.convert_size node['memorysize']
+    system_mem = ::Dust.convert_size @node['memorysize']
 
     # don't allow a process to use more than 90% of the system memory
     max_mem = (system_mem * 0.9).to_i
@@ -16,8 +15,7 @@ class MemoryLimit < Thor
     max_mem = system_mem - threshold if max_mem > threshold
 
     ::Dust.print_msg "setting max memory for a process to #{max_mem} kb"
-    node.write '/etc/security/limits.d/00-memory-limit', "*          hard    as        #{max_mem}", :quiet => true
+    @node.write '/etc/security/limits.d/00-memory-limit', "*          hard    as        #{max_mem}", :quiet => true
     ::Dust.print_ok
-
   end
 end

@@ -1,23 +1,20 @@
 require 'erb'
 
-class Duplicity < Thor
+class Duplicity < Recipe
   desc 'duplicity:deploy', 'installs and configures duplicity backups'
-  def deploy node, scenarios, options
-    template_path = "./templates/#{ File.basename(__FILE__).chomp( File.extname(__FILE__) ) }"
-
-    return unless node.install_package 'duplicity'
+  def deploy
+    return unless @node.install_package 'duplicity'
 
     # clear all other duplicity cronjobs that might have been deployed earlier
-    remove_duplicity_cronjobs node
+    remove_duplicity_cronjobs
 
     # return if config simply says 'remove'
-    return if scenarios == 'remove'
+    return if @config == 'remove'
 
-    scenarios.each do |scenario, conf|
-      config = conf.clone
+    @config.each do |scenario, config|
 
       # if directory config options is not given, use hostname-scenario
-      config['directory'] ||= "#{node['hostname']}-#{scenario}"
+      config['directory'] ||= "#{@node['hostname']}-#{scenario}"
 
       # check whether backend is specified, skip to next scenario if not
       unless config['backend'] and config['passphrase']
@@ -31,17 +28,17 @@ class Duplicity < Thor
       end
 
       # check whether we need ncftp
-      node.install_package 'ncftp' if config['backend'].include? 'ftp://'
+      @node.install_package 'ncftp' if config['backend'].include? 'ftp://'
       
       # scp backend on centos needs python-pexpect (not needed anymore for newer systems)
-      # node.install_package 'python-pexpect' if config['backend'].include? 'scp://' and node.uses_rpm?
+      # @node.install_package 'python-pexpect' if config['backend'].include? 'scp://' and @node.uses_rpm?
 
       # add hostkey to known_hosts
       if config['hostkey']
         ::Dust.print_msg 'checking if ssh key is in known_hosts'
-        unless ::Dust.print_result node.exec("grep -q '#{config['hostkey']}' ~/.ssh/known_hosts")[:exit_code] == 0
-          node.mkdir '~/.ssh', :indent => 2
-          node.append '~/.ssh/known_hosts', config['hostkey'], :indent => 2
+        unless ::Dust.print_result @node.exec("grep -q '#{config['hostkey']}' ~/.ssh/known_hosts")[:exit_code] == 0
+          @node.mkdir '~/.ssh', :indent => 2
+          @node.append '~/.ssh/known_hosts', config['hostkey'], :indent => 2
         end
       end
 
@@ -49,13 +46,13 @@ class Duplicity < Thor
       cronjob_path = "/etc/cron.#{config['interval']}/duplicity-#{scenario}"
 
       # adjust and upload cronjob
-      template = ERB.new File.read("#{template_path}/cronjob.erb"), nil, '%<>'
+      template = ERB.new File.read("#{@template_path}/cronjob.erb"), nil, '%<>'
       ::Dust.print_msg "adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n"
       config['options'].each { |option| ::Dust.print_ok "adding option: #{option}", :indent => 2 }
-      node.write cronjob_path, template.result(binding)
+      @node.write cronjob_path, template.result(binding)
  
       # making cronjob executeable
-      node.chmod '0700', cronjob_path
+      @node.chmod '0700', cronjob_path
       puts
     end
   end
@@ -63,16 +60,14 @@ class Duplicity < Thor
 
   # print duplicity-status
   desc 'duplicity:status', 'displays current status of all duplicity backups'
-  def status node, scenarios, options
-    template_path = "./templates/#{ File.basename(__FILE__).chomp( File.extname(__FILE__) ) }"
+  def status
+    return unless @node.package_installed? 'duplicity'
 
-    return unless node.package_installed? 'duplicity'
-
-    scenarios.each do |scenario, conf|
+    @config.each do |scenario, conf|
       config = conf.clone
 
       # if directory config option is not given, use hostname-scenario
-      config['directory'] ||= "#{node['hostname']}-#{scenario}"
+      config['directory'] ||= "#{@node['hostname']}-#{scenario}"
 
       # check whether backend is specified, skip to next scenario if not
       return ::Dust.print_failed 'no backend specified.' unless config['backend']
@@ -84,7 +79,7 @@ class Duplicity < Thor
   
       cmd += " |tail -n3 |head -n1" unless options.long?
 
-      ret = node.exec cmd
+      ret = @node.exec cmd
 
       # check exit code and stdout shouldn't be empty
       ::Dust.print_result( (ret[:exit_code] == 0 and ret[:stdout].length > 0) )
@@ -101,9 +96,9 @@ class Duplicity < Thor
 
   private
   # removes all duplicity cronjobs
-  def remove_duplicity_cronjobs node
+  def remove_duplicity_cronjobs
     ::Dust.print_msg 'deleting old duplicity cronjobs'
-    node.rm '/etc/cron.*/duplicity*', :quiet => true
+    @node.rm '/etc/cron.*/duplicity*', :quiet => true
     ::Dust.print_ok
   end
 

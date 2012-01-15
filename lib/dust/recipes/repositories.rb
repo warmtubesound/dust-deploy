@@ -1,24 +1,24 @@
-class Repositories < Thor
+class Repositories < Recipe
   desc 'repositories:deploy', 'configures package management repositories (aptitude, yum)'
-  def deploy node, repos, options
-    node.collect_facts
+  def deploy
+    @node.collect_facts
 
-    if node.uses_apt? :quiet=>false
+    if @node.uses_apt? :quiet=>false
       :: Dust.print_msg 'deleting old repositories'
-      node.rm '/etc/apt/sources.list.d/*.list', :quiet => true
+      @node.rm '/etc/apt/sources.list.d/*.list', :quiet => true
       ::Dust.print_ok 
 
       puts
-      repos.each do |name, repo|
+      @config.each do |name, repo|
 
         # if repo is present but not a hash use defaults
         repo = {} unless repo.is_a? Hash
 
         # setting defaults
-        repo['url'] ||= 'http://ftp.debian.org/debian/' if node.is_debian?
-        repo['url'] ||= 'http://archive.ubuntu.com/ubuntu/' if node.is_ubuntu?
+        repo['url'] ||= 'http://ftp.debian.org/debian/' if @node.is_debian?
+        repo['url'] ||= 'http://archive.ubuntu.com/ubuntu/' if @node.is_ubuntu?
    
-        repo['release'] ||= node['lsbdistcodename']
+        repo['release'] ||= @node['lsbdistcodename']
         repo['components'] ||= 'main'
 
         # ||= doesn't work for booleans
@@ -34,10 +34,10 @@ class Repositories < Thor
                      "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n\n"
 
           # security
-          if node.is_debian?
+          if @node.is_debian?
             sources += "deb http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n" +
                        "deb-src http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n\n"
-          elsif node.is_ubuntu?
+          elsif @node.is_ubuntu?
             sources += "deb http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n" +
                        "deb-src http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n\n"
           end
@@ -47,18 +47,18 @@ class Repositories < Thor
                      "deb-src #{repo['url']} #{repo['release']}-updates #{repo['components']}\n\n"
 
           # proposed
-          if node.is_ubuntu?
+          if @node.is_ubuntu?
             sources += "deb #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n" +
                        "deb-src #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n\n"
           end
 
           # backports is enabled per default in ubuntu oneiric
-          if node.is_ubuntu?
+          if @node.is_ubuntu?
             sources += "deb #{repo['url']} #{repo['release']}-backports #{repo['components']}\n" +
                        "deb-src #{repo['url']} #{repo['release']}-backports #{repo['components']}\n\n"
           end
 
-          ::Dust.print_result node.write('/etc/apt/sources.list', sources, :quiet => true)
+          ::Dust.print_result @node.write('/etc/apt/sources.list', sources, :quiet => true)
 
         else
           # add url to sources.list
@@ -67,17 +67,17 @@ class Repositories < Thor
           sources += "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n" if repo['source']
 
           ::Dust.print_msg "adding repository '#{name}' to sources"
-          ::Dust.print_result node.write("/etc/apt/sources.list.d/#{name}.list", sources, :quiet => true)
+          ::Dust.print_result @node.write("/etc/apt/sources.list.d/#{name}.list", sources, :quiet => true)
 
           # add the repository key
           if repo['key']
             ::Dust.print_msg "adding #{name} repository key"
-            ::Dust.print_result node.exec("wget -O- '#{repo['key']}' | apt-key add -")[:exit_code]
+            ::Dust.print_result @node.exec("wget -O- '#{repo['key']}' | apt-key add -")[:exit_code]
           end
         end
       end
 
-    elsif node.uses_rpm? :quiet=>false
+    elsif @node.uses_rpm? :quiet=>false
       ::Dust.print_failed 'rpm not yet supported'
 
     else
@@ -86,7 +86,7 @@ class Repositories < Thor
 
     # fetch new stuff
     puts
-    node.update_repos if options.restart? or options.reload?
+    @node.update_repos if options.restart? or options.reload?
   end
 end
 

@@ -1,21 +1,21 @@
-class RcLocal < Thor
+class RcLocal < Recipe
   desc 'rc_local:deploy', 'configures custom startup script'
-  def deploy node, config, options
+  def deploy
 
-    if node.uses_apt?
+    if @node.uses_apt?
       ::Dust.print_msg "configuring custom startup script\n"
 
       rc = ''
-      config.each do |cmd|
+      @config.each do |cmd|
         ::Dust.print_msg "adding command: #{cmd}", :indent => 2
         rc += "#{cmd}\n"
         ::Dust.print_ok
       end
       rc += "\nexit 0\n"
 
-      node.write '/etc/rc.local', rc
-      node.chown 'root:root', '/etc/rc.local'
-      node.chmod '755', '/etc/rc.local'
+      @node.write '/etc/rc.local', rc
+      @node.chown 'root:root', '/etc/rc.local'
+      @node.chmod '755', '/etc/rc.local'
     else
       ::Dust.print_failed 'os not supported'
     end

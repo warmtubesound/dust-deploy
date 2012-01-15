@@ -1,10 +1,10 @@
-class Debsecan < Thor
+class Debsecan < Recipe
   desc 'debsecan:deploy', 'installs and configures debian security package "debsecan"'
-  def deploy node, config, options
-    node.collect_facts
+  def deploy
+    @node.collect_facts
 
-    if node.is_os? ['ubuntu', 'debian']
-      node.install_package 'debsecan'
+    if @node.is_os? ['ubuntu', 'debian']
+      @node.install_package 'debsecan'
 
       ::Dust.print_msg 'configuring debsecan'
 
@@ -25,7 +25,7 @@ class Debsecan < Thor
       # configures the suite
       config_file += "# For better reporting, specify the correct suite here, using the code\n" +
                      "# name (that is, \"sid\" instead of \"unstable\").\n" +
-                     "SUITE=#{node['lsbdistcodename']}\n\n"
+                     "SUITE=#{@node['lsbdistcodename']}\n\n"
 
       # which user gets the reports?
       config_file += "# Mail address to which reports are sent.\n" +
@@ -36,7 +36,7 @@ class Debsecan < Thor
                      "# built-in default.\n" +
                      "SOURCE=#{config['source']}\n\n"
 
-      node.write '/etc/default/debsecan', config_file, :quiet => true
+      @node.write '/etc/default/debsecan', config_file, :quiet => true
       ::Dust.print_ok
     else
       ::Dust.print_failed 'os not supported'

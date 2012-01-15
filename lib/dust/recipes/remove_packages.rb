@@ -1,8 +1,8 @@
-class RemovePackages < Thor
+class RemovePackages < Recipe
   desc 'remove_packages:deploy', 'removes packages'
-  def deploy node, packages, options
-    packages.each do |package| 
-      node.remove_package package
+  def deploy
+    @config.each do |package| 
+      @node.remove_package package
     end
   end
 end

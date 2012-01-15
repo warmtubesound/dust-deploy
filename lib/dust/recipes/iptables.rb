@@ -1,14 +1,9 @@
 require 'ipaddress'
 
-class Iptables < Thor
+class Iptables < Recipe
   
   desc 'iptables:deploy', 'configures iptables firewall'
-  def deploy node, rules, options
-    template_path = "./templates/#{ File.basename(__FILE__).chomp( File.extname(__FILE__) ) }"
-    @node = node
-    @rules = rules
-    @options = options
-
+  def deploy
     # list of all tables and chains
     @tables = {}
     @tables['ipv4'] = {}
@@ -69,7 +64,7 @@ class Iptables < Thor
   # protocol to tcp (if port is given)
   # and converts non-arrays to arrays, so .each and .combine won't cause hickups
   def populate_rule_defaults
-    @rules.values.each do |chain_rules|
+    @config.values.each do |chain_rules|
       chain_rules.values.each do |rule|
         rule['table'] ||= ['filter']
         rule['jump'] ||= ['ACCEPT']
@@ -113,9 +108,9 @@ class Iptables < Thor
   def get_chain_policy table, chain
     # only filter table supports DENY target
     return 'ACCEPT' unless table == 'filter'
-    return 'ACCEPT' unless @rules[chain.downcase]
+    return 'ACCEPT' unless @config[chain.downcase]
 
-    @rules[chain.downcase].values.each do |rule|
+    @config[chain.downcase].values.each do |rule|
       return 'DROP' if rule['table'].include? table
     end
 
@@ -124,7 +119,7 @@ class Iptables < Thor
 
   # generate iptables rules for table 'table'
   def generate_rules_for_table table
-    @rules.each do |chain, chain_rules|
+    @config.each do |chain, chain_rules|
       rules = get_rules_for_table chain_rules, table
       next if rules.empty?
       
