@@ -127,9 +127,9 @@ module  Dust
 
         # runs the method with the recipe name, defined and included in recipe/*.rb
         # call recipes for each recipe that is defined for this node
-        recipes.each do |recipe, ingredients|
+        recipes.each do |recipe, config|
           ::Dust.print_recipe recipe
-          send recipe, context, server, ingredients, options
+          send recipe, 'prepare', server, recipe, context, config, options
           puts
         end
 
@@ -140,20 +140,20 @@ module  Dust
     # generate list of recipes for this node
     def generate_recipes node, context
       recipes = {}  
-      node['recipes'].each do |recipe, ingredients|
+      node['recipes'].each do |recipe, config|
       
         # in case --recipes was set, skip unwanted recipes
         next unless options[:recipes].include?(recipe) if options[:recipes]
       
         # skip disabled recipes
-        next if ingredients == 'disabled'
+        next if config == 'disabled'
       
         # check if method and thor task actually exist
         k = Thor::Util.find_by_namespace recipe
         next unless k
         next unless k.method_defined? context
       
-        recipes[recipe] = ingredients
+        recipes[recipe] = config
       end
       recipes
     end
@@ -220,8 +220,8 @@ module  Dust
 
           # if hostname is a valid ip address, don't add domain
           # so we can connect via ip address only
-          unless IPAddress.valid? hostname and n['domain']
-            n['fqdn'] += '.' + n['domain']
+          unless IPAddress.valid? hostname
+            n['fqdn'] += '.' + n['domain'] if n['domain']
           end
 
           # pass command line proxy option
