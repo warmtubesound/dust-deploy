@@ -1,25 +1,25 @@
 #!/bin/bash
 
 # user as which postgres runs
-PG_USER=<%= config['dbuser'] %>
+PG_USER=<%= @config['dbuser'] %>
 
 # path to postgres directory (data and archives)
-PG_DATA=<%= config['data-dir'] %>
-PG_ARCHIVE=<%= config['archive-dir'] %>
+PG_DATA=<%= @config['data-dir'] %>
+PG_ARCHIVE=<%= @config['archive-dir'] %>
 
 # path to recovery.conf (on slaves)
 RECOVERY=$PG_DATA/recovery.conf
 RECOVERY_DONE=$PG_DATA/recovery.done
 
 # path to postgresql init script
-% if node.is_gentoo?
-PG_INIT=/etc/init.d/postgresql-<%= config['version'] %>
+% if @node.is_gentoo?
+PG_INIT=/etc/init.d/postgresql-<%= @config['version'] %>
 % else
 PG_INIT=/etc/init.d/postgresql
 % end
 
 # the clustered IP
-DB_MASTER=db-<%= node['environment'] %>-master.<%= node['domain'] %>
+DB_MASTER=db-<%= @node['environment'] %>-master.<%= @node['domain'] %>
 
 
 start() {

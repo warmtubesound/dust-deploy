@@ -43,7 +43,7 @@
 # NOTE that the basename of %p will be different from %f; do not
 # expect them to be interchangeable.
 #
-restore_command = 'cp -i <%= config['archive-dir'] %>/%f %p < /dev/null'
+restore_command = 'cp -i <%= @config['archive-dir'] %>/%f %p < /dev/null'
 #
 #
 # archive_cleanup_command
@@ -97,9 +97,9 @@ restore_command = 'cp -i <%= config['archive-dir'] %>/%f %p < /dev/null'
 #
 standby_mode = 'on'
 #
-% if node['environment'] == 'production'
+% if @node['environment'] == 'production'
 primary_conninfo = '<your pg connection string here>'
-% elsif node['environment'] == 'staging'
+% elsif @node['environment'] == 'staging'
 primary_conninfo = '<your pg connection string here>'
 % end
 
@@ -111,7 +111,7 @@ primary_conninfo = '<your pg connection string here>'
 # Server will poll the trigger file path periodically and stop streaming
 # when it's found.
 #
-trigger_file = '/var/lib/postgresql/<%= config['version'] %>/master_trigger'
+trigger_file = '/var/lib/postgresql/<%= @config['version'] %>/master_trigger'
 #
 #---------------------------------------------------------------------------
 # HOT STANDBY PARAMETERS

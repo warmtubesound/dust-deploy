@@ -1,19 +1,19 @@
-data_directory = '<%= config['data-dir'] %>'
-hba_file = '<%= config['conf-dir'] %>/pg_hba.conf'
-ident_file = '<%= config['conf-dir'] %>/pg_ident.conf'
+data_directory = '<%= @config['data-dir'] %>'
+hba_file = '<%= @config['conf-dir'] %>/pg_hba.conf'
+ident_file = '<%= @config['conf-dir'] %>/pg_ident.conf'
 
 listen_addresses = '*'
 port = 5432
 ssl = on
 
-% if node['environment'] == 'production'
+% if @node['environment'] == 'production'
 max_connections = 200
 % else
 max_connections = 100
 % end
 
 
-% if node['environment'] == 'production'
+% if @node['environment'] == 'production'
 shared_buffers = 1152MB			# min 128kB
 work_mem = 12MB				# min 64kB
 maintenance_work_mem = 288MB		# min 1MB
@@ -27,7 +27,7 @@ full_page_writes = yes                  # make xfs usage safe
 
 wal_level = hot_standby			# minimal, archive, or hot_standby
 
-% if node['environment'] == 'production'
+% if @node['environment'] == 'production'
 wal_buffers = 8MB			# min 32kB
 checkpoint_segments = 16		# in logfile segments, min 1, 16MB each
 checkpoint_completion_target = 0.9	# checkpoint target duration, 0.0 - 1.0
@@ -39,13 +39,13 @@ checkpoint_completion_target = 0.9	# checkpoint target duration, 0.0 - 1.0
 
 
 archive_mode = yes
-archive_command = 'cp -i %p <%= config['archive-dir'] %>/%f < /dev/null'
+archive_command = 'cp -i %p <%= @config['archive-dir'] %>/%f < /dev/null'
 
 max_wal_senders = 5
 wal_keep_segments = 32
 hot_standby = on
 
-% if node['environment'] == 'production'
+% if @node['environment'] == 'production'
 effective_cache_size = 3584MB
 % else
 #effective_cache_size = 128MB
