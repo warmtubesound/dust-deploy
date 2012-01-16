@@ -7,6 +7,10 @@ module Dust
   class Server
     attr_reader :ssh
   
+    def default_options options = {}
+      { :quiet => false, :indent => 1 }.merge options
+    end
+    
     def initialize attr
       @attr = attr
   
@@ -66,7 +70,9 @@ module Dust
     end
  
 
-    def write target, text, options={:quiet => false, :indent => 1}
+    def write target, text, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "deploying #{File.basename target}", options
 
       # escape $ signs and \ at the end of line
@@ -84,40 +90,54 @@ module Dust
       restorecon target, options # restore SELinux labels
     end
 
-    def append target, text, options={:quiet => false, :indent => 1}
+    def append target, text, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "appending to #{File.basename target}", options
       Dust.print_result exec("cat << EOF >> #{target}\n#{text}\nEOF")[:exit_code], options
     end
  
-    def scp source, destination, options={:quiet => false, :indent => 1}
+    def scp source, destination, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "deploying #{File.basename(source)}", options
       @ssh.scp.upload! source, destination
       Dust.print_ok '', options
       restorecon destination, options # restore SELinux labels
     end
   
-    def symlink source, destination, options={:quiet => false, :indent => 1}
+    def symlink source, destination, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "symlinking #{File.basename(source)} to '#{destination}'", options
       Dust.print_result exec("ln -s #{source} #{destination}")[:exit_code], options
       restorecon destination, options # restore SELinux labels
     end
   
-    def chmod mode, file, options={:quiet => false, :indent => 1}
+    def chmod mode, file, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "setting mode of #{File.basename(file)} to #{mode}", options
       Dust.print_result exec("chmod -R #{mode} #{file}")[:exit_code], options
     end
 
-    def chown user, file, options={:quiet => false, :indent => 1}
+    def chown user, file, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "setting owner of #{File.basename(file)} to #{user}", options
       Dust.print_result exec("chown -R #{user} #{file}")[:exit_code], options
     end
 
-    def rm file, options={:quiet => false, :indent => 1}
+    def rm file, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "deleting #{file}", options
       Dust.print_result exec("rm -rf #{file}")[:exit_code], options
     end
 
-    def mkdir dir, options={:quiet => false, :indent => 1}
+    def mkdir dir, options = {}
+      options = default_options.merge options
+
       return true if dir_exists? dir, :quiet => true
 
       Dust.print_msg "creating directory #{dir}", options
@@ -127,7 +147,9 @@ module Dust
 
     # check if restorecon (selinux) is available
     # if so, run it on "path" recursively
-    def restorecon path, options={:quiet => false, :indent => 1}
+    def restorecon path, options = {}
+      options = default_options.merge options
+
 
       # if restorecon is not installed, just return true
       ret = exec 'which restorecon'
@@ -137,7 +159,9 @@ module Dust
       Dust.print_result exec("#{ret[:stdout].chomp} -R #{path}")[:exit_code], options
     end
  
-    def get_system_users options={:quiet => false, :indent => 1} 
+    def get_system_users options = {}
+      options = default_options.merge options
+ 
       Dust.print_msg "getting all system users", options
       ret = exec 'getent passwd |cut -d: -f1'
       Dust.print_result ret[:exit_code], options
@@ -150,7 +174,9 @@ module Dust
     end
 
     # checks if one of the packages is installed
-    def package_installed? packages, options={:quiet => false, :indent => 1}
+    def package_installed? packages, options = {}
+      options = default_options.merge options
+
       packages = [ packages ] if packages.is_a? String
 
       Dust.print_msg "checking if #{packages.join(' or ')} is installed", options
@@ -168,12 +194,15 @@ module Dust
       Dust.print_failed '', options
     end
  
-    def install_package package, options={:quiet => false, :indent => 1, :env => ''}
-      if package_installed? package, {:quiet=>true, :indent => options[:indent]}
+    def install_package package, options = {}
+      options = default_options.merge options
+      options[:env] ||= ''
+      
+      if package_installed? package, :quiet=>true
         return Dust.print_ok "package #{package} already installed"
       end
 
-      Dust.print_msg "installing #{package}", {:quiet => options[:quiet], :indent => options[:indent] + 1}
+      Dust.print_msg "installing #{package}", :indent => options[:indent] + 1
 
       if uses_apt?
         exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
@@ -189,7 +218,9 @@ module Dust
       Dust.print_result package_installed? package, :quiet => true
     end
 
-    def remove_package package, options={:quiet => false, :indent => 1}
+    def remove_package package, options = {}
+      options = default_options.merge options
+
       unless package_installed? package, :quiet => true
         return Dust.print_ok "package #{package} not installed", options
       end
@@ -206,7 +237,9 @@ module Dust
       end
     end
 
-    def update_repos options={:quiet => false, :indent => 1}
+    def update_repos options = {}
+      options = default_options.merge options
+
       Dust.print_msg 'updating system repositories', options
 
       if uses_apt?
@@ -220,7 +253,9 @@ module Dust
       end
     end
 
-    def system_update options={:quiet => false, :indent => 1}
+    def system_update options = {}
+      options = default_options.merge options
+
       Dust.print_msg 'installing system updates', options
 
       if uses_apt?
@@ -244,22 +279,30 @@ module Dust
 
     # determining the system packet manager has to be done without facter
     # because it's used to find out whether facter is installed / install facter
-    def uses_apt? options={:quiet => true, :indent => 1}
+    def uses_apt? options = {}
+      options = default_options(:quiet => true).merge options
+
       Dust.print_msg 'determining whether node uses apt', options
       Dust.print_result exec('test -e /etc/debian_version')[:exit_code], options
     end
 
-    def uses_rpm? options={:quiet => true, :indent => 1}
+    def uses_rpm? options = {}
+      options = default_options(:quiet => true).merge options
+
       Dust.print_msg 'determining whether node uses rpm', options
       Dust.print_result exec('test -e /etc/redhat-release')[:exit_code], options
     end
 
-    def uses_emerge? options={:quiet => true, :indent => 1}
+    def uses_emerge? options = {}
+      options = default_options(:quiet => true).merge options
+
       Dust.print_msg 'determining whether node uses emerge', options
       Dust.print_result exec('test -e /etc/gentoo-release')[:exit_code], options
     end
   
-    def is_os? os_list, options={:quiet => true, :indent => 1}
+    def is_os? os_list, options = {}
+      options = default_options(:quiet => true).merge options
+
       Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options
       collect_facts options unless @attr['operatingsystem']
 
@@ -273,46 +316,66 @@ module Dust
       false
     end
   
-    def is_debian? options={:quiet => true, :indent => 1}
+    def is_debian? options = {}
+      options = default_options(:quiet => true).merge options
+
       is_os? ['debian'], options
     end
   
-    def is_ubuntu? options={:quiet => true, :indent => 1}
+    def is_ubuntu? options = {}
+      options = default_options(:quiet => true).merge options
+
       is_os? ['ubuntu'], options
     end
   
-    def is_gentoo? options={:quiet => true, :indent => 1}
+    def is_gentoo? options = {}
+      options = default_options(:quiet => true).merge options
+
       is_os? ['gentoo'], options
     end
   
-    def is_centos? options={:quiet => true, :indent => 1}
+    def is_centos? options = {}
+      options = default_options(:quiet => true).merge options
+
       is_os? ['centos'], options
     end
   
-    def is_scientific? options={:quiet => true, :indent => 1}
+    def is_scientific? options = {}
+      options = default_options(:quiet => true).merge options
+
       is_os? ['scientific'], options
     end
 
-    def is_fedora? options={:quiet => true, :indent => 1}
+    def is_fedora? options = {}
+      options = default_options(:quiet => true).merge options
+
       is_os? ['fedora'], options
     end
   
-    def is_executable? file, options={:quiet => false, :indent => 1}
+    def is_executable? file, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "checking if file #{file} exists and is executeable", options
       Dust.print_result exec("test -x $(which #{file})")[:exit_code], options
     end
   
-    def file_exists? file, options={:quiet => false, :indent => 1}
+    def file_exists? file, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "checking if file #{file} exists", options
       Dust.print_result exec("test -e #{file}")[:exit_code], options
     end
 
-    def dir_exists? dir, options={:quiet => false, :indent => 1}
+    def dir_exists? dir, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "checking if directory #{dir} exists", options
       Dust.print_result exec("test -d #{dir}")[:exit_code], options
     end
  
-    def autostart_service service, options={:quiet => false, :indent => 1}
+    def autostart_service service, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "autostart #{service} on boot", options
       if uses_rpm?
         Dust.print_result exec("chkconfig #{service} on")[:exit_code], options
@@ -323,27 +386,37 @@ module Dust
       end
     end
  
-    def restart_service service, options={:quiet => false, :indent => 1}
+    def restart_service service, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "restarting #{service}", options
       Dust.print_result exec("/etc/init.d/#{service} restart")[:exit_code], options
     end
   
-    def reload_service service, options={:quiet => false, :indent => 1}
+    def reload_service service, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "reloading #{service}", options
       Dust.print_result exec("/etc/init.d/#{service} reload")[:exit_code], options
     end
   
     # check whether a user exists on this node
-    def user_exists? user, options={:quiet => false, :indent => 1}
+    def user_exists? user, options = {}
+      options = default_options.merge options
+
       Dust.print_msg "checking if user #{user} exists", options
       Dust.print_result exec("id #{user}")[:exit_code], options
     end
 
     # create a user
-    def create_user user, options={:home => nil, :shell => nil, :quiet => false, :indent => 1}
+    def create_user user, options = {}
+      options = default_options.merge options
+      options[:home] ||= nil
+      options[:shell] ||= nil
+      
       return true if user_exists? user, options
 
-      Dust.print_msg "creating user #{user}", {:quiet => options[:quiet], :indent => options[:indent] + 1}
+      Dust.print_msg "creating user #{user}", :indent => options[:indent]
       cmd = "useradd #{user} -m"
       cmd += " -d #{options[:home]}" if options[:home]
       cmd += " -s #{options[:shell]}" if options[:shell]
@@ -351,7 +424,9 @@ module Dust
     end
 
     # collect additional system facts using puppets facter
-    def collect_facts options={:quiet => false, :indent => 1}
+    def collect_facts options = {}
+      options = default_options.merge options
+
 
       # check if lsb-release (on apt systems) and facter are installed
       # and install them if not
