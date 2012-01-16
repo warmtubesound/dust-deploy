@@ -2,6 +2,7 @@ require 'rubygems'
 require 'net/ssh'
 require 'net/scp'
 require 'net/ssh/proxy/socks5'
+require 'erb'
   
 module Dust
   class Server
@@ -11,32 +12,31 @@ module Dust
       { :quiet => false, :indent => 1 }.merge options
     end
     
-    def initialize attr
-      @attr = attr
-  
-      @attr['user'] ||= 'root'
-      @attr['port'] ||= 22
-      @attr['password'] ||= ''
+    def initialize node
+      @node = node
+      @node['user'] ||= 'root'
+      @node['port'] ||= 22
+      @node['password'] ||= ''
     end
 
     def connect 
-      Dust.print_hostname @attr['hostname']
+      Dust.print_hostname @node['hostname']
       begin
         # connect to proxy if given
-        if @attr['proxy']
-          host, port = @attr['proxy'].split ':'
+        if @node['proxy']
+          host, port = @node['proxy'].split ':'
           proxy = Net::SSH::Proxy::SOCKS5.new host, port
         else
           proxy = nil
         end
 
-        @ssh = Net::SSH.start @attr['fqdn'], @attr['user'],
-                              { :password => @attr['password'],
-                                :port => @attr['port'],
+        @ssh = Net::SSH.start @node['fqdn'], @node['user'],
+                              { :password => @node['password'],
+                                :port => @node['port'],
                                 :proxy => proxy }
       rescue Exception
-        error_message = "coudln't connect to #{@attr['fqdn']}"
-        error_message += " (via socks5 proxy #{@attr['proxy']})" if proxy
+        error_message = "coudln't connect to #{@node['fqdn']}"
+        error_message += " (via socks5 proxy #{@node['proxy']})" if proxy
         Dust.print_failed error_message
         return false
       end
@@ -304,10 +304,10 @@ module Dust
       options = default_options(:quiet => true).merge options
 
       Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options
-      collect_facts options unless @attr['operatingsystem']
+      collect_facts options unless @node['operatingsystem']
 
       os_list.each do |os|
-        if @attr['operatingsystem'].downcase == os.downcase
+        if @node['operatingsystem'].downcase == os.downcase
           return Dust.print_ok '', options
         end
       end
@@ -440,23 +440,41 @@ module Dust
 
       Dust.print_msg "collecting additional system facts (using facter)", options
 
-      # run facter with -y for yaml output, and merge results into @attr
+      # run facter with -y for yaml output, and merge results into @node
       ret = exec 'facter -y'
-      @attr.merge! YAML.load ret[:stdout]
+      @node.merge! YAML.load ret[:stdout]
 
       Dust.print_result ret[:exit_code], options
     end
 
+    # if file is a regular file, copy it using scp
+    # if it's an file.erb exists, render template and push to server
+    def deploy_file file, destination, options = {}
+      options = default_options(:binding => binding).merge options
+      
+      if File.exists? file
+        scp file, destination, options
+        
+      elsif File.exists? "#{file}.erb"
+        template = ERB.new( File.read("#{file}.erb"), nil, '%<>')
+        write destination, template.result(options[:binding]), options
+        
+      else
+        ::Dust.print_failed "'#{file}' was not found."
+      end
+    end
+    
+    
     private
 
     def method_missing method, *args, &block
-      # make server attributes accessible via server.attribute
-      if @attr[method.to_s]
-        @attr[method.to_s]
+      # make server nodeibutes accessible via server.nodeibute
+      if @node[method.to_s]
+        @node[method.to_s]
    
-      # and as server['attribute']
-      elsif @attr[args.first]
-        @attr[args.first]
+      # and as server['nodeibute']
+      elsif @node[args.first]
+        @node[args.first]
 
       # default to super
       else
