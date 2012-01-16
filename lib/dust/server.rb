@@ -169,9 +169,12 @@ module Dust
     end
  
     def install_package package, options={:quiet => false, :indent => 1, :env => ''}
-      return true if package_installed? package, options
+      if package_installed? package, {:quiet=>true, :indent => options[:indent]}
+        return Dust.print_ok "package #{package} already installed"
+      end
 
       Dust.print_msg "installing #{package}", {:quiet => options[:quiet], :indent => options[:indent] + 1}
+
       if uses_apt?
         exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
       elsif uses_emerge?
