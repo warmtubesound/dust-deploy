@@ -1,5 +1,3 @@
-require 'erb'
-
 class Postgres < Recipe
   desc 'postgres:deploy', 'installs and configures postgresql database'
   def deploy
@@ -24,9 +22,9 @@ class Postgres < Recipe
     end
 
 
-    deploy_file 'postgresql.conf', "#{@config['conf-dir']}/postgresql.conf"
-    deploy_file 'pg_hba.conf', "#{@config['conf-dir']}/pg_hba.conf"
-    deploy_file 'pg_ident.conf', "#{@config['conf-dir']}/pg_ident.conf"
+    @node.deploy_file "#{@template_path}/postgresql.conf", "#{@config['conf-dir']}/postgresql.conf", :binding => binding
+    @node.deploy_file "#{@template_path}/pg_hba.conf", "#{@config['conf-dir']}/pg_hba.conf", :binding => binding
+    @node.deploy_file "#{@template_path}/pg_ident.conf", "#{@config['conf-dir']}/pg_ident.conf", :binding => binding
 
     @node.chmod '644', "#{@config['conf-dir']}/postgresql.conf"
     @node.chmod '644', "#{@config['conf-dir']}/pg_hba.conf"
@@ -34,21 +32,21 @@ class Postgres < Recipe
 
     # deploy pacemaker script
     if @node.package_installed? 'pacemaker'
-      deploy_file 'pacemaker.sh', "#{@config['conf-dir']}/pacemaker.sh"
+      @node.deploy_file "#{@template_path}/pacemaker.sh", "#{@config['conf-dir']}/pacemaker.sh", :binding => binding
       @node.chmod '755', "#{@config['conf-dir']}/pacemaker.sh"
     end
 
     # copy recovery.conf to either recovery.conf or recovery.done
     # depending on which file already exists.
     if @node.file_exists? "#{@config['data-dir']}/recovery.conf", :quiet => true
-      deploy_file 'recovery.conf', "#{@config['data-dir']}/recovery.conf"
+      @node.deploy_file "#{@template_path}/recovery.conf", "#{@config['data-dir']}/recovery.conf", :binding => binding
     else
-      deploy_file 'recovery.conf', "#{@config['data-dir']}/recovery.done"
+      @node.deploy_file "#{@template_path}/recovery.conf", "#{@config['data-dir']}/recovery.done", :binding => binding
     end
 
     # deploy certificates to data-dir
-    deploy_file 'server.crt', "#{@config['data-dir']}/server.crt"
-    deploy_file 'server.key', "#{@config['data-dir']}/server.key"
+    @node.deploy_file "#{@template_path}/server.crt", "#{@config['data-dir']}/server.crt", :binding => binding
+    @node.deploy_file "#{@template_path}/server.key", "#{@config['data-dir']}/server.key", :binding => binding
 
     @node.chown @config['dbuser'], @config['data-dir'] if @config['dbuser']
     @node.chmod 'u+Xrw,g-rwx,o-rwx', @config['data-dir']
@@ -89,24 +87,6 @@ class Postgres < Recipe
     # reload/restart postgres if command line option is given
     @node.restart_service @config['service-name'] if options.restart?
     @node.reload_service @config['service-name'] if options.reload?
-  end
-
-  private
-  def deploy_file file, target
-    # if file is just a regular file, copy it to sites-available
-    if File.exists? "#{@template_path}/#{file}"
-      @node.scp "#{@template_path}/#{file}", target
-
-    # if file is an erb template, render it and deploy
-    elsif File.exists? "#{@template_path}/#{file}.erb"
-      ::Dust.print_msg "adjusting and deploying #{file}"
-      template = ERB.new( File.read("#{@template_path}/#{file}.erb"), nil, '%<>')
-      ::Dust.print_result @node.write(target, template.result(binding), :quiet => true)
-
-    # file was not found, return
-    else
-      return ::Dust.print_failed "file '#{@template_path}/#{file}' not found."
-    end
   end
 
 end

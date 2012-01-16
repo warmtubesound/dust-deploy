@@ -1,5 +1,3 @@
-require 'erb'
-
 class Nginx < Recipe
   desc 'nginx:deploy', 'installs and configures nginx web server'
   def deploy
@@ -14,27 +12,13 @@ class Nginx < Recipe
     ::Dust.print_ok
 
     @config.each do |state, site|
-      file = "#{@template_path}/sites/#{site}"
-
-      # if this site is just a regular file, copy it to sites-available
-      if File.exists? file
-        @node.scp file, "/etc/nginx/sites-available/#{site}"
-
-       # if this site is an erb template, render it and deploy
-      elsif File.exists? "#{file}.erb"
-        template = ERB.new( File.read("#{file}.erb"), nil, '%<>')
-        @node.write "/etc/nginx/sites-available/#{site}", template.result(binding)
-
-      # skip to next site if template wasn't found
-      else
-        ::Dust.print_failed "couldn't find template for #{site}", :indent => 2
-        next
-      end
-
+      
+      @node.deploy_file "#{@template_path}/sites/#{site}", "/etc/nginx/sites-available/#{site}", :binding => binding
+    
       # symlink to sites-enabled if this is listed as an enabled site
       if state == 'sites-enabled'
         ::Dust.print_msg "enabling #{site}", :indent => 2
-        ::Dust.print_result( @node.exec("cd /etc/nginx/sites-enabled && ln -s ../sites-available/#{site} #{site}")[:exit_code] )
+        ::Dust.print_result @node.exec("cd /etc/nginx/sites-enabled && ln -s ../sites-available/#{site} #{site}")[:exit_code]
       end
     end
 
