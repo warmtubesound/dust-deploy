@@ -1,24 +1,16 @@
-require 'erb'
-
 class ZabbixAgent < Recipe
   desc 'zabbix_agent:deploy', 'installs and configures zabbix agent'
   def deploy 
     return unless install_zabbix
 
-    # configure @node using erb template
-    template = ERB.new File.read("#{@template_path}/zabbix_agentd.conf.erb"), nil, '%<>'
-    ::Dust.print_msg 'adjusting and deploying zabbix_agentd.conf'
-    @node.write '/etc/zabbix/zabbix_agentd.conf', template.result(binding), :quiet => true
-    ::Dust.print_ok
-
+    @node.deploy_file "#{@template_path}/zabbix_agentd.conf", '/etc/zabbix/zabbix_agentd.conf', :binding => binding
+    
+    # set daemon name, according zu distribution
+    daemon = @node.uses_emerge? ? 'zabbix-agentd' : 'zabbix-agent'
+    
     # restart using new configuration
-    if @node.uses_emerge? :quiet => true
-      @node.autostart_service 'zabbix-agentd'
-      @node.restart_service 'zabbix-agentd' if options.restart?
-    else 
-      @node.autostart_service 'zabbix-agent'
-      @node.restart_service 'zabbix-agent' if options.restart?
-    end
+    @node.autostart_service daemon
+    @node.restart_service daemon if options.restart?
   end
 
   private
@@ -26,15 +18,13 @@ class ZabbixAgent < Recipe
   def install_zabbix
 
     if @node.uses_apt?
+      # debsecan is needed for zabbix checks (security updates)      
       return false unless @node.install_package 'zabbix-agent'
-
-      # debsecan is needed for zabbix checks (security updates)
       return false unless @node.install_package 'debsecan'
 
     elsif @node.uses_emerge?
+      # glsa-check (part of gentoolkit) is needed for zabbix checks (security updates)      
       return false unless @node.install_package 'zabbix', :env => 'USE=agent'
-
-      # glsa-check (part of gentoolkit) is needed for zabbix checks (security updates)
       return false unless @node.install_package 'gentoolkit'
 
     elsif @node.uses_rpm?
@@ -49,6 +39,9 @@ class ZabbixAgent < Recipe
     true
   end
 
+  
+  # below this line is unfinished code, not in use yet
+  
   # TODO (not yet finished)
   desc 'zabbix_agent:postgres', 'configure postgres database for zabbix monitoring'
   def postgres
@@ -69,7 +62,7 @@ class ZabbixAgent < Recipe
       ::Dust.print_result( @node.exec('createuser -U postgres zabbix -RSD')[:exit_code] )
     end
 
-# TODO: only GRANT is this is a master
+    # TODO: only GRANT is this is a master
     ::Dust.print_msg 'GRANT zabbix user access to postgres database'
     ::Dust.print_result( @node.exec('psql -U postgres -c "GRANT SELECT ON pg_stat_database TO zabbix" postgres')[:exit_code] )
 

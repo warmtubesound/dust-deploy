@@ -1,5 +1,3 @@
-require 'erb'
-
 class Mysql < Recipe
   desc 'mysql:deploy', 'installs and configures mysql database'
   def deploy
@@ -36,8 +34,7 @@ class Mysql < Recipe
 
     ::Dust.print_ok "setting innodb buffer pool to '#{@config['innodb_buffer_pool_size']}'", :indent => 2
 
-    template = ERB.new( File.read("#{@template_path}/my.cnf.erb"), nil, '%<>')
-    @node.write '/etc/mysql/my.cnf', template.result(binding)
+    @node.deploy_file "#{@template_path}/my.cnf", '/etc/mysql/my.cnf', :binding => binding
     @node.chmod '644', '/etc/mysql/my.cnf'
 
     @node.restart_service 'mysql-server' if options.restart?

@@ -1,5 +1,3 @@
-require 'erb'
-
 class Duplicity < Recipe
   desc 'duplicity:deploy', 'installs and configures duplicity backups'
   def deploy
@@ -46,11 +44,11 @@ class Duplicity < Recipe
       cronjob_path = "/etc/cron.#{config['interval']}/duplicity-#{scenario}"
 
       # adjust and upload cronjob
-      template = ERB.new File.read("#{@template_path}/cronjob.erb"), nil, '%<>'
-      ::Dust.print_msg "adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n"
+      ::Dust.print_msg "adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n"      
       config['options'].each { |option| ::Dust.print_ok "adding option: #{option}", :indent => 2 }
-      @node.write cronjob_path, template.result(binding)
- 
+      
+      @node.deploy_file "#{@template_path}/cronjob", cronjob_path, :binding => binding
+      
       # making cronjob executeable
       @node.chmod '0700', cronjob_path
       puts

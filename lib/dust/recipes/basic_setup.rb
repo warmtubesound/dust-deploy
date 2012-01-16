@@ -25,7 +25,7 @@ class BasicSetup < Recipe
     ::Dust.print_msg "deploying configuration files for root\n"
     Dir["#{@template_path}/.*"].each do |file|
       next unless File.file? file
-      @node.scp file, "/root/#{File.basename file}", :indent => 2
+      @node.deploy_file file, "/root/#{File.basename file}", { :binding => binding, :indent => 2 }
     end
 
   end
