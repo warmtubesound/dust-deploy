@@ -4,8 +4,10 @@ class Newrelic < Recipe
     return Dust.print_failed 'no key specified' unless @config
     return unless @node.uses_apt? :quiet=>false
 
-    ::Dust.print_msg 'updating repositories'
-    ::Dust.print_result @node.exec('aptitude update')[:exit_code]
+    if @options.restart? or @options.reload?
+      ::Dust.print_msg 'updating repositories'
+      ::Dust.print_result @node.exec('aptitude update')[:exit_code]
+    end
 
     unless @node.install_package 'newrelic-sysmond'
       ::Dust.print_failed 'installing newrelic monitoring daemon failed, did you setup the newrelic repositories?'
