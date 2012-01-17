@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.4.2
+------------
+
+adds hash_check recipe, which can check for weak hashes (according to provided list) in your /etc/shadow files.
+can be used e.g. for making sure that none of your servers still has the template password.
+
+
 0.4.1
 ------------
 
