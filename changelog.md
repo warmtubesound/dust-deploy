@@ -1,6 +1,18 @@
 Changelog
 =============
 
+0.4.3
+------------
+
+adds sshd recipe, which configures sshd_config. all sshd options are supported, with more or less intelligent default settings.
+usage:
+
+    recipes:
+      sshd:
+        Port: 12345
+        X11Forward: yes
+
+
 0.4.2
 ------------
 
