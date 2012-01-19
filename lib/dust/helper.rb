@@ -32,6 +32,11 @@ class Hash
     end
     self
   end
+
+  # converts each value to an array, so .each and .combine won't get hickups
+  def values_to_array!
+    self.each { |k, v| self[k] = [ self[k] ] unless self[k].is_a? Array }
+  end
 end
 
 # stole this from Afz902k who posted something similar at stackoverflow.com
