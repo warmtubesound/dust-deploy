@@ -45,6 +45,10 @@ class Sshd < Recipe
       @config['SyslogFacility'] ||= 'AUTHPRIV'
       @config['GSSAPIAuthentication'] ||= 'yes'
     end
+
+    if @node.uses_apt?
+      @config['PrintMotd'] ||= 'no'
+    end
   end
 
   def apply_configuration
