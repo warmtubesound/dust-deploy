@@ -69,7 +69,7 @@ class Iptables < Recipe
         rule['table'] ||= ['filter']
         rule['jump'] ||= ['ACCEPT']
         rule['protocol'] ||= ['tcp'] if rule['dport'] or rule['sport']
-        rule.each { |k, v| rule[k] = [ rule[k] ] unless rule[k].is_a? Array }
+        rule.values_to_array!
       end
     end
   end
