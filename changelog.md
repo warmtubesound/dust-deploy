@@ -1,6 +1,14 @@
 Changelog
 =============
 
+0.4.4
+------------
+
+sshd recipe
+-  default PrintMotd to false on apt systems (will be displayed 2 times otherwise)
+-  no and yes can be specified in config file, without getting converted to booleans automatically 
+
+
 0.4.3
 ------------
 
