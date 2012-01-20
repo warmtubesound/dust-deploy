@@ -34,9 +34,9 @@ class Duplicity < Recipe
       # add hostkey to known_hosts
       if config['hostkey']
         ::Dust.print_msg 'checking if ssh key is in known_hosts'
-        unless ::Dust.print_result @node.exec("grep -q '#{config['hostkey']}' ~/.ssh/known_hosts")[:exit_code] == 0
-          @node.mkdir '~/.ssh', :indent => 2
-          @node.append '~/.ssh/known_hosts', config['hostkey'], :indent => 2
+        unless ::Dust.print_result @node.exec("grep -q '#{config['hostkey']}' /root/.ssh/known_hosts")[:exit_code] == 0
+          @node.mkdir '/root/.ssh', :indent => 2
+          @node.append '/root/.ssh/known_hosts', config['hostkey'], :indent => 2
         end
       end
 
