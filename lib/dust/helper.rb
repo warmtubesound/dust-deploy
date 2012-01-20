@@ -37,6 +37,11 @@ class Hash
   def values_to_array!
     self.keys.each { |k| self[k] = [ self[k] ] unless self[k].is_a? Array }    
   end
+  
+  # converts each value that is a boolean to 'yes' resp. 'no' strings
+  def boolean_to_string!
+    self.each { |k, v| self[k] = v ? 'yes' : 'no' if v.is_a? TrueClass or v.is_a? FalseClass }
+  end 
 end
 
 
