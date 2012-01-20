@@ -95,7 +95,7 @@ module Dust
     def scp source, destination, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "deploying #{File.basename(source)}", options
+      Dust.print_msg "deploying #{File.basename source}", options
       @ssh.scp.upload! source, destination
       Dust.print_ok '', options
       restorecon destination, options # restore SELinux labels
@@ -104,7 +104,7 @@ module Dust
     def symlink source, destination, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "symlinking #{File.basename(source)} to '#{destination}'", options
+      Dust.print_msg "symlinking #{File.basename source} to '#{destination}'", options
       Dust.print_result exec("ln -s #{source} #{destination}")[:exit_code], options
       restorecon destination, options # restore SELinux labels
     end
@@ -112,14 +112,14 @@ module Dust
     def chmod mode, file, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "setting mode of #{File.basename(file)} to #{mode}", options
+      Dust.print_msg "setting mode of #{File.basename file} to #{mode}", options
       Dust.print_result exec("chmod -R #{mode} #{file}")[:exit_code], options
     end
 
     def chown user, file, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "setting owner of #{File.basename(file)} to #{user}", options
+      Dust.print_msg "setting owner of #{File.basename file} to #{user}", options
       Dust.print_result exec("chown -R #{user} #{file}")[:exit_code], options
     end
 
