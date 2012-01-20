@@ -34,6 +34,7 @@ class Sshd < Recipe
   end
 
   def generate_default_config
+    @config.boolean_to_string!
     @config = default_config.merge @config
 
     unless @config['sftp']
