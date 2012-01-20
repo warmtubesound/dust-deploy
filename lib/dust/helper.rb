@@ -15,9 +15,8 @@ class Array
   end
 end
 
-# stole this from rails
-# https://github.com/rails/rails/blob/c0262827cacc1baf16668af65c35a09138166394/activesupport/lib/active_support/core_ext/hash/deep_merge.rb
 class Hash
+  # stole this from rails
   # Returns a new hash with +self+ and +other_hash+ merged recursively.
   def deep_merge(other_hash)
     dup.deep_merge!(other_hash)
@@ -33,26 +32,28 @@ class Hash
     self
   end
 
+  
   # converts each value to an array, so .each and .combine won't get hickups
   def values_to_array!
-    self.each { |k, v| self[k] = [ self[k] ] unless self[k].is_a? Array }
+    self.keys.each { |k| self[k] = [ self[k] ] unless self[k].is_a? Array }    
   end
 end
 
-# stole this from Afz902k who posted something similar at stackoverflow.com
-# adds ability to check if a class with the name of a string exists
-class String
-    def to_class
-        Kernel.const_get self.capitalize
-    rescue NameError 
-        nil
-    end
 
-    def is_a_defined_class?
-        true if self.to_class
-    rescue NameError
-        false
-    end
+class String
+  # stole this from Afz902k who posted something similar at stackoverflow.com
+  # adds ability to check if a class with the name of a string exists  
+  def to_class
+    Kernel.const_get self.capitalize
+  rescue NameError 
+    nil
+  end
+
+  def is_a_defined_class?
+    true if self.to_class
+  rescue NameError
+    false
+  end
 end
 
 
