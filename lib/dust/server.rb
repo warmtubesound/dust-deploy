@@ -85,11 +85,15 @@ module Dust
       restorecon destination, options # restore SELinux labels
     end
 
-    def append target, text, options = {}
+    def append destination, newcontent, options = {}
       options = default_options.merge options
-
-      Dust.print_msg "appending to #{File.basename target}", options
-      Dust.print_result exec("cat << EOF >> #{target}\n#{text}\nEOF")[:exit_code], options
+      
+      Dust.print_msg "appending to #{File.basename destination}", options
+      
+      content = exec("cat #{destination}")[:stdout]
+      content.concat newcontent
+      
+      Dust.print_result write(destination, content, :quiet => true), options      
     end
  
     def scp source, destination, options = {}
