@@ -3,7 +3,8 @@ require 'net/ssh'
 require 'net/scp'
 require 'net/ssh/proxy/socks5'
 require 'erb'
-  
+require 'tempfile'
+
 module Dust
   class Server
     attr_reader :ssh
@@ -70,24 +71,18 @@ module Dust
     end
  
 
-    def write target, text, options = {}
+    def write destination, content, options = {}
       options = default_options.merge options
-
-      Dust.print_msg "deploying #{File.basename target}", options
-
-      # escape $ signs and \ at the end of line
-      text.gsub! '$','\$'
-      text.gsub! /\\$/, '\\\\\\'
-
-      # note: ` (backticks) somehow cannot be escaped.. don't use them
-      # in bash, use $(cmd) instead of `cmd` as a workaround
-      if exec("cat << EOF > #{target}\n#{text}\nEOF")[:exit_code] != 0
-        Dust.print_failed '', options
-        return false
-      end
-
-      Dust.print_ok '', options
-      restorecon target, options # restore SELinux labels
+      
+      Dust.print_msg "deploying #{File.basename destination}", options
+      
+      f = Tempfile.new 'dust-write'
+      f.print content
+      f.close
+      
+      Dust.print_result scp(f.path, destination, :quiet => true), options
+      f.unlink
+      restorecon destination, options # restore SELinux labels
     end
 
     def append target, text, options = {}
