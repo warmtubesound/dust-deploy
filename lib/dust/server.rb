@@ -82,7 +82,6 @@ module Dust
       
       Dust.print_result scp(f.path, destination, :quiet => true), options
       f.unlink
-      restorecon destination, options # restore SELinux labels
     end
 
     def append destination, newcontent, options = {}
@@ -148,7 +147,6 @@ module Dust
     # if so, run it on "path" recursively
     def restorecon path, options = {}
       options = default_options.merge options
-
 
       # if restorecon is not installed, just return true
       ret = exec 'which restorecon'
