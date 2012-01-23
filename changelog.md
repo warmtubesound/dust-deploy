@@ -1,6 +1,16 @@
 Changelog
 =============
 
+0.4.5
+------------
+
+-  node.write and node.append now not using echo for writing files on the server anymore.
+   this solves problems with binary files and files including backticks (`)
+-  adds pacemaker recipe, for basic setup and configuration of corosync/pacemaker
+-  adds sudoers recipe for maintaining your sudoers rules
+-  postgres recipe now checks if zabbix is installed, and if so configures the node for monitoring
+
+
 0.4.4
 ------------
 
