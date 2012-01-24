@@ -8,9 +8,11 @@ class Duplicity < Recipe
 
     # return if config simply says 'remove'
     return if @config == 'remove'
-
-    @config.each do |scenario, config|
-
+    
+    @config.each do |scenario, c|
+      # cloning is necessary if we have configurations with multiple hostnames
+      config = c.clone
+      
       # if directory config options is not given, use hostname-scenario
       config['directory'] ||= "#{@node['hostname']}-#{scenario}"
 
