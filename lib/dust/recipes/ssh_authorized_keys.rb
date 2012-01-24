@@ -42,15 +42,16 @@ class SshAuthorizedKeys < Recipe
     # create user, if not existent
     next unless @node.create_user user
     
+    home = @node.get_home user
     # check and create necessary directories
-    next unless @node.mkdir("~#{user}/.ssh")
+    next unless @node.mkdir("#{home}/.ssh")
     
     # deploy authorized_keys
-    next unless @node.write "~#{user}/.ssh/authorized_keys", authorized_keys
+    next unless @node.write "#{home}/.ssh/authorized_keys", authorized_keys
     
     # check permissions
-    @node.chown "#{user}:#{user}", "~#{user}/.ssh"
-    @node.chmod '0644', "~#{user}/.ssh/authorized_keys"    
+    @node.chown "#{user}:#{user}", "#{home}/.ssh"
+    @node.chmod '0644', "#{home}/.ssh/authorized_keys"    
   end
   
   # remove authorized_keys files for all other users  
@@ -60,8 +61,9 @@ class SshAuthorizedKeys < Recipe
       ::Dust.print_msg "deleting other authorized_keys files\n"
       @node.get_system_users(:quiet => true).each do |user|
         next if users.keys.include? user
-        if @node.file_exists? "~#{user}/.ssh/authorized_keys", :quiet => true
-          @node.rm "~#{user}/.ssh/authorized_keys", :indent => 2
+        home = @node.get_home user
+        if @node.file_exists? "#{home}/.ssh/authorized_keys", :quiet => true
+          @node.rm "#{home}/.ssh/authorized_keys", :indent => 2
         end
       end
     end
