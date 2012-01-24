@@ -422,6 +422,19 @@ module Dust
       Dust.print_result exec(cmd)[:exit_code], options
     end
 
+    # returns the home directory of this user
+    def get_home user, options = {}
+      options = default_options(:quiet => true).merge options
+      
+      Dust.print_msg "getting home directory of #{user}"
+      ret = exec "grep #{user} /etc/passwd |cut -d':' -f6"
+      if Dust.print_result ret[:exit_code]
+        return ret[:output]
+      else
+        return false
+      end
+    end
+
     # collect additional system facts using puppets facter
     def collect_facts options = {}
       options = default_options.merge options
