@@ -80,8 +80,10 @@ module Dust
       f.print content
       f.close
       
-      Dust.print_result scp(f.path, destination, :quiet => true), options
+      ret = Dust.print_result scp(f.path, destination, :quiet => true), options
       f.unlink
+      
+      ret
     end
 
     def append destination, newcontent, options = {}
