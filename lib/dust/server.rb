@@ -428,8 +428,8 @@ module Dust
       
       Dust.print_msg "getting home directory of #{user}"
       ret = exec "grep #{user} /etc/passwd |cut -d':' -f6"
-      if Dust.print_result ret[:exit_code]
-        return ret[:output]
+      if Dust.print_result ret[:exit_code]     
+        return ret[:stdout].chomp
       else
         return false
       end
