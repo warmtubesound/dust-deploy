@@ -1,6 +1,26 @@
 Changelog
 =============
 
+0.5.0
+------------
+
+-  improved mysql recipe. it now accepts every option (change your configuration accordingly)
+
+    recipes:
+      mysql:
+        mysqld:
+          bind-address: 0.0.0.0
+          port: 1234
+        mysqldump:
+          quick: false
+        isamchk:
+          key_buffer: 128M
+
+-  fixes a bug in the ssh_authorized_keys recipe with ~user shortcut, uses new get_home method now
+-  fixes a bug in the duplicity recipe occuring when using yaml files with multiple hostnames
+-  fixes a bug where @node.get_home was returning nil
+
+
 0.4.5
 ------------
 
