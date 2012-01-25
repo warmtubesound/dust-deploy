@@ -4,7 +4,7 @@ class BasicSetup < Recipe
     # install some basic packages
     ::Dust.print_msg "installing basic packages\n"
 
-    @node.install_package 'screen', :indent => 2
+    @node.install_package 'tmux', :indent => 2
     @node.install_package 'rsync', :indent => 2
     @node.install_package 'psmisc', :indent => 2 if @node.uses_apt?
 
