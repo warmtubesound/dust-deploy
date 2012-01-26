@@ -110,8 +110,9 @@ module Dust
       options = default_options.merge options
 
       Dust.print_msg "symlinking #{File.basename source} to '#{destination}'", options
-      Dust.print_result exec("ln -s #{source} #{destination}")[:exit_code], options
+      ret = Dust.print_result exec("ln -s #{source} #{destination}")[:exit_code], options
       restorecon destination, options # restore SELinux labels
+      ret
     end
   
     def chmod mode, file, options = {}
@@ -141,8 +142,9 @@ module Dust
       return true if dir_exists? dir, :quiet => true
 
       Dust.print_msg "creating directory #{dir}", options
-      Dust.print_result exec("mkdir -p #{dir}")[:exit_code], options
+      ret = Dust.print_result exec("mkdir -p #{dir}")[:exit_code], options
       restorecon dir, options # restore SELinux labels
+      ret
     end
 
     # check if restorecon (selinux) is available
