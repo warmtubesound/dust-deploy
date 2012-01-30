@@ -256,7 +256,9 @@ module Dust
 
     def system_update options = {}
       options = default_options.merge options
-
+    
+      update_repos
+      
       Dust.print_msg 'installing system updates', options
 
       if uses_apt?
