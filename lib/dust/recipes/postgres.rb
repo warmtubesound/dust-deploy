@@ -36,6 +36,9 @@ class Postgres < Recipe
     end
     
     @node.install_package package
+
+    # also install the postgresql meta package
+    @node.install_package 'postgresql' if @node.uses_apt?
   end
 
   # set conf-dir, archive-dir and data-dir as well as service-name
