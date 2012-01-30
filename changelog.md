@@ -1,6 +1,44 @@
 Changelog
 =============
 
+0.6.0
+------------
+
+-  improves postgresql recipe. now accepts every option and tries to automatically configure the settings based on your system ram (unless you specify them manually). you have to change your postgresql coniguration.
+
+    recipes:
+      postgres:
+        cluster: main
+        version: 9.1
+        dbuser: 'postgres:postgres'
+
+      postgresql.conf:
+        listen_addresses: *
+        port: 5432 
+
+      pg_hba.conf:
+        - 'local   all         postgres                 trust'
+
+
+-  improves zabbix_agent recipe. accepts all options as well, no need for erb template anymore. It tries to automatically configure monitoring of adaptec raid controllers, postgres databases and system (security) updates. other UserParameters are configured using an array:
+
+    recipes:
+      zabbix_agent:
+        Server: zabbix.example.com
+        UserParameter:
+          - user.parameter,myshellcommand1
+          - user.otherparameter,myothershellcommand
+
+
+-  locale recipe now installs language-base package of selected language on ubuntu nodes
+-  postgres recipe now installs postgresql meta package as well on apt systems
+-  adds more examples (e.g. an ubuntu template)
+-  @node.uses_*? and collect_facts methods now caching result, reducing overhead of repeated statements
+-  system_update now updates repositories before performing upgrade (apt/emerge)
+-  dust now checks for unknown options
+-  several small bug fixes and improvements
+
+
 0.5.0
 ------------
 
