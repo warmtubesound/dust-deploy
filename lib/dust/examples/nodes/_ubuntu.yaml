@@ -1,0 +1,12 @@
+group: ubuntu
+
+recipes:
+  locale: en_US.UTF-8
+  unattended_upgrades: true
+  debsecan: default
+  repositories:
+    default:
+      url: "http://de.archive.ubuntu.com/ubuntu/"
+      components: "main restricted universe multiverse"
+
+  remove_packages: [ popularity-contest, landscape-common, apport, python-apport ]
