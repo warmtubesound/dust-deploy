@@ -310,7 +310,7 @@ module Dust
       options = default_options(:quiet => true).merge options
 
       Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options
-      collect_facts options unless @node['operatingsystem']
+      collect_facts options
 
       os_list.each do |os|
         if @node['operatingsystem'].downcase == os.downcase
@@ -446,6 +446,8 @@ module Dust
     def collect_facts options = {}
       options = default_options.merge options
 
+      # if facts already have been collected, just return
+      return true if @node['operatingsystem']
 
       # check if lsb-release (on apt systems) and facter are installed
       # and install them if not
