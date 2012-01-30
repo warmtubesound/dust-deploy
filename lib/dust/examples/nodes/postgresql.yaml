@@ -1,0 +1,48 @@
+hostname: [ db-1, db-2, db-3-]
+inherits: [ _default, _newrelic ]
+
+recipes:
+  postgres:
+    cluster: main
+    version: 9.1
+    dbuser: 'postgres:postgres'
+
+    postgresql.conf:
+      listen_addresses: *
+      port: 5432 
+      ssl: on
+      full_page_writes: on
+
+      hot_standby: on
+      wal_level: 'hot_standby'
+      archive_mode: on
+      archive_command: 'cp -i %p /var/lib/postgresql/9.1/main-archive/%f < /dev/null'
+      max_wal_senders: 5
+      wal_keep_segments: 32
+
+      default_statistics_target: 50
+      constraint_exclusion: on
+
+    pg_hba.conf:
+      - 'local   all         postgres                 trust'
+      - 'hostssl replication replicant 192.168.1.0/24 password'
+
+    recovery.conf:
+      standby_mode: on
+      primary_conninfo: 'host=master.example.com port=5432 user=replicant password=<supersecret>'
+      trigger_file: '/var/lib/postgresql/9.1/master_trigger'
+
+    server.crt: staging.crt
+    server.key: staging.key
+
+  iptables:
+    input:
+      - ssh: { dport: 22, match: state, state: NEW }
+      - postgres:
+          dport: 5432
+          match: state
+          state: new
+          in-interface: eth1
+          source: 10.0.0.0/8
+          
+  rc_local: blockdev --setra 8192 /dev/vda

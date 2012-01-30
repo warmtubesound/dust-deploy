@@ -15,6 +15,7 @@ class Postgres < Recipe
     set_permissions
     configure_sysctl
     
+    deploy_pacemaker_script if @node.package_installed? 'pacemaker', :quiet => true
     configure_for_zabbix if zabbix_installed?
     
     # reload/restart postgres if command line option is given
@@ -212,6 +213,12 @@ class Postgres < Recipe
     @node.chown @config['dbuser'], @config['archive_directory'] if @config['dbuser']
     @node.chmod 'u+Xrw,g-rwx,o-rwx', @config['archive_directory']
   end
+  
+  # deploy the pacemaker script
+  def deploy_pacemaker_script
+    @node.deploy_file "#{@template_path}/pacemaker.sh", "#{@config['conf_directory']}/pacemaker.sh", :binding => binding
+    @node.chmod '755', "#{@config['conf_directory']}/pacemaker.sh"
+  end  
   
   # check if zabbix is installed
   def zabbix_installed?
