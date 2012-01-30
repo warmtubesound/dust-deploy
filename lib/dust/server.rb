@@ -434,7 +434,7 @@ module Dust
       options = default_options(:quiet => true).merge options
       
       Dust.print_msg "getting home directory of #{user}"
-      ret = exec "grep #{user} /etc/passwd |cut -d':' -f6"
+      ret = exec "grep '^#{user}' /etc/passwd |cut -d':' -f6"
       if Dust.print_result ret[:exit_code]     
         return ret[:stdout].chomp
       else
