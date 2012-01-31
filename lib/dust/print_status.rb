@@ -46,7 +46,7 @@ module Dust
     print_msg "\n[ #{blue}#{hostname}#{none} ]\n\n", options
   end
 
-  def self.print_recipe recipe, options={:quiet => false, :indent => 1}
+  def self.print_recipe recipe, options={:quiet => false, :indent => 0}
     print_msg "#{green}|#{recipe}|#{none}\n", options
   end
 
