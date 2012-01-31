@@ -203,7 +203,7 @@ module Dust
         return Dust.print_ok "package #{package} already installed"
       end
 
-      Dust.print_msg "installing #{package}", :indent => options[:indent] + 1
+      Dust.print_msg "installing #{package}"
 
       if uses_apt?
         exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
