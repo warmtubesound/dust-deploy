@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.6.1
+------------
+
+-  adds cups_client recipe
+-  @node.get_home uses 'getent passwd' now instead of '/etc/passwd'
+
+
 0.6.0
 ------------
 
