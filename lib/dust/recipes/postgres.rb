@@ -93,9 +93,12 @@ class Postgres < Recipe
       ::Dust.print_msg "setting postgres sysctl keys\n"
       @node.collect_facts :quiet => true
 
+      # get pagesize
+      pagesize = @node.exec('getconf PAGESIZE')[:stdout] || 4096
+
       # use half of system memory for shmmax
       shmmax = ::Dust.convert_size(@node['memorysize']) * 1024 / 2
-      shmall = shmmax / 4096 # shmmax/pagesize (pagesize = 4096)
+      shmall = shmmax / pagesize
 
       ::Dust.print_msg "setting shmmax to: #{shmmax}", :indent => 2
       ::Dust.print_result @node.exec("sysctl -w kernel.shmmax=#{shmmax}")[:exit_code]
