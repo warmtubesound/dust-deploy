@@ -1,6 +1,21 @@
 Changelog
 =============
 
+0.6.2
+------------
+
+-  adds redis recipe, you can now maintain your redis configurations with dust as well:
+
+    recipes:
+      redis:
+        port: 6379
+        daemonize: yes
+
+-  fixes hash_check recipe, now works with centos-like machines as well
+-  improves mysql recipe: now sets shm sysctls as well (like the postgresql recipe does)
+-  small improvements to automatic innodb tuning
+
+
 0.6.1
 ------------
 
@@ -80,6 +95,7 @@ Changelog
 ------------
 
 sshd recipe
+
 -  default PrintMotd to false on apt systems (will be displayed 2 times otherwise)
 -  no and yes can be specified in config file, without getting converted to booleans automatically 
 
