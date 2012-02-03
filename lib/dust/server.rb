@@ -383,10 +383,17 @@ module Dust
       options = default_options.merge options
 
       Dust.print_msg "autostart #{service} on boot", options
+
       if uses_rpm?
-        Dust.print_result exec("chkconfig #{service} on")[:exit_code], options
+        if file_exists? '/bin/systemctl', :quiet => true
+          Dust.print_result exec("systemctl enable #{service}.service")[:exit_code], options
+        else
+          Dust.print_result exec("chkconfig #{service} on")[:exit_code], options
+        end
+
       elsif uses_apt?
         Dust.print_result exec("update-rc.d #{service} defaults")[:exit_code], options
+
       elsif uses_emerge?
         Dust.print_result exec("rc-update add #{service} default")[:exit_code], options
       end
