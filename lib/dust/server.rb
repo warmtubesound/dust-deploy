@@ -392,18 +392,40 @@ module Dust
       end
     end
  
+    def service service, command, options = {}
+      options = default_options.merge options
+
+      # try systemd, then upstart, then sysvconfig, then initscript
+      if file_exists? '/bin/systemctl', :quiet => true
+        Dust.print_msg "#{command}ing #{service} (via systemd)", options
+        ret = exec("systemctl #{command} #{service}.service")[:exit_code]
+
+      elsif file_exists? "/etc/init/#{service}", :quiet => true
+        Dust.print_msg "#{command}ing #{service} (via upstart)", options
+        ret = exec("#{command} #{service}")[:exit_code]
+
+      elsif file_exists? '/sbin/service', :quiet => true or file_exists? '/usr/sbin/service', :quiet => true
+        Dust.print_msg "#{command}ing #{service} (via sysvconfig)", options
+        ret = exec("service #{service} #{command}")[:exit_code]
+
+      else
+        Dust.print_msg "#{command}ing #{service} (via initscript)", options
+        ret = exec("/etc/init.d/#{service} #{command}")[:exit_code]
+      end
+
+      Dust.print_result ret, options
+    end
+
     def restart_service service, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "restarting #{service}", options
-      Dust.print_result exec("/etc/init.d/#{service} restart")[:exit_code], options
+      service service, 'restart', options
     end
-  
+
     def reload_service service, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "reloading #{service}", options
-      Dust.print_result exec("/etc/init.d/#{service} reload")[:exit_code], options
+      service service, 'reload', options
     end
   
     # check whether a user exists on this node
@@ -487,7 +509,7 @@ module Dust
     
     
     private
-
+    
     def method_missing method, *args, &block
       # make server nodeibutes accessible via server.nodeibute
       if @node[method.to_s]
