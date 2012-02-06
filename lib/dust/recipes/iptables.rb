@@ -37,6 +37,14 @@ class Iptables < Recipe
     end
   end
 
+  desc 'iptables:status', 'displays iptables rules'
+  def status
+    ::Dust.print_ok 'displaying iptables rules (ipv4)'
+    ::Dust.print_msg @node.exec('iptables -L -v -n')[:stdout], :indent => 0
+    puts
+    ::Dust.print_ok 'displaying iptables rules (ipv6)'
+    ::Dust.print_msg @node.exec('ip6tables -L -v -n')[:stdout], :indent => 0
+  end
 
   private
 
