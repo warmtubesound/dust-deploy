@@ -398,29 +398,33 @@ module Dust
         Dust.print_result exec("rc-update add #{service} default")[:exit_code], options
       end
     end
- 
+
+    # invoke 'command' on the service (e.g. @node.service 'postgresql', 'restart') 
     def service service, command, options = {}
       options = default_options.merge options
+
+      return ::Dust.print_failed "service: '#{service}' unknown", options unless service.is_a? String
 
       # try systemd, then upstart, then sysvconfig, then initscript
       if file_exists? '/bin/systemctl', :quiet => true
         Dust.print_msg "#{command}ing #{service} (via systemd)", options
-        ret = exec("systemctl #{command} #{service}.service")[:exit_code]
+        ret = exec("systemctl #{command} #{service}.service")
 
       elsif file_exists? "/etc/init/#{service}", :quiet => true
         Dust.print_msg "#{command}ing #{service} (via upstart)", options
-        ret = exec("#{command} #{service}")[:exit_code]
+        ret = exec("#{command} #{service}")
 
       elsif file_exists? '/sbin/service', :quiet => true or file_exists? '/usr/sbin/service', :quiet => true
         Dust.print_msg "#{command}ing #{service} (via sysvconfig)", options
-        ret = exec("service #{service} #{command}")[:exit_code]
+        ret = exec("service #{service} #{command}")
 
       else
         Dust.print_msg "#{command}ing #{service} (via initscript)", options
-        ret = exec("/etc/init.d/#{service} #{command}")[:exit_code]
+        ret = exec("/etc/init.d/#{service} #{command}")
       end
 
-      Dust.print_result ret, options
+      Dust.print_result ret[:exit_code], options
+      ret
     end
 
     def restart_service service, options = {}
@@ -434,7 +438,18 @@ module Dust
 
       service service, 'reload', options
     end
-  
+
+    def print_service_status service, options = {}
+      options = default_options.merge options
+      ret = service service, 'status', options
+
+      options[:indent] += 1
+      Dust.print_msg "#{Dust.grey}#{ret[:stdout].chomp}#{Dust.none}", options unless ret[:stdout].empty?
+      Dust.print_msg "#{Dust.red}#{ret[:stderr].chomp}#{Dust.none}", options unless ret[:stderr].empty?
+
+      ret
+    end
+
     # check whether a user exists on this node
     def user_exists? user, options = {}
       options = default_options.merge options
