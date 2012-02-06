@@ -22,7 +22,13 @@ class Postgres < Recipe
     @node.restart_service @config['service_name'] if options.restart?
     @node.reload_service @config['service_name'] if options.reload?
   end
-    
+
+  desc 'postgres:status', 'displays status of postgres cluster'
+  def status
+    return unless @node.package_installed? [ 'postgresql-server', "postgresql-#{@config['version']}" ]
+    set_default_directories
+    @node.print_service_status @config['service_name']
+  end
   
   private
   
