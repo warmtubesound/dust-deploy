@@ -43,7 +43,7 @@ class Iptables < Recipe
   # install iptables
   def install
     return false unless @node.install_package 'iptables'
-    return false unless @node.install_package 'iptables-ipv6' if @node.uses_rpm?
+    return false unless @node.install_package 'iptables-ipv6' if @node.uses_rpm? and not @node.is_fedora?
     true
   end
   
