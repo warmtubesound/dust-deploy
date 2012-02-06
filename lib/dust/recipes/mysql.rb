@@ -21,6 +21,12 @@ class Mysql < Recipe
     @node.reload_service 'mysql' if options.reload?
   end
   
+  desc 'mysql:status', 'displays status of the mysql daemon'
+  def status
+    return unless @node.package_installed? 'mysql-server'
+    @node.print_service_status 'mysql'
+  end
+
   
   private
   
