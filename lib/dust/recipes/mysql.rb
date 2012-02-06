@@ -82,7 +82,7 @@ class Mysql < Recipe
       system_mem = ::Dust.convert_size @node['memorysize']
   
       # allocate 80% of the available ram to mysql
-      buffer_pool = (system_mem * 0.8).to_i
+      buffer_pool = (system_mem * 0.7).to_i
       
       ::Dust.print_ok
       "#{buffer_pool / 1024}M"
