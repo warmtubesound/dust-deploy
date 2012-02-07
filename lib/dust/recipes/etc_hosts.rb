@@ -9,5 +9,13 @@ class EtcHosts < Recipe
       @node.restart_service @config
     end
   end
+
+  desc 'etc_hosts:status', 'shows current /etc/hosts'
+  def status
+    ::Dust.print_msg 'getting /etc/hosts'
+    ret = @node.exec 'cat /etc/hosts'
+    ::Dust.print_result ret[:exit_code]
+    ::Dust.print_ret ret
+  end
 end
 
