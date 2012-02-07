@@ -32,4 +32,12 @@ class Pacemaker < Recipe
     # not restarting automatically, because it provokes switching of ha services
     #@node.restart_service 'corosync' if @options.restart
   end
+  
+  desc 'pacemaker:status', 'shows status of pacemaker/corosync cluster'
+  def status
+    ::Dust.print_msg 'running crm_mon'
+    ret = @node.exec 'crm_mon -1'
+    ::Dust.print_result ret[:exit_code]
+    ::Dust.print_ret ret
+  end 
 end
