@@ -20,5 +20,13 @@ class RcLocal < Recipe
       ::Dust.print_failed 'os not supported'
     end
   end
+  
+  desc 'rc_local:status', 'shows current /etc/rc.local'
+  def status
+    ::Dust.print_msg 'getting /etc/rc.local'
+    ret = @node.exec 'cat /etc/rc.local'
+    ::Dust.print_result ret[:exit_code]
+    ::Dust.print_ret ret
+  end
 end
 
