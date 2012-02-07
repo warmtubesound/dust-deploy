@@ -471,7 +471,7 @@ module Dust
       Dust.print_msg "getting home directory of #{user}"
       ret = exec "getent passwd |grep '^#{user}' |cut -d':' -f6"
       if Dust.print_result ret[:exit_code]     
-        return ret[:stdout].chomp
+        return ret[:stdout].gsub("\n", '').gsub("\r", '')
       else
         return false
       end
