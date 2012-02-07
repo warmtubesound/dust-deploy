@@ -123,8 +123,30 @@ module Dust
       options = default_options.merge options
 
       Dust.print_msg "deploying #{File.basename source}", options
-      @ssh.scp.upload! source, destination
-      Dust.print_ok '', options
+
+      # if in sudo mode, copy file to temporary place, then move using sudo
+      if @node['sudo'] 
+        ret = exec 'mktemp --tmpdir dust.XXXXXXXXXX' 
+        if ret[:exit_code] != 0
+          ::Dust.print_failed 'could not create temporary file (needed for sudo)'
+          return false
+        end
+
+        # remove (trailing and leading) newlines
+        tmpfile = ret[:stdout].gsub("\n", '').gsub("\r", '')
+
+        # allow user to write file without sudo (for scp)
+        # then change file back to root, and copy to the destination
+        chown @node['user'], tmpfile, :quiet => true
+        @ssh.scp.upload! source, tmpfile
+        chown 'root', tmpfile, :quiet => true
+        Dust.print_result exec("mv -f #{tmpfile} #{destination}")[:exit_code]
+
+      else
+        @ssh.scp.upload! source, destination
+        Dust.print_ok '', options
+      end
+
       restorecon destination, options # restore SELinux labels
     end
   
@@ -458,7 +480,7 @@ module Dust
       Dust.print_msg "getting home directory of #{user}"
       ret = exec "getent passwd |grep '^#{user}' |cut -d':' -f6"
       if Dust.print_result ret[:exit_code]     
-        return ret[:stdout].chomp
+        return ret[:stdout].gsub("\n", '').gsub("\r", '')
       else
         return false
       end
