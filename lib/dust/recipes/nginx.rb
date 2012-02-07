@@ -2,9 +2,9 @@ class Nginx < Recipe
   desc 'nginx:deploy', 'installs and configures nginx web server'
   def deploy
     # abort if nginx cannot be installed
-    return unless @node.install_package('nginx')
+    return unless @node.install_package 'nginx'
 
-    @node.scp("#{@template_path}/nginx.conf", '/etc/nginx/nginx.conf')
+    @node.scp "#{@template_path}/nginx.conf", '/etc/nginx/nginx.conf'
 
     # remove old sites that may be present
     ::Dust.print_msg 'deleting old sites in /etc/nginx/sites-*'
@@ -31,5 +31,11 @@ class Nginx < Recipe
       ::Dust.print_failed
     end
   end
+  
+  desc 'nginx:status', 'displays nginx status'
+  def status
+    return unless @node.package_installed? 'nginx'
+    @node.print_service_status 'nginx'
+  end  
 end
 
