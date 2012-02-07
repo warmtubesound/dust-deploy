@@ -38,5 +38,13 @@ class ResolvConf < Recipe
  
     @node.write '/etc/resolv.conf', config_file
   end
+  
+  desc 'resolv_conf:status', 'shows current /etc/resolv.conf'
+  def status
+    ::Dust.print_msg 'getting /etc/resolv.conf'
+    ret = @node.exec 'cat /etc/resolv.conf'
+    ::Dust.print_result ret[:exit_code]
+    ::Dust.print_ret ret
+  end  
 end
 
