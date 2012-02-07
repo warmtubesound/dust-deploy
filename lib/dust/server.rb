@@ -80,7 +80,7 @@ module Dust
               stdout += data
             end            
           end
-          
+
           channel.on_extended_data { |ch, type, data| stderr += data }
           channel.on_request('exit-status') { |ch, data| exit_code = data.read_long }
           channel.on_request('exit-signal') { |ch, data| exit_signal = data.read_long }
@@ -88,7 +88,10 @@ module Dust
       end
   
       @ssh.loop
-  
+
+      # sudo usage provokes a heading newline that's unwanted.
+      stdout.sub! /^(\r\n|\n|\r)/, '' if @node['sudo'] 
+
       { :stdout => stdout, :stderr => stderr, :exit_code => exit_code, :exit_signal => exit_signal }
     end
 
@@ -131,8 +134,7 @@ module Dust
           return false
         end
 
-        # remove (trailing and leading) newlines
-        tmpfile = ret[:stdout].gsub("\n", '').gsub("\r", '')
+        tmpfile = ret[:stdout].chomp
 
         # allow user to write file without sudo (for scp)
         # then change file back to root, and copy to the destination
@@ -515,7 +517,7 @@ module Dust
       Dust.print_msg "getting home directory of #{user}"
       ret = exec "getent passwd |grep '^#{user}' |cut -d':' -f6"
       if Dust.print_result ret[:exit_code]     
-        return ret[:stdout].gsub("\n", '').gsub("\r", '')
+        return ret[:stdout].chomp
       else
         return false
       end
