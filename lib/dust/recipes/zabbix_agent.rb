@@ -13,6 +13,14 @@ class ZabbixAgent < Recipe
     @node.restart_service daemon if options.restart?
   end
 
+  desc 'zabbix_agent:status', 'displays status of the zabbix agent'
+  def status
+    daemon = @node.uses_emerge? ? 'zabbix-agentd' : 'zabbix-agent'
+    return unless @node.package_installed? daemon
+    @node.print_service_status  daemon
+  end
+  
+  
   private
   # installs zabbix and its dependencies
   def install_zabbix
