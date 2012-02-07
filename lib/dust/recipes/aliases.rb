@@ -8,5 +8,13 @@ class Aliases < Recipe
     ::Dust.print_msg 'running newaliases'
     ::Dust.print_result @node.exec('newaliases')[:exit_code]
   end
+  
+  desc 'aliases:status', 'shows current aliases'
+  def status
+    ::Dust.print_msg 'getting /etc/aliases'
+    ret = @node.exec 'cat /etc/aliases'
+    ::Dust.print_result ret[:exit_code]
+    ::Dust.print_ret ret
+  end
 end
 
