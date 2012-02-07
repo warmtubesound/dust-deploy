@@ -18,6 +18,7 @@ module Dust
       @node['user'] ||= 'root'
       @node['port'] ||= 22
       @node['password'] ||= ''
+      @node['sudo'] ||= false
     end
 
     def connect 
@@ -50,15 +51,36 @@ module Dust
     end
   
     def exec command
+      sudo_authenticated = false
       stdout = ''
       stderr = ''
       exit_code = nil
       exit_signal = nil
-  
+
       @ssh.open_channel do |channel|
+        
+        # request a terminal (sudo needs it)
+        # and prepend "sudo"
+        if @node['sudo']          
+          channel.request_pty
+          command = "sudo #{command}"
+        end
+        
         channel.exec command do |ch, success|
           abort "FAILED: couldn't execute command (ssh.channel.exec)" unless success
-          channel.on_data { |ch, data| stdout += data }
+          
+          channel.on_data do |ch, data|
+            # only send password if sudo mode is enabled,
+            # sudo password string matches
+            # and only send password once in a session (trying to prevent attacks reading out the password)
+            if @node['sudo'] and data =~ /^\[sudo\] password for #{@node['user']}/ and not sudo_authenticated
+              channel.send_data "#{@node['password']}\n"
+              sudo_authenticated = true
+            else
+              stdout += data
+            end            
+          end
+          
           channel.on_extended_data { |ch, type, data| stderr += data }
           channel.on_request('exit-status') { |ch, data| exit_code = data.read_long }
           channel.on_request('exit-signal') { |ch, data| exit_signal = data.read_long }
@@ -100,8 +122,30 @@ module Dust
       options = default_options.merge options
 
       Dust.print_msg "deploying #{File.basename source}", options
-      @ssh.scp.upload! source, destination
-      Dust.print_ok '', options
+
+      # if in sudo mode, copy file to temporary place, then move using sudo
+      if @node['sudo'] 
+        ret = exec 'mktemp --tmpdir dust.XXXXXXXXXX' 
+        if ret[:exit_code] != 0
+          ::Dust.print_failed 'could not create temporary file (needed for sudo)'
+          return false
+        end
+
+        # remove (trailing and leading) newlines
+        tmpfile = ret[:stdout].gsub("\n", '').gsub("\r", '')
+
+        # allow user to write file without sudo (for scp)
+        # then change file back to root, and copy to the destination
+        chown @node['user'], tmpfile, :quiet => true
+        @ssh.scp.upload! source, tmpfile
+        chown 'root', tmpfile, :quiet => true
+        Dust.print_result exec("mv -f #{tmpfile} #{destination}")[:exit_code]
+
+      else
+        @ssh.scp.upload! source, destination
+        Dust.print_ok '', options
+      end
+
       restorecon destination, options # restore SELinux labels
     end
   
