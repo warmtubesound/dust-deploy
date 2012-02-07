@@ -141,7 +141,7 @@ module Dust
         chown @node['user'], tmpfile, :quiet => true
         @ssh.scp.upload! source, tmpfile
         chown 'root', tmpfile, :quiet => true
-        Dust.print_result exec("mv -f #{tmpfile} #{destination}")[:exit_code]
+        Dust.print_result exec("mv -f #{tmpfile} #{destination}")[:exit_code], options
 
       else
         @ssh.scp.upload! source, destination
