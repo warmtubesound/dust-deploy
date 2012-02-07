@@ -6,8 +6,8 @@ class HashCheck < Recipe
     keys = [ '*', '!', '!!', '', 'LK', 'NP' ]
 
     weak_passwords = File.open "#{@template_path}/weak_passwords", 'r'
-    shadow = @node.exec('cat /etc/shadow')[:stdout]
 
+    shadow = @node.exec('getent shadow')[:stdout]
     ::Dust.print_msg "checking for weak password hashes\n"
 
     found_weak = false
