@@ -50,6 +50,15 @@ module Dust
     print_msg "#{green}|#{recipe}|#{none}\n", options
   end
 
+  # prints stdout in grey and stderr in red (if existend)
+  def self.print_ret ret, options={:quiet => false, :indent => -1}
+    opts = options.clone
+
+    opts[:indent] += 1
+    print_msg "#{grey}#{ret[:stdout].chomp}#{none}\n", opts unless ret[:stdout].empty?
+    print_msg "#{red}#{ret[:stderr].chomp}#{none}\n", opts unless ret[:stderr].empty?
+  end
+
   # indent according to options[:indent]
   # indent 0
   #  - indent 1

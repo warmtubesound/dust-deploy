@@ -69,7 +69,6 @@ module Dust
   
       { :stdout => stdout, :stderr => stderr, :exit_code => exit_code, :exit_signal => exit_signal }
     end
- 
 
     def write destination, content, options = {}
       options = default_options.merge options
@@ -272,12 +271,8 @@ module Dust
         return false
       end
      
-      Dust.print_result ret[:exit_code], options 
-
-      # display stderr and stdout
-      puts
-      puts "#{Dust.grey}#{ret[:stdout]}#{Dust.none}"
-      puts "#{Dust.red}#{ret[:stderr]}#{Dust.none}"
+      Dust.print_result ret[:exit_code], options
+      Dust.print_ret ret, options
     end
 
     # determining the system packet manager has to be done without facter
@@ -442,11 +437,7 @@ module Dust
     def print_service_status service, options = {}
       options = default_options.merge options
       ret = service service, 'status', options
-
-      options[:indent] += 1
-      Dust.print_msg "#{Dust.grey}#{ret[:stdout].chomp}#{Dust.none}", options unless ret[:stdout].empty?
-      Dust.print_msg "#{Dust.red}#{ret[:stderr].chomp}#{Dust.none}", options unless ret[:stderr].empty?
-
+      Dust.print_ret ret, options
       ret
     end
 
