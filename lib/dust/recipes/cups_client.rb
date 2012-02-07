@@ -9,6 +9,13 @@ class CupsClient < Recipe
     @node.write '/etc/cups/client.conf', "ServerName #{@config}\n"
   end
   
+  desc 'cups_client:status', 'shows current /etc/cups/client.conf'
+  def status
+    ::Dust.print_msg 'getting /etc/cups/client.conf'
+    ret = @node.exec 'cat /etc/cups/client.conf'
+    ::Dust.print_result ret[:exit_code]
+    ::Dust.print_ret ret
+  end
   
   private
   
