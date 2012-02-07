@@ -17,5 +17,21 @@ class Locale < Recipe
       ::Dust.print_failed 'os not supported'
     end
   end
+  
+  desc 'locale:status', 'shows current locale'
+  def status
+    ::Dust.print_msg 'getting current locale'
+
+    if @node.uses_apt?
+      ret = @node.exec 'cat /etc/default/locale'
+    elsif @node.uses_rpm?
+      ret = @node.exec 'cat /etc/sysconfig/i18n'
+    else
+      return ::Dust.print_failed
+    end
+    
+    ::Dust.print_result ret[:exit_code]
+    ::Dust.print_ret ret
+  end  
 end
 
