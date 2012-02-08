@@ -1,6 +1,27 @@
 Changelog
 =============
 
+0.7.0
+------------
+
+-  adds sudo support, you can now connect using an unpriviledged user. needs sudo rights, e.g.: 
+   <username> ALL=(ALL) ALL
+
+    hostname: myhost
+    port: 22
+    user: myuser
+    password: mypass # not needed when connecting using ssh keys
+    sudo: true
+
+
+-  adds status command to most recipes (you can now watch the status of current recipes/daemons with 'dust status'
+-  node.restart/reload now tries systemd, upstart, sysvconfig and then uses initscript as fallback
+-  node.autostart_service now uses systemd on rpm systems (if available), falls back to chkconfig
+-  adds node.print_service_status method, used to retrieve daemon status
+-  adds new ::Dust.print_ret method, used to print stderr/stdout from node.exec in different colors 
+-  mysql recipe now defaults to 0.7 of system ram for innodb buffer size, because 0.8 sometimes lead to oom situations
+
+
 0.6.2
 ------------
 
@@ -11,6 +32,7 @@ Changelog
         port: 6379
         daemonize: yes
 
+-  the redis recipe also supports the 'status' command
 -  fixes hash_check recipe, now works with centos-like machines as well
 -  improves mysql recipe: now sets shm sysctls as well (like the postgresql recipe does)
 -  small improvements to automatic innodb tuning
