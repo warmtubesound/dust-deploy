@@ -147,7 +147,7 @@ module  Dust
         next unless options[:recipes].include?(recipe) if options[:recipes]
       
         # skip disabled recipes
-        next if config == 'disabled'
+        next if config == 'disabled' or config.is_a? FalseClass
       
         # check if method and thor task actually exist
         k = Thor::Util.find_by_namespace recipe
