@@ -100,7 +100,7 @@ class Postgres < Recipe
       @node.collect_facts :quiet => true
 
       # get pagesize
-      pagesize = @node.exec('getconf PAGESIZE')[:stdout] || 4096
+      pagesize = @node.exec('getconf PAGESIZE')[:stdout].to_i || 4096
 
       # use half of system memory for shmmax
       shmmax = ::Dust.convert_size(@node['memorysize']) * 1024 / 2
