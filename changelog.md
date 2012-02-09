@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.7.2
+------------
+
+-  fixes small bug in postgres recipe
+
+
 0.7.1
 ------------
 
