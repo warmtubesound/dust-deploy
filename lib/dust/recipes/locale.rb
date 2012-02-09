@@ -34,4 +34,3 @@ class Locale < Recipe
     ::Dust.print_ret ret
   end  
 end
-

@@ -106,4 +106,3 @@ class Repositories < Recipe
     end
   end
 end
-

@@ -43,4 +43,3 @@ class Sudoers < Recipe
     @node.chown 'root:root', "/etc/sudoers.d/#{name}", :indent => 2    
   end
 end
-

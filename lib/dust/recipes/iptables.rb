@@ -294,4 +294,3 @@ class Iptables < Recipe
   end
 
 end
-

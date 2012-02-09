@@ -29,4 +29,3 @@ class RcLocal < Recipe
     ::Dust.print_ret ret
   end
 end
-

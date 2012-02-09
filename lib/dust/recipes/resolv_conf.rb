@@ -47,4 +47,3 @@ class ResolvConf < Recipe
     ::Dust.print_ret ret
   end  
 end
-

@@ -18,4 +18,3 @@ class EtcHosts < Recipe
     ::Dust.print_ret ret
   end
 end
-

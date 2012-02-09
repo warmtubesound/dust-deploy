@@ -24,4 +24,3 @@ class UnattendedUpgrades < Recipe
     @node.write '/etc/apt/apt.conf.d/02periodic', periodic      
   end
 end
-

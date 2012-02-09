@@ -6,4 +6,3 @@ class RemovePackages < Recipe
     end
   end
 end
-

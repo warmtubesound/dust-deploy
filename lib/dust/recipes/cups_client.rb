@@ -31,4 +31,3 @@ class CupsClient < Recipe
     true
   end
 end
-

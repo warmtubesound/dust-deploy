@@ -38,4 +38,3 @@ class Nginx < Recipe
     @node.print_service_status 'nginx'
   end  
 end
-

@@ -6,4 +6,3 @@ class Packages < Recipe
     end
   end
 end
-

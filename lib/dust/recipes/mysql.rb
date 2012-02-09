@@ -156,4 +156,3 @@ class Mysql < Recipe
     end
   end
 end
-

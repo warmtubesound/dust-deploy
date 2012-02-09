@@ -33,6 +33,7 @@ class Logrotate < Recipe
     ::Dust.print_ret @node.exec('ls /etc/logrotate.d/*')
   end
 
+
   private
 
   def default_args

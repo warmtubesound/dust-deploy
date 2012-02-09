@@ -30,4 +30,3 @@ class BasicSetup < Recipe
 
   end
 end
-

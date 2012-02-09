@@ -8,11 +8,11 @@ class Duplicity < Recipe
 
     # return if config simply says 'remove'
     return if @config == 'remove'
-    
+
     @config.each do |scenario, c|
       # cloning is necessary if we have configurations with multiple hostnames
       config = c.clone
-      
+
       # if directory config options is not given, use hostname-scenario
       config['directory'] ||= "#{@node['hostname']}-#{scenario}"
 
@@ -22,14 +22,14 @@ class Duplicity < Recipe
         next
       end
 
-      # check if interval is correct   
+      # check if interval is correct
       unless [ 'monthly', 'weekly', 'daily', 'hourly' ].include? config['interval']
         return ::Dust.print_failed "invalid interval: '#{config['interval']}'"
       end
 
       # check whether we need ncftp
       @node.install_package 'ncftp' if config['backend'].include? 'ftp://'
-      
+
       # scp backend on centos needs python-pexpect (not needed anymore for newer systems)
       # @node.install_package 'python-pexpect' if config['backend'].include? 'scp://' and @node.uses_rpm?
 
@@ -46,11 +46,11 @@ class Duplicity < Recipe
       cronjob_path = "/etc/cron.#{config['interval']}/duplicity-#{scenario}"
 
       # adjust and upload cronjob
-      ::Dust.print_msg "adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n"      
+      ::Dust.print_msg "adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n"
       config['options'].each { |option| ::Dust.print_ok "adding option: #{option}", :indent => 2 }
-      
+
       @node.deploy_file "#{@template_path}/cronjob", cronjob_path, :binding => binding
-      
+
       # making cronjob executeable
       @node.chmod '0700', cronjob_path
       puts
@@ -76,7 +76,7 @@ class Duplicity < Recipe
       cmd = "nice -n #{config['nice']} duplicity collection-status " +
             "--archive-dir #{config['archive']} " +
             "#{File.join(config['backend'], config['directory'])}"
-  
+
       cmd += " |tail -n3 |head -n1" unless options.long?
 
       ret = @node.exec cmd
@@ -103,4 +103,3 @@ class Duplicity < Recipe
   end
 
 end
-

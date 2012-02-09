@@ -17,4 +17,3 @@ class Aliases < Recipe
     ::Dust.print_ret ret
   end
 end
-

@@ -43,4 +43,3 @@ class Debsecan < Recipe
     end
   end
 end
-
