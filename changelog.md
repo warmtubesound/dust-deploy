@@ -1,6 +1,19 @@
 Changelog
 =============
 
+0.7.1
+------------
+
+-  adds logrotate recipe
+-  you can now enable recipes using default configuration:
+   
+    recipes:
+      recipe1: true
+      recipe2: enabled
+      recipe3: false
+      recipe4: disabled
+
+
 0.7.0
 ------------
 
