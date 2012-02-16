@@ -1,6 +1,11 @@
 Changelog
 =============
 
+0.7.3
+------------
+
+-  fixes issue in node.get_home (errors when there were two similar usernames or two passwd entries for the same user)
+
 0.7.2
 ------------
 
