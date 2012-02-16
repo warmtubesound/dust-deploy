@@ -244,11 +244,11 @@ module Dust
       options = default_options.merge options
       options[:env] ||= ''
       
-      if package_installed? package, :quiet=>true
-        return Dust.print_ok "package #{package} already installed"
+      if package_installed? package, :quiet => true
+        return Dust.print_ok "package #{package} already installed", options
       end
 
-      Dust.print_msg "installing #{package}"
+      Dust.print_msg "installing #{package}", options
 
       if uses_apt?
         exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
@@ -257,11 +257,11 @@ module Dust
       elsif uses_rpm?
         exec "yum install -y #{package}"
       else
-        Dust.print_failed 'install_package only supports apt, emerge and rpm systems at the moment'
+        Dust.print_failed 'install_package only supports apt, emerge and rpm systems at the moment', options
       end
 
       # check if package actually was installed
-      Dust.print_result package_installed? package, :quiet => true
+      Dust.print_result package_installed?(package, :quiet => true), options
     end
 
     def remove_package package, options = {}
