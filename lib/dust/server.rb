@@ -515,7 +515,7 @@ module Dust
       options = default_options(:quiet => true).merge options
       
       Dust.print_msg "getting home directory of #{user}"
-      ret = exec "getent passwd |grep '^#{user}' |cut -d':' -f6"
+      ret = exec "getent passwd |cut -d':' -f1,6 |grep '^#{user}' |head -n1 |cut -d: -f2"
       if Dust.print_result ret[:exit_code]     
         return ret[:stdout].chomp
       else
