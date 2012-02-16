@@ -350,8 +350,8 @@ module Dust
     def is_os? os_list, options = {}
       options = default_options(:quiet => true).merge options
 
-      Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options
-      collect_facts options
+      Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options      
+      return Dust.print_failed '', options unless collect_facts options
 
       os_list.each do |os|
         if @node['operatingsystem'].downcase == os.downcase
@@ -537,7 +537,7 @@ module Dust
       end
 
       unless package_installed? 'facter', :quiet => true
-        install_package 'facter', :quiet => false
+        return false unless install_package 'facter', :quiet => false
       end
 
       Dust.print_msg "collecting additional system facts (using facter)", options
