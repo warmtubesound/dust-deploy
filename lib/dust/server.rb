@@ -124,6 +124,9 @@ module Dust
     def scp source, destination, options = {}
       options = default_options.merge options
 
+      # make sure scp is installed on client
+      install_package 'openssh-clients', :quiet => true if uses_rpm?
+
       Dust.print_msg "deploying #{File.basename source}", options
 
       # if in sudo mode, copy file to temporary place, then move using sudo
