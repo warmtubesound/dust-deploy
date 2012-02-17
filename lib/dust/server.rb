@@ -50,7 +50,7 @@ module Dust
       @ssh.close
     end
   
-    def exec command
+    def exec command, options={:live => false}
       sudo_authenticated = false
       stdout = ''
       stderr = ''
@@ -78,10 +78,16 @@ module Dust
               sudo_authenticated = true
             else
               stdout += data
-            end            
+            end
+
+            Dust.print_msg "#{Dust.green 0}#{data}#{Dust.none}", :indent => 0 if options[:live] and not data.empty?
           end
 
-          channel.on_extended_data { |ch, type, data| stderr += data }
+          channel.on_extended_data do |ch, type, data|
+            stderr += data
+            Dust.print_msg "#{Dust.red 0}#{data}#{Dust.none}", :indent => 0 if options[:live] and not data.empty?
+          end
+
           channel.on_request('exit-status') { |ch, data| exit_code = data.read_long }
           channel.on_request('exit-signal') { |ch, data| exit_signal = data.read_long }
         end
@@ -290,38 +296,53 @@ module Dust
       options = default_options.merge options
 
       Dust.print_msg 'updating system repositories', options
+      puts if options[:live]
 
       if uses_apt?
-        Dust.print_result exec('aptitude update')[:exit_code], options
+        ret = exec 'aptitude update', options
       elsif uses_emerge?
-        Dust.print_result exec('emerge --sync')[:exit_code], options
+        ret = exec 'emerge --sync', options
       elsif uses_rpm?
-        Dust.print_result exec('yum check-update')[:exit_code], options
+        ret = exec 'yum check-update', options
       else
-        Dust.print_failed '', options
+        return Dust.print_failed '', options
       end
+
+      if options[:live]
+        puts
+      else
+        Dust.print_result ret[:exit_code], options
+      end
+ 
+      ret[:exit_code]
     end
 
     def system_update options = {}
-      options = default_options.merge options
+      options = default_options.merge(:live => true).merge(options)
     
       update_repos
       
       Dust.print_msg 'installing system updates', options
+      puts if options[:live]
 
       if uses_apt?
-        ret = exec 'DEBIAN_FRONTEND=noninteractive aptitude full-upgrade -y'
+        ret = exec 'DEBIAN_FRONTEND=noninteractive aptitude full-upgrade -y', options
       elsif uses_emerge?
-        ret = exec 'emerge -uND @world'
+        ret = exec 'emerge -uND @world', options
       elsif uses_rpm?
-        ret = exec 'yum upgrade -y'
+        ret = exec 'yum upgrade -y', options
       else
-        Dust.print_failed "\nsystem not (yet) supported", options
+        Dust.print_failed 'system not (yet) supported', options
         return false
       end
-      
-      Dust.print_result ret[:exit_code], options
-      Dust.print_ret ret, options.merge(:indent => -1)
+
+      if options[:live] 
+        puts
+      else
+        Dust.print_result ret[:exit_code], options
+      end
+
+      ret[:exit_code]
     end
 
     # determining the system packet manager has to be done without facter

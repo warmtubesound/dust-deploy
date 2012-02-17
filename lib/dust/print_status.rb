@@ -55,8 +55,8 @@ module Dust
     opts = options.clone
 
     opts[:indent] += 1
-    print_msg "#{grey}#{ret[:stdout].chomp}#{none}\n", opts unless ret[:stdout].empty?
-    print_msg "#{red}#{ret[:stderr].chomp}#{none}\n", opts unless ret[:stderr].empty?
+    print_msg "#{green 0}#{ret[:stdout].chomp}#{none}\n", opts unless ret[:stdout].empty?
+    print_msg "#{red 0}#{ret[:stderr].chomp}#{none}\n", opts unless ret[:stderr].empty?
   end
 
   # indent according to options[:indent]
