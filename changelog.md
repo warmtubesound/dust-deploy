@@ -1,10 +1,20 @@
 Changelog
 =============
 
+0.7.4
+------------
+
+-  node.install_package now repsects options
+-  make sure openssh-clients is installed on rpm machines before trying to scp
+-  node.exec now supports :live => true option, which displays stdout/stderr live
+-  'dust system_update' uses this new live function, so you can now watch the update process live
+
+
 0.7.3
 ------------
 
 -  fixes issue in node.get_home (errors when there were two similar usernames or two passwd entries for the same user)
+
 
 0.7.2
 ------------
