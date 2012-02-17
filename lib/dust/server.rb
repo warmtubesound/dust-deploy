@@ -319,9 +319,9 @@ module Dust
         Dust.print_failed "\nsystem not (yet) supported", options
         return false
       end
-     
+      
       Dust.print_result ret[:exit_code], options
-      Dust.print_ret ret, options
+      Dust.print_ret ret, options.merge(:indent => -1)
     end
 
     # determining the system packet manager has to be done without facter
