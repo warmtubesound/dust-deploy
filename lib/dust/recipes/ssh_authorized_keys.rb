@@ -40,14 +40,14 @@ class SshAuthorizedKeys < Recipe
   # creating user if not existent
   def deploy_authorized_keys user, authorized_keys
     # create user, if not existent
-    next unless @node.create_user user
+    return unless @node.create_user user
     
     home = @node.get_home user
     # check and create necessary directories
-    next unless @node.mkdir("#{home}/.ssh")
+    return unless @node.mkdir("#{home}/.ssh")
     
     # deploy authorized_keys
-    next unless @node.write "#{home}/.ssh/authorized_keys", authorized_keys
+    return unless @node.write "#{home}/.ssh/authorized_keys", authorized_keys
     
     # check permissions
     @node.chown "#{user}:#{user}", "#{home}/.ssh"
