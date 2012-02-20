@@ -12,7 +12,7 @@ class Sudoers < Recipe
       if rule.is_a? String
         file = "#{rule}\n"
         
-      # rulename: { user: [ user1, user2 ], command: [ cmd1, cmd2 ] }
+      # rulename: { user: [ user1, user2 ], command: [ cmd1, cmd2 ] }
       else
         unless rule['user'] and rule['command']
           ::Dust.print_failed 'user or command missing', :indent => 2

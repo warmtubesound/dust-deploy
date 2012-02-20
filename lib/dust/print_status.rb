@@ -25,25 +25,25 @@ module Dust
   def self.print_ok string='', options={:quiet => false, :indent => 1}
     opts = options.clone
     opts[:indent] = 0 if string.empty?
-    print_msg "#{string} #{blue}[ ok ]#{none}\n", opts
+    print_msg "#{string} #{blue}[ ok ]#{none}\n", opts
     true
   end
 
   def self.print_failed string='', options={:quiet => false, :indent => 1}
     opts = options.clone
     opts[:indent] = 0 if string.empty?
-    print_msg "#{string} #{red}[ failed ]#{none}\n", opts
+    print_msg "#{string} #{red}[ failed ]#{none}\n", opts
     false
   end
 
   def self.print_warning string='', options={:quiet => false, :indent => 1}
     opts = options.clone
     opts[:indent] = 0 if string.empty?
-    print_msg "#{string} #{yellow}[ warning ]#{none}\n", opts
+    print_msg "#{string} #{yellow}[ warning ]#{none}\n", opts
   end
 
   def self.print_hostname hostname, options={:quiet => false, :indent => 0}
-    print_msg "\n[ #{blue}#{hostname}#{none} ]\n\n", options
+    print_msg "\n[ #{blue}#{hostname}#{none} ]\n\n", options
   end
 
   def self.print_recipe recipe, options={:quiet => false, :indent => 0}
