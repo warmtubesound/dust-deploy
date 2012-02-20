@@ -77,9 +77,7 @@ module  Dust
         # connect to server
         server = Server.new node
         next unless server.connect
-        ret = server.exec cmd
-        puts "#{Dust.grey}#{ret[:stdout]}#{Dust.none}"
-        puts "#{Dust.red}#{ret[:stderr]}#{Dust.none}"
+        server.exec cmd, :live => true
         server.disconnect
       end
     end
