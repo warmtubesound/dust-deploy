@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.7.5
+------------
+
+-  dust is now compatible with ruby 1.9 again
+-  'dust exec' now displays stdout/stderr live
+
+
 0.7.4
 ------------
 
