@@ -11,8 +11,7 @@ class HashCheck < Recipe
     ::Dust.print_msg "checking for weak password hashes\n"
 
     found_weak = false
-
-    shadow.each do |line|
+    shadow.each_line do |line|
       user, hash = line.split(':')[0..1]
       next if keys.include? hash
       method, salt = hash.split('$')[1..2]

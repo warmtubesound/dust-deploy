@@ -255,7 +255,7 @@ class Iptables < Recipe
   
   # prepend iptables command on non-centos-like machines
   def prepend_cmd
-    @script = @script.map { |s| "#{cmd} #{s}" }.to_s unless @node.uses_rpm?
+    @script.gsub! /^/, "#{cmd} " unless @node.uses_rpm?
   end
   
   # apply newly pushed rules

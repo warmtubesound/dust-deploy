@@ -6,6 +6,8 @@ class RcLocal < Recipe
       ::Dust.print_msg "configuring custom startup script\n"
 
       rc = ''
+      @config = [ @config ] unless @config.is_a? Enumerable
+
       @config.each do |cmd|
         ::Dust.print_msg "adding command: #{cmd}", :indent => 2
         rc += "#{cmd}\n"

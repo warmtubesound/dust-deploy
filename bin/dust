@@ -208,6 +208,7 @@ module  Dust
 
         # if more than one hostname is specified, create a node
         # with the same settings for each hostname
+        node['hostname'] = [ node['hostname'] ] unless node['hostname'].is_a? Enumerable
         node['hostname'].each do |hostname|
           n = node.clone
 
