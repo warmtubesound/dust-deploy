@@ -304,6 +304,10 @@ module Dust
         ret = exec 'emerge --sync', options
       elsif uses_rpm?
         ret = exec 'yum check-update', options
+
+        # yum returns != 0 if packages that need to be updated are found
+        # we don't want that this is producing an error
+        ret[:exit_code] = 0 if ret[:exit_code] == 100
       else
         return Dust.print_failed '', options
       end
