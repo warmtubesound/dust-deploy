@@ -394,36 +394,42 @@ module Dust
     def is_debian? options = {}
       options = default_options(:quiet => true).merge options
 
+      return false unless uses_apt?
       is_os? ['debian'], options
     end
   
     def is_ubuntu? options = {}
       options = default_options(:quiet => true).merge options
 
+      return false unless uses_apt?
       is_os? ['ubuntu'], options
     end
   
     def is_gentoo? options = {}
       options = default_options(:quiet => true).merge options
 
+      return false unless uses_emerge?
       is_os? ['gentoo'], options
     end
   
     def is_centos? options = {}
       options = default_options(:quiet => true).merge options
 
+      return false unless uses_rpm?
       is_os? ['centos'], options
     end
   
     def is_scientific? options = {}
       options = default_options(:quiet => true).merge options
 
+      return false unless uses_rpm?
       is_os? ['scientific'], options
     end
 
     def is_fedora? options = {}
       options = default_options(:quiet => true).merge options
 
+      return false unless uses_rpm?
       is_os? ['fedora'], options
     end
   
