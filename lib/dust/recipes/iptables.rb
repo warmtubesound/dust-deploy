@@ -203,7 +203,7 @@ class Iptables < Recipe
     sorted = []
     rule.each do |r|
       # sort rules so it makes sense
-      r = r.sort_by do |x|
+      r = r.to_array.sort_by do |x|
         if x.include? '--match'
           -1
           elsif x.include? '--protocol'

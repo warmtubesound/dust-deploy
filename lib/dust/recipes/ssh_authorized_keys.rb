@@ -21,7 +21,7 @@ class SshAuthorizedKeys < Recipe
     authorized_keys = ''
     
     # create the authorized_keys hash for this user
-    ssh_users.each do |ssh_user|
+    ssh_users.to_array.each do |ssh_user|
       users[ssh_user]['name'] ||= ssh_user
       ::Dust.print_msg "adding user #{users[ssh_user]['name']}", :indent => 2
       users[ssh_user]['keys'].each do |key|
