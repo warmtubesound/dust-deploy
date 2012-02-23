@@ -11,14 +11,15 @@ class Nginx < Recipe
     @node.rm '/etc/nginx/sites-*/*', :quiet => true
     ::Dust.print_ok
 
-    @config.each do |state, site|
-      
-      @node.deploy_file "#{@template_path}/sites/#{site}", "/etc/nginx/sites-available/#{site}", :binding => binding
+    @config.each do |state, sites|
+      sites.to_array.each do |site|
+        @node.deploy_file "#{@template_path}/sites/#{site}", "/etc/nginx/sites-available/#{site}", :binding => binding
     
-      # symlink to sites-enabled if this is listed as an enabled site
-      if state == 'sites-enabled'
-        ::Dust.print_msg "enabling #{site}", :indent => 2
-        ::Dust.print_result @node.exec("cd /etc/nginx/sites-enabled && ln -s ../sites-available/#{site} #{site}")[:exit_code]
+        # symlink to sites-enabled if this is listed as an enabled site
+        if state == 'sites-enabled'
+          ::Dust.print_msg "enabling #{site}", :indent => 2
+          ::Dust.print_result @node.exec("cd /etc/nginx/sites-enabled && ln -s ../sites-available/#{site} #{site}")[:exit_code]
+        end
       end
     end
 
