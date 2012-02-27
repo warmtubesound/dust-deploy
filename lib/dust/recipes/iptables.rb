@@ -26,7 +26,7 @@ class Iptables < Recipe
       
       ::Dust.print_msg "generating ipv#{@ip_version} rules\n"
 
-      clear_all_tables
+      clear_all
       populate_rule_defaults
       generate_all_rules
         
@@ -56,16 +56,18 @@ class Iptables < Recipe
   end
   
   # deletes all rules/chains
-  def clear_all_tables
+  def clear_all
     return if @node.uses_rpm?
-    
-    # clear all rules
-    @tables['ipv' + @ip_version.to_s].keys.each { |table| @script.concat "--flush --table #{table}\n" }
-    
-    # delete all custom chains
-    @script.concat "--delete-chain \n" unless @node.uses_rpm?
+
+    @tables['ipv' + @ip_version.to_s].keys.each do |table|
+      # clear all rules
+      @script.concat "--flush --table #{table}\n"
+
+      # delete all custom chains
+      @script.concat "--delete-chain --table #{table}\n" unless @node.uses_rpm?
+    end
   end
-  
+
   # inserts default values to chains, if not given
   # table defaults to filter
   # jump target to ACCEPT
@@ -81,7 +83,7 @@ class Iptables < Recipe
       end
     end
   end
-  
+
   # generates all iptables rules
   def generate_all_rules
     @tables['ipv' + @ip_version.to_s].each do |table, chains|
@@ -93,21 +95,40 @@ class Iptables < Recipe
 
   # set the chain default policies to DROP/ACCEPT
   # according to whether chain is specified in config file
-  def set_chain_policies table
-    #::Dust.print_msg "#{::Dust.pink}#{table}#{Dust.none} table\n", :indent => 2
-    #::Dust.print_msg "setting default policies\n", :indent => 3
+  # and create custom chains
+  def set_chain_policies table  
     
+    # build in chains
     @tables['ipv' + @ip_version.to_s][table].each do |chain|
       policy = get_chain_policy table, chain
-      #::Dust.print_msg "#{table}/#{chain} -> #{policy}", :indent => 4
 
       if @node.uses_rpm?
         @script.concat ":#{chain.upcase} #{policy} [0:0]\n"
       else
         @script.concat "--table #{table} --policy #{chain.upcase} #{policy}\n"
       end
+    end
+
+    # custom chains
+    @config.each do |chain, chain_rules|
+      # filter out build in chains
+      next if @tables['ipv' + @ip_version.to_s][table].include? chain.upcase
+
+      # only continue if this chain is used in this table
+      chain_used_in_table = false
+      chain_rules.each do |name, rule|
+        if rule['table'].include? table
+          chain_used_in_table = true 
+          break
+        end
+      end
+      next unless chain_used_in_table
       
-      #::Dust.print_ok
+      if @node.uses_rpm?
+        @script.concat ":#{chain.upcase} - [0:0]\n"
+      else
+        @script.concat "--table #{table} --new-chain #{chain.upcase}\n"
+      end    
     end
   end
 
