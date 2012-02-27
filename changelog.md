@@ -1,6 +1,18 @@
 Changelog
 =============
 
+0.7.6
+------------
+
+-  further improvement of ruby1.9 support
+-  problem in nginx recipe fixed when using multiple sites
+-  adds sysctl recipe
+
+    recipes:
+      sysctl:
+        net.ipv4.tcp_max_syn_backlog: 1024
+
+
 0.7.5
 ------------
 
