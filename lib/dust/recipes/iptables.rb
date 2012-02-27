@@ -1,7 +1,7 @@
 require 'ipaddress'
 
 class Iptables < Recipe
-  
+
   desc 'iptables:deploy', 'configures iptables firewall'
   def deploy
     # list of all tables and chains
@@ -17,22 +17,22 @@ class Iptables < Recipe
     @tables['ipv6']['mangle'] = [ 'INPUT', 'OUTPUT', 'FORWARD', 'PREROUTING', 'POSTROUTING' ]
     @tables['ipv6']['raw'] = [ 'OUTPUT', 'PREROUTING' ]
 
-    
+
     return unless install
-    
+
     [4, 6].each do |v|
-      @script = '' 
+      @script = ''
       @ip_version = v
-      
+
       ::Dust.print_msg "generating ipv#{@ip_version} rules\n"
 
       clear_all
       populate_rule_defaults
       generate_all_rules
-        
+
       deploy_script
       apply_rules
-      
+
       puts
     end
   end
@@ -54,7 +54,7 @@ class Iptables < Recipe
     return false unless @node.install_package 'iptables-ipv6' if @node.uses_rpm? and not @node.is_fedora?
     true
   end
-  
+
   # deletes all rules/chains
   def clear_all
     return if @node.uses_rpm?
@@ -87,7 +87,7 @@ class Iptables < Recipe
   # generates all iptables rules
   def generate_all_rules
     @tables['ipv' + @ip_version.to_s].each do |table, chains|
-      @script.concat "*#{table}\n" if @node.uses_rpm? 
+      @script.concat "*#{table}\n" if @node.uses_rpm?
       set_chain_policies table
       generate_rules_for_table table
     end
@@ -96,8 +96,8 @@ class Iptables < Recipe
   # set the chain default policies to DROP/ACCEPT
   # according to whether chain is specified in config file
   # and create custom chains
-  def set_chain_policies table  
-    
+  def set_chain_policies table
+
     # build in chains
     @tables['ipv' + @ip_version.to_s][table].each do |chain|
       policy = get_chain_policy table, chain
@@ -118,17 +118,17 @@ class Iptables < Recipe
       chain_used_in_table = false
       chain_rules.each do |name, rule|
         if rule['table'].include? table
-          chain_used_in_table = true 
+          chain_used_in_table = true
           break
         end
       end
       next unless chain_used_in_table
-      
+
       if @node.uses_rpm?
         @script.concat ":#{chain.upcase} - [0:0]\n"
       else
         @script.concat "--table #{table} --new-chain #{chain.upcase}\n"
-      end    
+      end
     end
   end
 
@@ -151,12 +151,12 @@ class Iptables < Recipe
     @config.each do |chain, chain_rules|
       rules = get_rules_for_table chain_rules, table
       next if rules.empty?
-      
+
       #::Dust.print_msg "#{::Dust.pink}#{chain}#{::Dust.none} rules\n", :indent => 3
       rules.sort.each do |name, rule|
         next unless rule['table'].include? table
         next unless check_ip_version rule
-        
+
         ::Dust.print_msg "adding rule: #{name}", :indent => 2
         generate_iptables_string chain, rule
         ::Dust.print_ok
@@ -164,11 +164,11 @@ class Iptables < Recipe
     end
     @script.concat "COMMIT\n" if @node.uses_rpm?
   end
-  
+
   def get_rules_for_table rules, table
     rules.select { |name, rule| rule['table'].include? table }
   end
-  
+
   # check if source and destination ip (if given)
   # are valid ips for this ip version
   def check_ip_version rule
@@ -182,8 +182,8 @@ class Iptables < Recipe
       return false unless rule['ip-version'].include? @ip_version if rule['ip-version']
     end
     true
-  end  
-  
+  end
+
   # generates the iptables string out of a rule
   def generate_iptables_string chain, rule
     parse_rule(rule).each do |r|
@@ -196,17 +196,17 @@ class Iptables < Recipe
   def parse_rule r
     with_dashes = {}
     result = []
-    
+
     # map r[key] = value to '--key value'
     r.each do |k, v|
       next if k == 'ip-version' # skip ip-version, since its not iptables option
       next if k == 'table' if @node.uses_rpm? # rpm-firewall takes table argument with *table
-      
+
       with_dashes[k] = r[k].map do |v|
         value = v.to_s
         if value.start_with? '!', '! '
           # map '--key ! value' to '! --key value'
-          value.slice! '!' 
+          value.slice! '!'
           value.lstrip!
           "! --#{k} #{value}"
           else
@@ -215,11 +215,11 @@ class Iptables < Recipe
       end
     end
     with_dashes.values.each { |a| result = result.combine a }
-    
+
     sort_rule_options result
   end
-  
-  # make sure the options are sorted in a way that works.  
+
+  # make sure the options are sorted in a way that works.
   def sort_rule_options rule
     sorted = []
     rule.each do |r|
@@ -249,22 +249,22 @@ class Iptables < Recipe
       end
       sorted.push r
     end
-    
-    sorted    
+
+    sorted
   end
-  
-  def deploy_script 
+
+  def deploy_script
     target = get_target
-    
+
     prepend_cmd
-    prepend_header    
-    
+    prepend_header
+
     @node.write target, @script, :quiet => true
 
     if @node.uses_rpm?
       @node.chmod '600', target
     else
-      @node.chmod '700', target      
+      @node.chmod '700', target
     end
   end
 
@@ -273,17 +273,17 @@ class Iptables < Recipe
     @script.insert 0, "#!/bin/sh\n" unless @node.uses_rpm?
     @script.insert 0, "# automatically generated by dust\n\n"
   end
-  
+
   # prepend iptables command on non-centos-like machines
   def prepend_cmd
     @script.gsub! /^/, "#{cmd} " unless @node.uses_rpm?
   end
-  
+
   # apply newly pushed rules
   def apply_rules
     if @options.restart?
       ::Dust.print_msg "applying ipv#{@ip_version} rules"
-      
+
       if @node.uses_rpm?
         ::Dust.print_result @node.exec("/etc/init.d/#{cmd} restart")[:exit_code]
 
@@ -303,12 +303,12 @@ class Iptables < Recipe
 
   # set the target file depending on distribution
   def get_target
-    target = "/etc/#{cmd}"    
+    target = "/etc/#{cmd}"
     target = "/etc/network/if-pre-up.d/#{cmd}" if @node.uses_apt?
     target = "/etc/sysconfig/#{cmd}" if @node.uses_rpm?
     target
   end
-  
+
   def cmd
     return 'iptables' if @ip_version == 4
     return 'ip6tables' if @ip_version == 6
