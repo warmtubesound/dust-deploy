@@ -1,6 +1,34 @@
 Changelog
 =============
 
+0.8.0
+------------
+
+-  adds templates support for sysctl recipe (database, mysql and postgres templates are supported)
+-  removes automatic sysctl configuration from database recipes (mysql and postgres)
+   to preserve the way it was, you have to add the according database template to your sysctl configuration:
+
+    recipes:
+      postgres:
+        <your postgres configuration here>
+
+      sysctl:
+        templates: postgres
+        <your sysctl configuration here>
+
+
+-  iptables: fixes a small issue where custom chains in tables != filter were not cleared correctly
+-  iptables: support custom chains now
+
+    recipes:
+      iptables:
+        input:
+          rule_1: { ..., jump: CUSTOM }
+        custom:
+          custom_1: ...
+
+
+
 0.7.6
 ------------
 
