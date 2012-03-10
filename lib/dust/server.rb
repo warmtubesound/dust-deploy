@@ -190,6 +190,20 @@ module Dust
       Dust.print_result exec("rm -rf #{file}")[:exit_code], options
     end
 
+    def cp source, destination, options = {}
+      options = default_options.merge options
+
+      Dust.print_msg "copying #{source} to #{destination}", options
+      Dust.print_result exec("cp -a #{source} #{destination}")[:exit_code], options
+    end
+
+    def mv source, destination, options = {}
+      options = default_options.merge options
+
+      Dust.print_msg "moving #{source} to #{destination}", options
+      Dust.print_result exec("mv #{source} #{destination}")[:exit_code], options
+    end
+
     def mkdir dir, options = {}
       options = default_options.merge options
 
