@@ -8,11 +8,11 @@ class Cjdroute< Recipe
 
     return unless install_dependencies
     return unless get_latest_version
-    return unless @node.mkdir "#{@config['build_dir']}/build"
 
     # clean up building directory, if --restart is given
     # using --restart, since there's no --cleanup
     return unless make_clean if @options.restart?
+    return unless @node.mkdir "#{@config['build_dir']}/build"
 
     # compiling action
     return unless run_cmake
@@ -98,6 +98,12 @@ class Cjdroute< Recipe
 
     return false unless @node.install_package 'cmake', :indent => 2
 
+    # check cmake version
+    ret = @node.exec 'cmake --version'
+    ver = ret[:stdout].match(/2.[0-9]/)[0].to_f
+    return ::Dust.print_failed 'cjdroute requires cmake 2.8 or higher' if ver < 2.8
+
+
     if @node.uses_apt?
       return false unless @node.install_package 'git-core', :indent => 2
       return false unless @node.install_package 'build-essential', :indent => 2
@@ -146,7 +152,7 @@ class Cjdroute< Recipe
 
   # remove and recreate building directory
   def make_clean
-    ::Dust.print_msg 'cleaning build directory'
+    ::Dust.print_msg 'cleaning up'
     return false unless ::Dust.print_result @node.exec("rm -rf #{@config['build_dir']}/build")[:exit_code]
     true
   end
