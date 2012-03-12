@@ -27,13 +27,10 @@ class Cjdroute< Recipe
     # create the config file and place it into etc_dir
     return unless generate_config
 
-    # create the tuntap interface
-    return unless create_tuntap
+    start_cjdroute
 
     # add route for cjdns network
     return unless add_route
-
-    start_cjdroute
   end
 
 
@@ -196,19 +193,6 @@ class Cjdroute< Recipe
 
     return false unless @node.mkdir @config['etc_dir']
     return @node.write "#{@config['etc_dir']}/cjdroute.conf", JSON.pretty_generate(cjdroute_conf)
-  end
-
-  # creates the cjdroute tuntap device
-  def create_tuntap
-    unless @node.exec("/sbin/ip tuntap list |grep #{@config['tun']}")[:exit_code] == 0
-      ::Dust.print_msg "creating tun interface #{@config['tun']}"
-      return false unless ::Dust.print_result @node.exec("/sbin/ip tuntap add mode tun dev #{@config['tun']}")[:exit_code]
-    else
-      ::Dust.print_msg "tun interface #{@config['tun']} already exists, flushing ip addresses"
-      ::Dust.print_result @node.exec("ip addr flush dev #{@config['tun']}")[:exit_code]
-    end
-
-    true
   end
 
   # set the route for the cjdns network
