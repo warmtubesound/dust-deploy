@@ -193,12 +193,18 @@ module Dust
     def cp source, destination, options = {}
       options = default_options.merge options
 
+      # get rid of overly careful aliases
+      exec 'unalias -a'
+
       Dust.print_msg "copying #{source} to #{destination}", options
       Dust.print_result exec("cp -a #{source} #{destination}")[:exit_code], options
     end
 
     def mv source, destination, options = {}
       options = default_options.merge options
+
+      # get rid of overly careful aliases
+      exec 'unalias -a'
 
       Dust.print_msg "moving #{source} to #{destination}", options
       Dust.print_result exec("mv #{source} #{destination}")[:exit_code], options

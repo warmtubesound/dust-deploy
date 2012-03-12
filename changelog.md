@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.8.1
+------------
+
+-  introduces @node.cp and @node.mv
+-  adds cjdroute recipe: https://github.com/kechagia/dust-deploy/wiki/cjdroute/
+
+
 0.8.0
 ------------
 
