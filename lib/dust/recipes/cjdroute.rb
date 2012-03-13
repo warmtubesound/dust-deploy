@@ -40,6 +40,7 @@ class Cjdroute< Recipe
       'bin_dir' => '/usr/local/bin',
       'etc_dir' => '/etc/cjdns/',
       'tun' => 'cjdroute0',
+      'loglevel' => 'WARN'
     }
   end
 
@@ -155,14 +156,14 @@ class Cjdroute< Recipe
 
   def run_cmake
     ::Dust.print_msg "running cmake\n"
-    ret = @node.exec "cd #{@config['build_dir']}/build; cmake ..", :live => true
+    ret = @node.exec "export Log_LEVEL=#{@config['loglevel']}; cd #{@config['build_dir']}/build; cmake ..", :live => true
     return ::Dust.print_failed 'error running cmake' unless ret[:exit_code] == 0
     true
   end
 
   def run_make
     ::Dust.print_msg "compiling cjdns\n"
-    ret = @node.exec "cd #{@config['build_dir']}/build; make", :live => true
+    ret = @node.exec "export Log_LEVEL=#{@config['loglevel']}; cd #{@config['build_dir']}/build; make", :live => true
     return ::Dust.print_failed 'error compiling cjdroute' unless ret[:exit_code] == 0
     true
   end
