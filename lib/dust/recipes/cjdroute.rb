@@ -38,6 +38,7 @@ class Cjdroute< Recipe
   def default_config
     { 
       'git_repo' => 'git://github.com/cjdelisle/cjdns.git',
+      'git_branch' => 'master',
       'build_dir' => '/tmp/cjdns-tmp',
       'bin_dir' => '/usr/local/bin',
       'etc_dir' => '/etc/cjdns/',
@@ -139,7 +140,7 @@ class Cjdroute< Recipe
 
       # git clone cjdns repository
       ::Dust.print_msg "cloning cjdns repository into #{@config['build_dir']}\n"
-      ret = @node.exec "git clone #{@config['git_repo']} #{@config['build_dir']}", :live => true
+      ret = @node.exec "git clone #{@config['git_repo']} -b #{@config['git_branch']} #{@config['build_dir']}", :live => true
       return ::Dust.print_failed 'error cloning git repository' unless ret[:exit_code] == 0
     end
 
