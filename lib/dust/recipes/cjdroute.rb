@@ -28,9 +28,6 @@ class Cjdroute< Recipe
     return unless generate_config
 
     start_cjdroute
-
-    # add route for cjdns network
-    return unless add_route
   end
 
 
@@ -194,16 +191,6 @@ class Cjdroute< Recipe
 
     return false unless @node.mkdir @config['etc_dir']
     return @node.write "#{@config['etc_dir']}/cjdroute.conf", JSON.pretty_generate(cjdroute_conf)
-  end
-
-  # set the route for the cjdns network
-  def add_route
-    ::Dust.print_msg 'getting routing information'
-    ret = @node.exec "#{@config['bin_dir']}/cjdroute --getcmds < #{@config['etc_dir']}/cjdroute.conf"
-    return false unless ::Dust.print_result ret[:exit_code]
-
-    ::Dust.print_msg 'applying cjdns routes'
-    ::Dust.print_result @node.exec(ret[:stdout])[:exit_code]
   end
 
   # kill any cjdroute processes that might be running
