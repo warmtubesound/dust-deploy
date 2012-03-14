@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.8.3
+------------
+
+-  cjdroute recipe fixes (manually adding rules not necessary anymore)
+-  small bugfixes
+
+
 0.8.2
 ------------
 
