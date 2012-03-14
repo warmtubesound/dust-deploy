@@ -97,7 +97,7 @@ module  Dust
     def check_dust_dir
       if Dir.pwd.split('.').last != 'dust'
         Dust.print_failed 'current directory does not end with .dust, are you in your dust directory?'
-        Dust.print_msg "try running 'dust new mynetwork' to let me create one for you with tons of examples!\n", 0
+        Dust.print_msg "try running 'dust new mynetwork' to let me create one for you with tons of examples!\n", :indent => 0
         return false
       end
 
