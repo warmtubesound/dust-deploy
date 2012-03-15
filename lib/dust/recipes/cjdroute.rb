@@ -40,7 +40,7 @@ class Cjdroute< Recipe
       'bin_dir' => '/usr/local/bin',
       'etc_dir' => '/etc/cjdns/',
       'tun' => 'cjdroute0',
-      'loglevel' => 'WARN'
+      'loglevel' => 'INFO'
     }
   end
 
