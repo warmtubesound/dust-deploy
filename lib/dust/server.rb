@@ -78,9 +78,8 @@ module Dust
               sudo_authenticated = true
             else
               stdout += data
+              Dust.print_msg "#{Dust.green 0}#{data}#{Dust.none}", :indent => 0 if options[:live] and not data.empty?
             end
-
-            Dust.print_msg "#{Dust.green 0}#{data}#{Dust.none}", :indent => 0 if options[:live] and not data.empty?
           end
 
           channel.on_extended_data do |ch, type, data|
