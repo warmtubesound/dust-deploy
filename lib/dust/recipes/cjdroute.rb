@@ -103,6 +103,7 @@ class Cjdroute< Recipe
     if @node.uses_apt?
       return false unless @node.install_package 'git-core', :indent => 2
       return false unless @node.install_package 'build-essential', :indent => 2
+      return false unless @node.install_package 'psmisc', :indent => 2
       return false unless @node.install_package 'coreutils', :indent => 2
     elsif @node.uses_rpm?
       return false unless @node.install_package 'git', :indent => 2
@@ -197,9 +198,7 @@ class Cjdroute< Recipe
   # kill any cjdroute processes that might be running
   def stop_cjdroute
     ::Dust.print_msg 'stopping cjdroute'
-    pids = @node.exec("ps ax |grep cjdroute |grep -v grep |awk '{print $1}'")[:stdout]
-    pids.each_line { |pid| @node.exec "kill #{pid}" }
-    ::Dust.print_ok
+    ::Dust.print_result @node.exec('killall cjdroute')[:exit_code]
   end
 
   # fire up cjdroute
