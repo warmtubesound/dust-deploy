@@ -11,7 +11,7 @@ class Duplicity < Recipe
 
     @config.each do |scenario, c|
       # cloning is necessary if we have configurations with multiple hostnames
-      config = c.clone
+      config = default_config.merge c
 
       # if directory config options is not given, use hostname-scenario
       config['directory'] ||= "#{@node['hostname']}-#{scenario}"
@@ -47,7 +47,7 @@ class Duplicity < Recipe
 
       # adjust and upload cronjob
       ::Dust.print_msg "adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n"
-      config['options'].each { |option| ::Dust.print_ok "adding option: #{option}", :indent => 2 }
+      config['options'].to_array.each { |option| ::Dust.print_ok "adding option: #{option}", :indent => 2 }
 
       @node.deploy_file "#{@template_path}/cronjob", cronjob_path, :binding => binding
 
@@ -63,8 +63,8 @@ class Duplicity < Recipe
   def status
     return unless @node.package_installed? 'duplicity'
 
-    @config.each do |scenario, conf|
-      config = conf.clone
+    @config.each do |scenario, c|
+      config = default_config.merge c
 
       # if directory config option is not given, use hostname-scenario
       config['directory'] ||= "#{@node['hostname']}-#{scenario}"
@@ -95,6 +95,20 @@ class Duplicity < Recipe
   end
 
   private
+  def default_config
+    {
+      'interval' => 'daily',
+      'nice' => 10,
+      'keep-n-full' => 5,
+      'full-if-older-than' => '7D',
+      'archive' => '/tmp/duplicity',
+      'options' => [],
+      'include' => [],
+      'exclude' => []
+    }
+  end
+
+
   # removes all duplicity cronjobs
   def remove_duplicity_cronjobs
     ::Dust.print_msg 'deleting old duplicity cronjobs'

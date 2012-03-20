@@ -41,12 +41,13 @@ nice -n $NICE slapcat > /root/.ldap-<%= config['interval'] %> &> /dev/null
 # backup selected directories
 nice -n <%= config['nice'] %> duplicity --archive-dir <%= config['archive'] %> \
   --full-if-older-than <%= config['full-if-older-than'] %> --exclude-device-files / \
-% config['include'].each do |dir|
-  --include <%= dir %> \
-% end
-% config['exclude'].each do |dir|
+% config['exclude'].to_array.each do |dir|
   --exclude <%= dir %> \
 % end
+% config['include'].to_array.each do |dir|
+  --include <%= dir %> \
+% end
+  --exclude '**' \
   <%= File.join(config['backend'], config['directory']) %> &> /dev/null
 
 unset PASSPHRASE
