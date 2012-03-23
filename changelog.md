@@ -1,6 +1,24 @@
 Changelog
 =============
 
+
+0.9.0
+------------
+
+-  @node.exec now supports a :as_user => username argument, and then executes the command as the specified user
+-  fixes a bug where @noed.uses_* methods wherent properly cached
+-  sudo prompt is not displayed anymore when using :live => true
+-  duplicity recipe and cronjob example now inverts the --exclude and --include order. this is more what you probably want. 
+   BE CAREFUL: you may have to adapt your cronjob.erb for duplicity. have a look at the updated example
+
+-  adds ruby_rvm recipe, you can now maintain your ruby version with dust and rvm.
+
+   recipes:
+     ruby_rvm:
+       # installs a specified ruby version using rvm for this user
+       myuser: '1.9.3-p125'
+
+
 0.8.3
 ------------
 
