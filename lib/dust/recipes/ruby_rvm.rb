@@ -4,15 +4,26 @@ class RubyRvm < Recipe
     # TODO: rvm only works if your user uses bash/zsh as login shell, check
     
     # dependency needed by rvm
-    # TODO: these are only debian/ubuntu dependencies, add for other distributions as well
+    return unless @node.install_package 'bash'
+    return unless @node.install_package 'curl'
+
     if @node.uses_apt?
-      return unless @node.install_package 'bash'
-      return unless @node.install_package 'curl'
       return unless @node.install_package 'dh-autoreconf'
+      return unless @node.install_package 'build-essential'
+      @node.install_package 'libyaml-dev'
       @node.install_package 'libxml2-dev'
       @node.install_package 'libxslt1-dev'
       @node.install_package 'libreadline6-dev'
       @node.install_package 'zlib1g-dev'
+
+    elsif @node.uses_rpm?
+      return unless @node.install_package 'gcc'
+      return unless @node.install_package 'make'
+      @node.install_package 'libyaml-devel'
+      @node.install_package 'libxml2-devel'
+      @node.install_package 'libxslt-devel'
+      @node.install_package 'readline-devel'
+      @node.install_package 'zlib-devel'
     end
 
     @config.each do |user, version|
