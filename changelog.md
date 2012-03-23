@@ -1,6 +1,11 @@
 Changelog
 =============
 
+0.9.1
+------------
+
+-  ruby_rvm now installs dependencies on rpm systems as well, was tested with centos/scientificlinux 6.1
+
 
 0.9.0
 ------------
