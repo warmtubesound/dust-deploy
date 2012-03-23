@@ -10,6 +10,7 @@ class RubyRvm < Recipe
     if @node.uses_apt?
       return unless @node.install_package 'dh-autoreconf'
       return unless @node.install_package 'build-essential'
+      @node.install_package 'libssl-dev'
       @node.install_package 'libyaml-dev'
       @node.install_package 'libxml2-dev'
       @node.install_package 'libxslt1-dev'
@@ -19,6 +20,7 @@ class RubyRvm < Recipe
     elsif @node.uses_rpm?
       return unless @node.install_package 'gcc'
       return unless @node.install_package 'make'
+      @node.install_package 'openssl-devel'
       @node.install_package 'libyaml-devel'
       @node.install_package 'libxml2-devel'
       @node.install_package 'libxslt-devel'
