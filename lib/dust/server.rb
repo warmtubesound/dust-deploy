@@ -373,7 +373,7 @@ module Dust
     def uses_apt? options = {}
       options = default_options(:quiet => true).merge options
 
-      return @uses_apt if @uses_apt
+      return @uses_apt if defined? @uses_apt
       Dust.print_msg 'determining whether node uses apt', options
       @uses_apt = Dust.print_result exec('test -e /etc/debian_version')[:exit_code], options
     end
@@ -381,7 +381,7 @@ module Dust
     def uses_rpm? options = {}
       options = default_options(:quiet => true).merge options
 
-      return @uses_rpm if @uses_rpm
+      return @uses_rpm if defined? @uses_rpm
       Dust.print_msg 'determining whether node uses rpm', options
       @uses_rpm = Dust.print_result exec('test -e /etc/redhat-release')[:exit_code], options
     end
@@ -389,7 +389,7 @@ module Dust
     def uses_emerge? options = {}
       options = default_options(:quiet => true).merge options
 
-      return @uses_emerge if @uses_emerge
+      return @uses_emerge if defined? @uses_emerge
       Dust.print_msg 'determining whether node uses emerge', options
       @uses_emerge = Dust.print_result exec('test -e /etc/gentoo-release')[:exit_code], options
     end
