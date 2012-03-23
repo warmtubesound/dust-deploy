@@ -50,7 +50,7 @@ module Dust
       @ssh.close
     end
   
-    def exec command, options={:live => false}
+    def exec command, options={:live => false, :as_user => false}
       sudo_authenticated = false
       stdout = ''
       stderr = ''
@@ -58,7 +58,10 @@ module Dust
       exit_signal = nil
 
       @ssh.open_channel do |channel|
-        
+
+        # if :as_user => user is given, execute as user (be aware of ' usage)
+        command = "su #{options[:as_user]} -l -c '#{command}'" if options[:as_user]
+
         # request a terminal (sudo needs it)
         # and prepend "sudo"
         if @node['sudo']          
