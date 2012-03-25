@@ -288,7 +288,9 @@ module Dust
       elsif uses_rpm?
         exec "yum install -y #{package}"
       else
-        Dust.print_failed 'install_package only supports apt, emerge and rpm systems at the moment', options
+        puts
+        return Dust.print_failed "install_package only supports apt, emerge and yum systems at the moment",
+                                 { :quiet => options[:quiet], :indent => options[:indent] + 1 }
       end
 
       # check if package actually was installed
