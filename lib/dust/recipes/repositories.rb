@@ -102,7 +102,24 @@ class Repositories < Recipe
     # add the repository key
     if repo['key']
       ::Dust.print_msg "adding #{name} repository key"
-      ::Dust.print_result @node.exec("wget -O- '#{repo['key']}' | apt-key add -")[:exit_code]
+
+      # if the key is a .deb, download and install it
+      if repo['key'].match /\.deb$/
+        ret = @node.exec 'mktemp --tmpdir dust.XXXXXXXXXX'
+        if ret[:exit_code] != 0
+          puts
+          ::Dust.print_failed 'could not create temporary file on server'
+          return false
+        end
+
+        tmpfile = ret[:stdout].chomp
+
+        ::Dust.print_result @node.exec("wget -q -O #{tmpfile} '#{repo['key']}' && dpkg -i #{tmpfile}")[:exit_code]
+
+      # if not, just download and add the key
+      else
+        ::Dust.print_result @node.exec("wget -q -O- '#{repo['key']}' |apt-key add -")[:exit_code]
+      end
     end
   end
 end
