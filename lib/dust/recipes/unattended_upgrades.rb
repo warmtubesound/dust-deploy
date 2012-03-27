@@ -22,5 +22,6 @@ class UnattendedUpgrades < Recipe
     periodic += "APT::Periodic::Verbose \"#{@config['verbose']}\";\n"
 
     @node.write '/etc/apt/apt.conf.d/02periodic', periodic      
+    @node.chmod '644', '/etc/apt/apt.conf.d/02periodic'
   end
 end
