@@ -1,6 +1,15 @@
 Changelog
 =============
 
+0.9.2
+------------
+
+-  adds openssl dev packages as dependency for ruby_rvm recipe
+-  improves @node.package_installed?, was failing for apt systems recently
+-  sudo uses sh -c for executing commands, this prevents problems when > < || | && ; is used
+-  repositories recipe now can handle keyring .deb files with the 'key' option
+
+
 0.9.1
 ------------
 
