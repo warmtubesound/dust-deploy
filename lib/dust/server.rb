@@ -64,11 +64,14 @@ module Dust
 
         # request a terminal (sudo needs it)
         # and prepend "sudo"
+        # command is wrapped in ", escapes " in the command string
+        # and then executed using "sh -c", so that
+        # the use of > < && || | and ; doesn't screw things up
         if @node['sudo']          
           channel.request_pty
-          command = "sudo #{command}"
+          command = "sudo sh -c \"#{command.gsub('"','\\"')}\""
         end
-        
+
         channel.exec command do |ch, success|
           abort "FAILED: couldn't execute command (ssh.channel.exec)" unless success
           
