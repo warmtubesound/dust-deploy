@@ -260,7 +260,7 @@ module Dust
 
       packages.each do |package|
         if uses_apt?
-          return Dust.print_ok '', options unless exec("dpkg -s #{package} |grep 'install ok'")[:stdout].empty?
+          return Dust.print_ok '', options if exec("dpkg -l #{package} |grep '^ii'")[:exit_code] == 0
         elsif uses_emerge?
           return Dust.print_ok '', options unless exec("qlist -I #{package}")[:stdout].empty?
         elsif uses_rpm?
