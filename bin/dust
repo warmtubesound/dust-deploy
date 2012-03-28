@@ -186,7 +186,7 @@ module  Dust
       end
 
       yaml_files.to_array.each do |file|
-        node = YAML.load_file(file)
+        node = YAML.load ERB.new( File.read(file), nil, '%<>').result
 
         # if the file is empty, just skip it
         next unless node
@@ -200,7 +200,7 @@ module  Dust
         if node['inherits']
           inherited = {}
           node.delete('inherits').each do |file|
-            template = YAML.load_file "./nodes/#{file}.yaml"
+            template = YAML.load ERB.new( File.read("./nodes/#{file}.yaml"), nil, '%<>').result
             inherited.deep_merge! template
           end
           node = inherited.deep_merge node
