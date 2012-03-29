@@ -46,7 +46,6 @@ class Logrotate < Recipe
   
   def deploy_rule name, file
     @node.write "/etc/logrotate.d/#{name}", file, :indent => 2
-    @node.chmod '0644', "/etc/logrotate.d/#{name}", :indent => 2
     @node.chown 'root:root', "/etc/logrotate.d/#{name}", :indent => 2    
   end
 

@@ -51,7 +51,6 @@ class SshAuthorizedKeys < Recipe
     
     # check permissions
     @node.chown "#{user}:#{user}", "#{home}/.ssh"
-    @node.chmod '0644', "#{home}/.ssh/authorized_keys"    
   end
   
   # remove authorized_keys files for all other users  

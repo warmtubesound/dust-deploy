@@ -108,16 +108,20 @@ module Dust
 
     def write destination, content, options = {}
       options = default_options.merge options
-      
+
       Dust.print_msg "deploying #{File.basename destination}", options
-      
+
       f = Tempfile.new 'dust-write'
       f.print content
       f.close
-      
+
+      file_existed = file_exists? destination, :quiet => true
+
       ret = Dust.print_result scp(f.path, destination, :quiet => true), options
       f.unlink
-      
+
+      # default to 644 unless file existed before
+      chmod '0644', destination, options unless file_existed
       ret
     end
 

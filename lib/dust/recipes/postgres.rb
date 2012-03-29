@@ -71,9 +71,6 @@ class Postgres < Recipe
     @node.write "#{@config['conf_directory']}/postgresql.conf", generate_postgresql_conf
     @node.write "#{@config['conf_directory']}/pg_hba.conf", generate_pg_hba_conf
     @node.write "#{@config['conf_directory']}/pg_ident.conf", generate_pg_ident_conf
-    @node.chmod '644', "#{@config['conf_directory']}/postgresql.conf"
-    @node.chmod '644', "#{@config['conf_directory']}/pg_hba.conf"
-    @node.chmod '644', "#{@config['conf_directory']}/pg_ident.conf"
   end
 
   # copy recovery.conf to either recovery.conf or recovery.done

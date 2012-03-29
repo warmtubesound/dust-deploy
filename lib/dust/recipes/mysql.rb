@@ -13,7 +13,6 @@ class Mysql < Recipe
     ::Dust.print_ok "set innodb buffer pool to '#{@config['mysqld']['innodb_buffer_pool_size']}'", :indent => 2
 
     @node.write '/etc/mysql/my.cnf', generate_my_cnf
-    @node.chmod '644', '/etc/mysql/my.cnf'
 
     @node.restart_service 'mysql' if options.restart?
     @node.reload_service 'mysql' if options.reload?
