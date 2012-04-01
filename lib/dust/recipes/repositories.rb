@@ -1,7 +1,7 @@
 class Repositories < Recipe
   desc 'repositories:deploy', 'configures package management repositories (aptitude, yum)'
   def deploy
-    @node.collect_facts
+    return unless @node.collect_facts
 
     delete_old_repositories
     deploy_repositories
