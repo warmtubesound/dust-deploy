@@ -13,7 +13,7 @@ module Dust
   $stdout.sync = true # autoflush
 
   def self.print_result ret, options={:quiet => false, :indent => 1}
-    if ret == 0 or ret == true
+    if ret == 0 or ret.is_a? TrueClass
       print_ok '', options
       return true
     else
