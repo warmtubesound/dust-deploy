@@ -52,6 +52,18 @@ class Apt < Recipe
   end
 
   def proxy config
+    # look for already configured proxy and delete
+    files = @node.exec("grep -v '^#' /etc/apt/ -R |grep -i 'acquire::http::proxy' |cut -d: -f1")[:stdout]
+    files.each_line do |file|
+      file.chomp!
+
+      # skip 02proxy, because we're going to overwrite it anyways
+      next if file == '/etc/apt/apt.conf.d/02proxy'
+
+      ::Dust.print_warning "found proxy configuration in file #{file}, commenting out"
+      @node.exec "sed -i 's/^\\(acquire::http::proxy.*\\)/#\\1/i' #{file}"
+    end
+
     return if config.is_a? FalseClass or config == 'disabled'
     
     ::Dust.print_msg "deploying proxy configuration\n"
