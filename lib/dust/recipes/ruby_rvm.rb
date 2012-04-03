@@ -34,6 +34,8 @@ class RubyRvm < Recipe
         next
       end
 
+      return unless change_shell user
+      return unless create_homedir user
       return unless install_rvm user
       return unless install_ruby user, version
       return unless set_default user, version
@@ -83,5 +85,23 @@ class RubyRvm < Recipe
       return ::Dust.print_ok "ruby-#{version} for user #{user} already installed"
     end
     false
+  end
+
+  # rvm only supports bash and zsh
+  def change_shell user
+    shell = @node.get_shell user
+    return true if shell == '/bin/zsh' or shell == '/bin/bash'
+
+    ::Dust.print_msg "changing shell for #{user} to /bin/bash"
+    ::Dust.print_result@node.exec("chsh -s /bin/bash #{user}")[:exit_code]
+  end
+
+  def create_homedir user
+    dir = @node.get_home user
+    unless @node.dir_exists? dir, :quiet => true
+      return false unless @node.mkdir dir
+      return false unless @node.chown user, dir
+    end
+    true
   end
 end
