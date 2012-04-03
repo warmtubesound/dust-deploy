@@ -4,6 +4,8 @@ class Postgres < Recipe
     return ::Dust.print_failed 'no version specified' unless @config['version']
     return unless install_postgres
 
+    @config['postgresql.conf'] ||= {}
+
     # default cluster on debian-like systems is 'main'
     @config['cluster'] ||= 'main' if @node.uses_apt?
 
@@ -104,6 +106,7 @@ class Postgres < Recipe
   end
 
   def generate_postgresql_conf
+    @config['postgresql.conf'] ||= {}
     @config['postgresql.conf'] = default_postgres_conf.merge @config['postgresql.conf']
 
     calculate_values
