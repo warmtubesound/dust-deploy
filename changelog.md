@@ -1,6 +1,42 @@
 Changelog
 =============
 
+0.10.0
+------------
+
+-  it is now possible to use ERB codes in your yaml configuration files.
+
+    <% user = john %>
+
+    hostname: <%= user %>-notebook
+
+    recipes:
+      ssh_authorized_keys:
+        <%= user %>: admin
+
+-  unattended upgrade recipe was removed in favor of the new apt recipe
+-  postgres recipe: now adds a log_line_prefix as default
+                    also accepts empty postgresql.conf in yaml configuration
+-  apt recipe now looks for present proxy configurations and comments them out before applying new config
+-  adds apt recipe to configure apt systems (unattended upgrades, proxy configuration, etc)
+   you have to migrate your existing unattended_upgrade recipe from:
+
+    recipes:
+      unattended_upgrades: true
+
+   to:
+ 
+    recipes:
+      apt:
+        unattended_upgrades:
+          enabled: 1
+
+   or simply, in case you do not need other apt options (as enabling unattended_upgrades is the default):
+
+    recipes:
+      apt: enabled
+
+
 0.9.2
 ------------
 
