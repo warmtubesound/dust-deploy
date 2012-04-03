@@ -579,9 +579,14 @@ module Dust
     def get_home user, options = {}
       options = default_options(:quiet => true).merge options
       
-      Dust.print_msg "getting home directory of #{user}"
+      Dust.print_msg "getting home directory of #{user}", options
       ret = exec "getent passwd |cut -d':' -f1,6 |grep '^#{user}' |head -n1 |cut -d: -f2"
-      if Dust.print_result ret[:exit_code]     
+      if Dust.print_result ret[:exit_code], options
+        return ret[:stdout].chomp
+      else
+        return false
+      end
+    end
         return ret[:stdout].chomp
       else
         return false
