@@ -587,6 +587,14 @@ module Dust
         return false
       end
     end
+
+    # returns shell of this user
+    def get_shell user, options = {}
+      options = default_options(:quiet => true).merge options
+
+      Dust.print_msg "getting shell of #{user}", options
+      ret = exec "getent passwd |cut -d':' -f1,7 |grep '^#{user}' |head -n1 |cut -d: -f2"
+      if Dust.print_result ret[:exit_code], options
         return ret[:stdout].chomp
       else
         return false
