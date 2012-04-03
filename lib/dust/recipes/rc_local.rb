@@ -8,10 +8,10 @@ class RcLocal < Recipe
       rc = ''
       @config.to_array.each do |cmd|
         ::Dust.print_msg "adding command: #{cmd}", :indent => 2
-        rc += "#{cmd}\n"
+        rc << "#{cmd}\n"
         ::Dust.print_ok
       end
-      rc += "\nexit 0\n"
+      rc << "\nexit 0\n"
 
       @node.write '/etc/rc.local', rc
       @node.chown 'root:root', '/etc/rc.local'

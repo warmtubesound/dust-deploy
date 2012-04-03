@@ -59,32 +59,32 @@ class Repositories < Recipe
   
   def generate_default_repo repo
     sources = ''
-    sources.concat "deb #{repo['url']} #{repo['release']} #{repo['components']}\n"
-    sources.concat "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n\n"
+    sources << "deb #{repo['url']} #{repo['release']} #{repo['components']}\n"
+    sources << "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n\n"
     
     # security
     if @node.is_debian?
-      sources.concat "deb http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n"
-      sources.concat "deb-src http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n\n"
+      sources << "deb http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n"
+      sources << "deb-src http://security.debian.org/ #{repo['release']}/updates #{repo['components']}\n\n"
     elsif @node.is_ubuntu?
-      sources.concat "deb http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n"
-      sources.concat "deb-src http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n\n"
+      sources << "deb http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n"
+      sources << "deb-src http://security.ubuntu.com/ubuntu/ #{repo['release']}-security #{repo['components']}\n\n"
     end
     
     # updates
-    sources.concat "deb #{repo['url']} #{repo['release']}-updates #{repo['components']}\n"
-    sources.concat "deb-src #{repo['url']} #{repo['release']}-updates #{repo['components']}\n\n"
+    sources << "deb #{repo['url']} #{repo['release']}-updates #{repo['components']}\n"
+    sources << "deb-src #{repo['url']} #{repo['release']}-updates #{repo['components']}\n\n"
     
     # proposed
     if @node.is_ubuntu?
-      sources.concat "deb #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n"
-      sources.concat "deb-src #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n\n"
+      sources << "deb #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n"
+      sources << "deb-src #{repo['url']} #{repo['release']}-proposed #{repo['components']}\n\n"
     end
     
     # backports is enabled per default in ubuntu oneiric
     if @node.is_ubuntu?
-      sources.concat "deb #{repo['url']} #{repo['release']}-backports #{repo['components']}\n"
-      sources.concat "deb-src #{repo['url']} #{repo['release']}-backports #{repo['components']}\n\n"
+      sources << "deb #{repo['url']} #{repo['release']}-backports #{repo['components']}\n"
+      sources << "deb-src #{repo['url']} #{repo['release']}-backports #{repo['components']}\n\n"
     end
 
     sources
@@ -93,8 +93,8 @@ class Repositories < Recipe
   def generate_repo repo
     # add url to sources.list
     sources = ''
-    sources.concat "deb #{repo['url']} #{repo['release']} #{repo['components']}\n" if repo['binary']
-    sources.concat "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n" if repo['source']
+    sources << "deb #{repo['url']} #{repo['release']} #{repo['components']}\n" if repo['binary']
+    sources << "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n" if repo['source']
     sources
   end
   

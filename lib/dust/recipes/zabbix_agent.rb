@@ -65,12 +65,12 @@ class ZabbixAgent < Recipe
     # add normal configuration variables
     @config.each do |key, value|
       next if key == 'UserParameter'
-      zabbix_agentd_conf.concat "#{key}=#{value}\n"
+      zabbix_agentd_conf << "#{key}=#{value}\n"
     end    
     
     # add user parameters
     @config['UserParameter'].each do |user_parameter|
-      zabbix_agentd_conf.concat "UserParameter=#{user_parameter}\n"
+      zabbix_agentd_conf << "UserParameter=#{user_parameter}\n"
     end
     
     zabbix_agentd_conf

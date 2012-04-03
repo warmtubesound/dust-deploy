@@ -21,7 +21,7 @@ class Sudoers < Recipe
         
         file = ''        
         rule['user'].each do |u|
-          rule['command'].each { |c| file.concat "#{u} #{c}\n" }
+          rule['command'].each { |c| file << "#{u} #{c}\n" }
         end
       end
       

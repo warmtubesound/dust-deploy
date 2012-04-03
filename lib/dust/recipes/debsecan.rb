@@ -19,20 +19,20 @@ class Debsecan < Recipe
       config_file = ''
 
       # configures whether daily reports are sent
-      config_file += "# If true, enable daily reports, sent by email.\n" +
+      config_file << "# If true, enable daily reports, sent by email.\n" +
                      "REPORT=#{config['report'].to_s}\n\n"
      
       # configures the suite
-      config_file += "# For better reporting, specify the correct suite here, using the code\n" +
+      config_file << "# For better reporting, specify the correct suite here, using the code\n" +
                      "# name (that is, \"sid\" instead of \"unstable\").\n" +
                      "SUITE=#{@node['lsbdistcodename']}\n\n"
 
       # which user gets the reports?
-      config_file += "# Mail address to which reports are sent.\n" +
+      config_file << "# Mail address to which reports are sent.\n" +
                      "MAILTO=#{config['mailto']}\n\n"
 
       # set vulnerability source
-      config_file += "# The URL from which vulnerability data is downloaded.  Empty for the\n" +
+      config_file << "# The URL from which vulnerability data is downloaded.  Empty for the\n" +
                      "# built-in default.\n" +
                      "SOURCE=#{config['source']}\n\n"
 

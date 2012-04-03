@@ -14,25 +14,25 @@ class ResolvConf < Recipe
     # configures whether daily reports are sent
     if @config['search']
       ::Dust.print_msg "adding search #{@config['search']}", :indent => 2
-      config_file += "search #{@config['search']}\n"
+      config_file << "search #{@config['search']}\n"
       ::Dust.print_ok
     end
 
     if @config['domain']
       ::Dust.print_msg "adding domain #{@config['domain']}", :indent => 2
-      config_file += "domain #{@config['domain']}\n"
+      config_file << "domain #{@config['domain']}\n"
       ::Dust.print_ok
     end
 
     if @config['options']
       ::Dust.print_msg "adding options #{@config['options']}", :indent => 2
-      config_file += "options #{@config['options']}\n"
+      config_file << "options #{@config['options']}\n"
       ::Dust.print_ok
     end
 
     @config['nameservers'].each do |nameserver|
       ::Dust.print_msg "adding nameserver #{nameserver}", :indent => 2
-      config_file += "nameserver #{nameserver}\n"
+      config_file << "nameserver #{nameserver}\n"
       ::Dust.print_ok
     end
  

@@ -55,7 +55,7 @@ class Sshd < Recipe
   def apply_configuration
     @sshd_config = ''
     @config.each do |key, values|
-      values.each { |value| @sshd_config.concat "#{key} #{value}\n" }
+      values.each { |value| @sshd_config << "#{key} #{value}\n" }
     end
   end
 

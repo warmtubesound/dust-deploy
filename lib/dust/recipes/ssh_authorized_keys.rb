@@ -25,10 +25,10 @@ class SshAuthorizedKeys < Recipe
       users[ssh_user]['name'] ||= ssh_user
       ::Dust.print_msg "adding user #{users[ssh_user]['name']}", :indent => 2
       users[ssh_user]['keys'].each do |key|
-        authorized_keys.concat"#{key}"
-        authorized_keys.concat " #{users[ssh_user]['name']}" if users[ssh_user]['name']
-        authorized_keys.concat " <#{users[ssh_user]['email']}>" if users[ssh_user]['email']
-        authorized_keys.concat "\n"
+        authorized_keys << "#{key}"
+        authorized_keys << " #{users[ssh_user]['name']}" if users[ssh_user]['name']
+        authorized_keys << " <#{users[ssh_user]['email']}>" if users[ssh_user]['email']
+        authorized_keys << "\n"
       end
       ::Dust.print_ok
     end

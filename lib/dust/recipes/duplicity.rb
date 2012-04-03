@@ -77,7 +77,7 @@ class Duplicity < Recipe
             "--archive-dir #{config['archive']} " +
             "#{File.join(config['backend'], config['directory'])}"
 
-      cmd += " |tail -n3 |head -n1" unless options.long?
+      cmd << " |tail -n3 |head -n1" unless options.long?
 
       ret = @node.exec cmd
 

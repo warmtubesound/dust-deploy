@@ -95,13 +95,13 @@ class Mysql < Recipe
   def generate_my_cnf
     my_cnf = ''
     @config.each do |category, config|
-      my_cnf.concat "[#{category}]\n"
-      config.each { |key, value| my_cnf.concat "#{key} = #{value}\n" }
-      my_cnf.concat "\n"
+      my_cnf << "[#{category}]\n"
+      config.each { |key, value| my_cnf << "#{key} = #{value}\n" }
+      my_cnf << "\n"
     end
 
     # add includedir
-    my_cnf.concat "!includedir /etc/mysql/conf.d/\n"
+    my_cnf << "!includedir /etc/mysql/conf.d/\n"
     my_cnf
   end
 end

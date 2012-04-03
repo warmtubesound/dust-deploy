@@ -61,10 +61,10 @@ class Iptables < Recipe
 
     @tables['ipv' + @ip_version.to_s].keys.each do |table|
       # clear all rules
-      @script.concat "--flush --table #{table}\n"
+      @script << "--flush --table #{table}\n"
 
       # delete all custom chains
-      @script.concat "--delete-chain --table #{table}\n" unless @node.uses_rpm?
+      @script << "--delete-chain --table #{table}\n" unless @node.uses_rpm?
     end
   end
 
@@ -87,7 +87,7 @@ class Iptables < Recipe
   # generates all iptables rules
   def generate_all_rules
     @tables['ipv' + @ip_version.to_s].each do |table, chains|
-      @script.concat "*#{table}\n" if @node.uses_rpm?
+      @script << "*#{table}\n" if @node.uses_rpm?
       set_chain_policies table
       generate_rules_for_table table
     end
@@ -103,9 +103,9 @@ class Iptables < Recipe
       policy = get_chain_policy table, chain
 
       if @node.uses_rpm?
-        @script.concat ":#{chain.upcase} #{policy} [0:0]\n"
+        @script << ":#{chain.upcase} #{policy} [0:0]\n"
       else
-        @script.concat "--table #{table} --policy #{chain.upcase} #{policy}\n"
+        @script << "--table #{table} --policy #{chain.upcase} #{policy}\n"
       end
     end
 
@@ -125,9 +125,9 @@ class Iptables < Recipe
       next unless chain_used_in_table
 
       if @node.uses_rpm?
-        @script.concat ":#{chain.upcase} - [0:0]\n"
+        @script << ":#{chain.upcase} - [0:0]\n"
       else
-        @script.concat "--table #{table} --new-chain #{chain.upcase}\n"
+        @script << "--table #{table} --new-chain #{chain.upcase}\n"
       end
     end
   end
@@ -162,7 +162,7 @@ class Iptables < Recipe
         ::Dust.print_ok
       end
     end
-    @script.concat "COMMIT\n" if @node.uses_rpm?
+    @script << "COMMIT\n" if @node.uses_rpm?
   end
 
   def get_rules_for_table rules, table
@@ -188,7 +188,7 @@ class Iptables < Recipe
   def generate_iptables_string chain, rule
     parse_rule(rule).each do |r|
       #::Dust.print_msg "#{::Dust.grey}#{r.join ' '}#{::Dust.none}\n", :indent => 5
-      @script.concat "--append #{chain.upcase} #{r.join ' '}\n"
+      @script << "--append #{chain.upcase} #{r.join ' '}\n"
     end
   end
 

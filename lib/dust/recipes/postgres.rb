@@ -111,7 +111,7 @@ class Postgres < Recipe
     postgresql_conf = ''
     @config['postgresql.conf'].each do |key, value|
       value = "'#{value}'" if value.is_a? String # enclose strings in ''
-      postgresql_conf.concat "#{key} = #{value}\n"
+      postgresql_conf << "#{key} = #{value}\n"
     end
 
     postgresql_conf
@@ -123,7 +123,7 @@ class Postgres < Recipe
     recovery_conf = ''
     @config['recovery.conf'].each do |key, value|
       value = "'#{value}'" if value.is_a? String # enclose strings in ''
-      recovery_conf.concat "#{key} = #{value}\n"
+      recovery_conf << "#{key} = #{value}\n"
     end
 
     recovery_conf

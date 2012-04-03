@@ -63,9 +63,9 @@ class Redis < Recipe
     redis_conf = ''
     @config.each do |key, value|
       if value.is_a? Array
-        value.each { |v| redis_conf.concat "#{key} #{v}\n" }
+        value.each { |v| redis_conf << "#{key} #{v}\n" }
       else
-        redis_conf.concat "#{key} #{value}\n"
+        redis_conf << "#{key} #{value}\n"
       end
     end
     
@@ -83,8 +83,8 @@ class Redis < Recipe
       ::Dust.print_result @node.exec('sysctl -w vm.swappiness=0')[:exit_code]
       
       file = ''
-      file += "vm.overcommit_memory=1\n"
-      file += "vm.swappiness=0\n"
+      file << "vm.overcommit_memory=1\n"
+      file << "vm.swappiness=0\n"
       
       @node.write "/etc/sysctl.d/30-redis.conf", file
       

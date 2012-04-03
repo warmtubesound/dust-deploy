@@ -14,15 +14,15 @@ class Logrotate < Recipe
       file = "#{rule['path']} {\n"
       
       rule['args'] ||= default_args
-      rule['args'].each { |arg| file.concat "    #{arg}\n" }
+      rule['args'].each { |arg| file << "    #{arg}\n" }
 
       rule['scripts'] ||= {}
       rule['scripts'].each do |script, commands|
-        file.concat "    #{script}\n"
-        commands.each { |cmd| file.concat "        #{cmd}\n" }
+        file << "    #{script}\n"
+        commands.each { |cmd| file << "        #{cmd}\n" }
       end
         
-      file.concat "}\n"
+      file << "}\n"
       deploy_rule name, file
     end
     

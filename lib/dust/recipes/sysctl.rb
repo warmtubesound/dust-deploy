@@ -30,7 +30,7 @@ class Sysctl < Recipe
     sysctl.each do |key, value|
       ::Dust.print_msg "setting #{key} = #{value}", :indent => 2
       ::Dust.print_result @node.exec("sysctl -w #{key}=#{value}")[:exit_code]
-      sysctl_conf.concat "#{key} = #{value}\n"
+      sysctl_conf << "#{key} = #{value}\n"
     end
 
     ::Dust.print_msg "saving settings to /etc/sysctl.d/10-#{name}.conf", :indent => 2
