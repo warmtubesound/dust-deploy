@@ -91,13 +91,16 @@ class Postgres < Recipe
 
   # default settings for postgresql.conf
   def default_postgres_conf
-    { 'max_connections' => 100,
+    {
+      'max_connections' => 100,
       'datestyle' => 'iso, mdy',
       'lc_messages' => 'en_US.UTF-8',
       'lc_monetary' => 'en_US.UTF-8',
       'lc_numeric' => 'en_US.UTF-8',
       'lc_time' => 'en_US.UTF-8',
-      'default_text_search_config' => 'pg_catalog.english' }
+      'default_text_search_config' => 'pg_catalog.english',
+      'log_line_prefix' => '%t [%p] %u@%d '
+    }
   end
 
   def generate_postgresql_conf
