@@ -50,7 +50,9 @@ class ZabbixAgent < Recipe
   # generate zabbix_agentd.conf
   def generate_zabbix_agentd_conf
     @config = default_config.merge @config 
-    
+
+    @config['UserParameter'] = Array @config['UserParameter']
+
     # system updates
     @config['UserParameter'] |= enable_apt if @node.uses_apt?
     @config['UserParameter'] |= enable_rpm if @node.uses_rpm?
