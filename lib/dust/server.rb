@@ -140,7 +140,14 @@ module Dust
 
       Dust.print_msg "deploying #{File.basename source}", options
 
-      file_existed = file_exists? destination, :quiet => true
+      # save permissions if the file already exists
+      ret = exec "stat -c %a:%u:%g #{destination}" 
+      if ret[:exit_code] == 0
+        permissions, user, group = ret[:stdout].chomp.split ':'
+      else
+        # files = 644, dirs = 755
+        permissions = 'ug-x,o-wx,u=rwX,g=rX,o=rX'
+      end
 
       # if in sudo mode, copy file to temporary place, then move using sudo
       if @node['sudo'] 
@@ -164,8 +171,9 @@ module Dust
         Dust.print_ok '', options
       end
 
-      # default permissions unless file existed before
-      chmod 'u=rwX,g=rX,o=rX', destination, options unless file_existed
+      # set file permissions
+      chown "#{user}:#{group}", destination, :quiet => true if user and group
+      chmod permissions, destination, :quiet => true
 
       restorecon destination, options # restore SELinux labels
     end
