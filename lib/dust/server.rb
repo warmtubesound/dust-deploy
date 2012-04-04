@@ -115,13 +115,9 @@ module Dust
       f.print content
       f.close
 
-      file_existed = file_exists? destination, :quiet => true
-
       ret = Dust.print_result scp(f.path, destination, :quiet => true), options
       f.unlink
 
-      # default to 644 unless file existed before
-      chmod '0644', destination, options unless file_existed
       ret
     end
 
@@ -144,6 +140,8 @@ module Dust
 
       Dust.print_msg "deploying #{File.basename source}", options
 
+      file_existed = file_exists? destination, :quiet => true
+
       # if in sudo mode, copy file to temporary place, then move using sudo
       if @node['sudo'] 
         ret = exec 'mktemp --tmpdir dust.XXXXXXXXXX' 
@@ -165,6 +163,9 @@ module Dust
         @ssh.scp.upload! source, destination
         Dust.print_ok '', options
       end
+
+      # default permissions unless file existed before
+      chmod 'u=rwX,g=rX,o=rX', destination, options unless file_existed
 
       restorecon destination, options # restore SELinux labels
     end
