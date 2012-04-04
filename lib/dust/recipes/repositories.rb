@@ -93,8 +93,10 @@ class Repositories < Recipe
   def generate_repo repo
     # add url to sources.list
     sources = ''
-    sources << "deb #{repo['url']} #{repo['release']} #{repo['components']}\n" if repo['binary']
-    sources << "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n" if repo['source']
+    repo['release'].to_array.each do |release|
+      sources << "deb #{repo['url']} #{release} #{repo['components']}\n" if repo['binary']
+      sources << "deb-src #{repo['url']} #{release} #{repo['components']}\n" if repo['source']
+    end
     sources
   end
   
