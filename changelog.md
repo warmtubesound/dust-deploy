@@ -1,6 +1,17 @@
 Changelog
 =============
 
+0.10.1
+------------
+
+-  fixes an issue, where node.scp / node.write were not preserved if the file existed before
+-  repositories recipe now accepts multiple releases for custom repos
+
+   recipes:
+     repositories:
+       release: [ myrelease1, myrelease2 ]
+
+
 0.10.0
 ------------
 
