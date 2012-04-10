@@ -143,6 +143,12 @@ class Cjdroute< Recipe
       return ::Dust.print_failed 'error cloning git repository' unless ret[:exit_code] == 0
     end
 
+    # reset to the wanted commit if given
+    if @config['commit']
+      ::Dust.print_msg "resetting to commit: #{@config['commit']}"
+      ::Dust.print_result @node.exec("cd #{@config['build_dir']}; git reset --hard #{@config['commit']}")[:exit_code]
+    end
+
     puts
     true
   end
