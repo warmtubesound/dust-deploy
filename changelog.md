@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.10.2
+------------
+
+-  cjdroute now accepts the "commit" configuration option
+
+
 0.10.1
 ------------
 
