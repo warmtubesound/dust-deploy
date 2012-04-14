@@ -105,12 +105,10 @@ class Cjdroute< Recipe
       return false unless @node.install_package 'build-essential', :indent => 2
       return false unless @node.install_package 'psmisc', :indent => 2
       return false unless @node.install_package 'coreutils', :indent => 2
-    elsif @node.uses_rpm?
+    else
       return false unless @node.install_package 'git', :indent => 2
       return false unless @node.install_package 'gcc', :indent => 2
       return false unless @node.install_package 'make', :indent => 2
-    else 
-      return ::Dust.print_failed 'sorry, your os is not supported by this script'
     end
 
     puts
