@@ -1,8 +1,10 @@
 class Sysctl < Recipe
   desc 'sysctl:deploy', 'configures sysctl'
   def deploy
-    # only debian derivatives are supported at the moment, since we need support for /etc/sysctl.d/
-    return ::Dust.print_warning 'sysctl configuration not supported for your linux distribution' unless @node.uses_apt?
+    # we need support for /etc/sysctl.d/
+    unless @node.dir_exists? '/etc/sysctl.d/'
+      return ::Dust.print_warning 'sysctl configuration not supported for your linux distribution'
+    end
 
     # seperate templates from sysctls
     sysctls = @config.clone
