@@ -2,7 +2,11 @@ class Sshd < Recipe
   
   desc 'sshd:deploy', 'installs and configures the ssh server'
   def deploy 
-    return unless @node.install_package 'openssh-server'
+    if @node.uses_pacman?
+      return unless @node.install_package 'openssh'
+    else
+      return unless @node.install_package 'openssh-server'
+    end
 
     generate_default_config
     @config.values_to_array!
@@ -69,8 +73,11 @@ class Sshd < Recipe
   end
 
   def restart_daemon
-    daemon = 'ssh' if @node.uses_apt?
-    daemon = 'sshd' if @node.uses_rpm?
+    if @node.uses_apt?
+      daemon = 'ssh'
+    else
+      daemon = 'sshd'
+    end
 
     @node.restart_service daemon if @options.restart
     @node.reload_service daemon if @options.reload
