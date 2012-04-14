@@ -1,6 +1,11 @@
 Changelog
 =============
 
+0.10.4
+
+-  cjdroute supports archlinux (and possibly gentoo) as well
+
+
 0.10.3
 ------------
 
