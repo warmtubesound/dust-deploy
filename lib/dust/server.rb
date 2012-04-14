@@ -281,6 +281,8 @@ module Dust
           return Dust.print_ok '', options unless exec("qlist -I #{package}")[:stdout].empty?
         elsif uses_rpm?
           return Dust.print_ok '', options if exec("rpm -q #{package}")[:exit_code] == 0
+        elsif uses_pacman?
+          return Dust.print_ok '', options if exec("pacman -Q #{package}")[:exit_code] == 0
         end
       end
 
@@ -303,6 +305,8 @@ module Dust
         exec "#{options[:env]} emerge #{package}"
       elsif uses_rpm?
         exec "yum install -y #{package}"
+      elsif uses_pacman?
+        exec "echo y |pacman -S #{package}"
       else
         puts
         return Dust.print_failed "install_package only supports apt, emerge and yum systems at the moment",
@@ -327,6 +331,8 @@ module Dust
         Dust.print_result exec("emerge --unmerge #{package}")[:exit_code], options
       elsif uses_rpm?
         Dust.print_result exec("yum erase -y #{package}")[:exit_code], options
+      elsif uses_pacman?
+        Dust.print_result exec("echo y |pacman -R #{package}")[:exit_code], options
       else
         Dust.print_failed '', options
       end
@@ -348,6 +354,8 @@ module Dust
         # yum returns != 0 if packages that need to be updated are found
         # we don't want that this is producing an error
         ret[:exit_code] = 0 if ret[:exit_code] == 100
+      elsif uses_pacman?
+        ret = exec 'pacman -Sy', options
       else
         return Dust.print_failed '', options
       end
@@ -375,6 +383,9 @@ module Dust
         ret = exec 'emerge -uND @world', options
       elsif uses_rpm?
         ret = exec 'yum upgrade -y', options
+      elsif uses_pacman?
+        # pacman has no --yes option that i know of, so echoing y
+        ret = exec 'echo y |pacman -Su', options
       else
         Dust.print_failed 'system not (yet) supported', options
         return false
@@ -413,6 +424,14 @@ module Dust
       return @uses_emerge if defined? @uses_emerge
       Dust.print_msg 'determining whether node uses emerge', options
       @uses_emerge = Dust.print_result exec('test -e /etc/gentoo-release')[:exit_code], options
+    end
+
+    def uses_pacman? options = {}
+      options = default_options(:quiet => true).merge options
+
+      return @uses_pacman if defined? @uses_pacman
+      Dust.print_msg 'determining whether node uses pacman', options
+      @uses_pacman = Dust.print_result exec('test -e /etc/arch-release')[:exit_code], options
     end
   
     def is_os? os_list, options = {}
@@ -471,6 +490,13 @@ module Dust
 
       return false unless uses_rpm?
       is_os? ['fedora'], options
+    end
+
+    def is_arch? options = {}
+      options = default_options(:quiet => true).merge options
+
+      return false unless uses_pacman?
+      is_os? ['archlinux'], options
     end
   
     def is_executable? file, options = {}
@@ -532,6 +558,10 @@ module Dust
       elsif file_exists? '/sbin/service', :quiet => true or file_exists? '/usr/sbin/service', :quiet => true
         Dust.print_msg "#{command}ing #{service} (via sysvconfig)", options
         ret = exec("service #{service} #{command}")
+
+      elsif file_exists? '/usr/sbin/rc.d', :quiet => true
+        Dust.print_msg "#{command}ing #{service} (via rc.d)", options
+        ret = exec("rc.d #{command} #{service}")
 
       else
         Dust.print_msg "#{command}ing #{service} (via initscript)", options
