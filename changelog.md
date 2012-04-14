@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.10.3
+------------
+
+-  the hash_check recipe now supports python3
+-  introduces basic archlinux support
+
+
 0.10.2
 ------------
 
