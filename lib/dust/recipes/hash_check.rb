@@ -22,7 +22,7 @@ class HashCheck < Recipe
         # python was imho the best solution to generate /etc/shadow hashes.
         # mkpasswd doesn't work on centos-like machines :/
         # and python is more likely installed than ruby
-        ret = @node.exec("python -c \"import crypt; print crypt.crypt('#{password}', '\\$#{method}\\$#{salt}\\$')\"")
+        ret = @node.exec("python -c \"import crypt; print(crypt.crypt('#{password}', '\\$#{method}\\$#{salt}\\$'));\"")
 
         unless ret[:exit_code] == 0
           ::Dust.print_failed 'error during hash creation (is python installed?)'
