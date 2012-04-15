@@ -51,7 +51,7 @@ start() {
 
 stop() {
   # if configured as master, stop postgresql
-  if [ ! -e $RECOVERY_DONE ]; then 
+  if [ ! -e $RECOVERY ]; then 
     $PG_INIT stop
 
     # always return success, because we want pacemaker
