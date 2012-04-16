@@ -1,7 +1,15 @@
 Changelog
 =============
 
+0.10.5
+------------
+
+-  fixes a bug in postgres pacemaker.sh template (created when using 'dust new')
+-  supports downloading of files (sudo not yet supported) using node.download
+
+
 0.10.4
+------------
 
 -  cjdroute supports archlinux (and possibly gentoo) as well
 
