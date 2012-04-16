@@ -177,7 +177,18 @@ module Dust
 
       restorecon destination, options # restore SELinux labels
     end
-  
+
+    # download a file (sudo not yet supported)
+    def download source, destination, options = {}
+      options = default_options.merge options
+
+      # make sure scp is installed on client
+      install_package 'openssh-clients', :quiet => true if uses_rpm?
+
+      Dust.print_msg "downloading #{File.basename source}", options
+      Dust.print_result @ssh.scp.download!(source, destination), options
+    end
+ 
     def symlink source, destination, options = {}
       options = default_options.merge options
 
