@@ -1,6 +1,15 @@
 Changelog
 =============
 
+0.10.6
+------------
+
+-  introduces ntpd recipe (basic ntpd installation)
+
+    recipes:
+      ntpd: enabled
+
+
 0.10.5
 ------------
 
