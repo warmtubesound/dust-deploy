@@ -548,6 +548,12 @@ module Dust
 
       elsif uses_emerge?
         Dust.print_result exec("rc-update add #{service} default")[:exit_code], options
+
+      # archlinux needs his autostart daemons in /etc/rc.conf, in the DAEMONS line
+      #elsif uses_pacman?
+
+      else
+        Dust.print_failed '', options
       end
     end
 
@@ -557,7 +563,7 @@ module Dust
 
       return ::Dust.print_failed "service: '#{service}' unknown", options unless service.is_a? String
 
-      # try systemd, then upstart, then sysvconfig, then initscript
+      # try systemd, then upstart, then sysvconfig, then rc.d, then initscript
       if file_exists? '/bin/systemctl', :quiet => true
         Dust.print_msg "#{command}ing #{service} (via systemd)", options
         ret = exec("systemctl #{command} #{service}.service")
