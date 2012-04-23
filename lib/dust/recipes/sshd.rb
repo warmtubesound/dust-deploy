@@ -1,7 +1,7 @@
 class Sshd < Recipe
-  
+
   desc 'sshd:deploy', 'installs and configures the ssh server'
-  def deploy 
+  def deploy
     if @node.uses_pacman?
       return unless @node.install_package 'openssh'
     else
@@ -9,7 +9,6 @@ class Sshd < Recipe
     end
 
     generate_default_config
-    @config.values_to_array!
 
     check_hostkeys
     apply_configuration
@@ -28,7 +27,7 @@ class Sshd < Recipe
       'HostKey' => [ '/etc/ssh/ssh_host_dsa_key',
                      '/etc/ssh/ssh_host_ecdsa_key',
                       '/etc/ssh/ssh_host_rsa_key' ],
-      'PasswordAuthentication' => 'yes', 
+      'PasswordAuthentication' => 'yes',
       'ChallengeResponseAuthentication' => 'no',
       'X11Forwarding' => 'yes',
       'UsePAM' => 'yes',
@@ -58,9 +57,25 @@ class Sshd < Recipe
 
   def apply_configuration
     @sshd_config = ''
-    @config.each do |key, values|
-      values.each { |value| @sshd_config << "#{key} #{value}\n" }
+    conditional_blocks = ''
+
+    @config.each do |key, value|
+
+      # hashes are conditional blocks
+      # which have to be placed at the end of the file
+      if value.is_a? Hash
+        value.each do |k, v|
+          conditional_blocks << "#{key} #{k}\n"
+          v.to_array.each { |x, y| conditional_blocks << "    #{x} #{y}\n" }
+        end
+
+      else
+        value.to_array.each { |value| @sshd_config << "#{key} #{value}\n" }
+      end
     end
+
+    # append conditional blocks
+    @sshd_config << conditional_blocks
   end
 
   def check_hostkeys
