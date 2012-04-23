@@ -1,6 +1,21 @@
 Changelog
 =============
 
+0.10.7
+------------
+
+-  sshd recipe supports conditional blocks
+
+    recipes:
+      sshd:
+        Match:
+          User john:
+            ChrootDirectory: /srv
+            ForceCommand: internal-sftp
+            AllowTcpForwarding: no
+            X11Forwarding: no
+
+
 0.10.6
 ------------
 
