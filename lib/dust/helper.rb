@@ -41,25 +41,31 @@ class Hash
     self
   end
 
-  
+
   # converts each value to an array, so .each and .combine won't get hickups
   def values_to_array!
-    self.keys.each { |k| self[k] = [ self[k] ] unless self[k].is_a? Array }    
+    self.keys.each { |k| self[k] = [ self[k] ] unless self[k].is_a? Array }
   end
-  
+
   # converts each value that is a boolean to 'yes' resp. 'no' strings
   def boolean_to_string!
-    self.each { |k, v| self[k] = v ? 'yes' : 'no' if v.is_a? TrueClass or v.is_a? FalseClass }
-  end 
+    self.each do |k, v|
+      self[k] = 'yes' if v.is_a? TrueClass
+      self[k] = 'no' if v.is_a? FalseClass
+
+      # recursion
+      v.boolean_to_string! if v.is_a? Hash
+    end
+  end
 end
 
 
 class String
   # stole this from Afz902k who posted something similar at stackoverflow.com
-  # adds ability to check if a class with the name of a string exists  
+  # adds ability to check if a class with the name of a string exists
   def to_class
     Kernel.const_get self.capitalize
-  rescue NameError 
+  rescue NameError
     nil
   end
 
@@ -75,7 +81,7 @@ module Dust
   # converts string to kilobytes (rounded)
   def self.convert_size s
     i, unit = s.split(' ')
-  
+
     case unit.downcase
     when 'kb'
       return i.to_i
