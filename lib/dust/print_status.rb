@@ -1,14 +1,14 @@
 module Dust
   # colors for terminal
-  def self.red thick=1;      "\033[#{thick};31m"; end
-  def self.green thick=1;    "\033[#{thick};32m"; end
-  def self.yellow thick=1;   "\033[#{thick};33m"; end
-  def self.blue thick=1;     "\033[#{thick};34m"; end
-  def self.pink thick=1;     "\033[#{thick};35m"; end
-  def self.turquois thick=1; "\033[#{thick};36m"; end
-  def self.grey thick=1;     "\033[#{thick};37m"; end
-  def self.black thick=1;    "\033[#{thick};38m"; end
-  def self.none;             "\033[0m"; end
+  def self.none(t=1);     colorize(0, t); end
+  def self.red(t=1);      colorize(1, t); end
+  def self.green(t=1);    colorize(2, t); end
+  def self.yellow(t=1);   colorize(3, t); end
+  def self.blue(t=1);     colorize(4, t); end
+  def self.pink(t=1);     colorize(5, t); end
+  def self.turquois(t=1); colorize(6, t); end
+  def self.grey(t=1);     colorize(7, t); end
+  def self.black(t=1);    colorize(8, t); end
 
   $stdout.sync = true # autoflush
 
@@ -76,4 +76,12 @@ module Dust
     end
   end
 
+
+  private
+
+  def colorize(no, t = 1)
+    return '' unless $stdout.tty?
+    return "\033[0m" if no == 0
+    "\033[#{t};3#{no}m"
+  end
 end
