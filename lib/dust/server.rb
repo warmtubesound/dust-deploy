@@ -84,13 +84,13 @@ module Dust
               sudo_authenticated = true
             else
               stdout += data
-              Dust.print_msg "#{Dust.green 0}#{data}#{Dust.none}", :indent => 0 if options[:live] and not data.empty?
+              Dust.print_msg data.green, :indent => 0 if options[:live] and not data.empty?
             end
           end
 
           channel.on_extended_data do |ch, type, data|
             stderr += data
-            Dust.print_msg "#{Dust.red 0}#{data}#{Dust.none}", :indent => 0 if options[:live] and not data.empty?
+            Dust.print_msg data.red, :indent => 0 if options[:live] and not data.empty?
           end
 
           channel.on_request('exit-status') { |ch, data| exit_code = data.read_long }

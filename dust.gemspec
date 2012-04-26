@@ -25,4 +25,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'net-sftp'
   s.add_runtime_dependency 'thor'
   s.add_runtime_dependency 'ipaddress'
+  s.add_runtime_dependency 'colorize'
 end
