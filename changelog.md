@@ -1,6 +1,16 @@
 Changelog
 =============
 
+0.10.8
+------------
+
+-  only use colors if stdout is a tty
+-  switches to colorize gem
+-  replaces basic_setup with skel recipe, to copy e.g. basic configuration files placed in templates/skel
+
+    skel: [ root, john ]
+
+
 0.10.7
 ------------
 
