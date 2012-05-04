@@ -1,6 +1,14 @@
 Changelog
 =============
 
+0.11.0
+------------
+
+-  refactors the postgres recipe, should now be cleaner and easier for standard setups.
+   now supports profiles and defaults to postgresql-defaults.
+   if you want to use the automatic configuration for dedicated servers (use all system ressources for the database), you have to specify "profile: dedicated" in your config file. have a look at the [postgres recipe wiki page](https://github.com/kechagia/dust-deploy/wiki/postgres) for information
+
+
 0.10.8
 ------------
 
