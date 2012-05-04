@@ -1,23 +1,33 @@
 class Postgres < Recipe
   desc 'postgres:deploy', 'installs and configures postgresql database'
   def deploy
-    return ::Dust.print_failed 'no version specified' unless @config['version']
-    return unless install_postgres
+    # version: 9.1
+    # package:  postgresql-9.1
+    # profile: [ dedicated|standard, zabbix, pacemaker ]
+    # service_name: "service name for init scripts"
 
-    @config['postgresql.conf'] ||= {}
+    return ::Dust.print_failed 'please specify version in your config file, e.g. "version: 9.1"' unless @config['version']
+    return unless install_postgres
 
     # default cluster on debian-like systems is 'main'
     @config['cluster'] ||= 'main' if @node.uses_apt?
+
 
     set_default_directories
     deploy_config
     deploy_recovery
     deploy_certificates if @config['server.crt'] and @config['server.key']
-    create_archive
     set_permissions
 
-    deploy_pacemaker_script if @node.package_installed? 'pacemaker', :quiet => true
-    configure_for_zabbix if zabbix_installed?
+    # configure pacemaker profile
+    if @config['profile'].to_array.include? 'pacemaker'
+      deploy_pacemaker_script if @node.package_installed? 'pacemaker'
+    end
+
+    # configure zabbix profile
+    if @config['profile'].to_array.include? 'zabbix'
+      configure_for_zabbix if zabbix_installed?
+    end
 
     # reload/restart postgres if command line option is given
     @node.restart_service @config['service_name'] if options.restart?
@@ -31,36 +41,41 @@ class Postgres < Recipe
     @node.print_service_status @config['service_name']
   end
 
+
   private
 
   def install_postgres
-    if @node.uses_apt?
+    if @config['package']
+      package = @config['package']
+    elsif @node.uses_apt?
       package = "postgresql-#{@config['version']}"
     elsif @node.uses_emerge?
       package = 'postgresql-server'
     else
-      return ::Dust.print_failed 'os not supported'
+      return ::Dust.print_failed 'os not supported, please specify "package: <package name>" in your config'
     end
 
     @node.install_package package
-
-    # also install the postgresql meta package
-    # @node.install_package 'postgresql' if @node.uses_apt?
   end
 
-  # set conf-dir, archive-dir and data-dir as well as service-name
+  # set conf-dir and data-dir as well as service-name
   # according to config file, or use standard values of distribution
   def set_default_directories
-    if @node.uses_emerge?
-      @config['conf_directory'] ||= "/etc/postgresql-#{@config['version']}"
-      @config['archive_directory'] ||= "/var/lib/postgresql/#{@config['version']}/archive"
-      @config['service_name'] ||= "postgresql-#{@config['version']}"
-      @config['postgresql.conf']['data_directory'] ||= "/var/lib/postgresql/#{@config['version']}/data"
+    @config['postgresql.conf'] ||= {} # create empty config, unless present
 
-    elsif @node.uses_apt?
-      @config['postgresql.conf']['data_directory'] ||= "/var/lib/postgresql/#{@config['version']}/#{@config['cluster']}"
+    if @config['cluster']
       @config['conf_directory'] ||= "/etc/postgresql/#{@config['version']}/#{@config['cluster']}"
-      @config['archive_directory'] ||= "/var/lib/postgresql/#{@config['version']}/#{@config['cluster']}-archive"
+      @config['postgresql.conf']['data_directory'] ||= "/var/lib/postgresql/#{@config['version']}/#{@config['cluster']}"
+    else
+      @config['conf_directory'] ||= "/etc/postgresql-#{@config['version']}"
+      @config['postgresql.conf']['data_directory'] ||= "/var/lib/postgresql/#{@config['version']}/data"
+    end
+
+    if @node.uses_emerge?
+      @config['service_name'] ||= "postgresql-#{@config['version']}"
+    else
+      # on non-debian and non-emerge systems, print a warning since I'm not sure if service name is correct.
+      Dust.print_warning 'service_name not specified in config, defaulting to "postgresql"' unless @node.uses_apt?
       @config['service_name'] ||= 'postgresql'
     end
 
@@ -109,7 +124,8 @@ class Postgres < Recipe
     @config['postgresql.conf'] ||= {}
     @config['postgresql.conf'] = default_postgres_conf.merge @config['postgresql.conf']
 
-    calculate_values
+    # calculate values if dedicated profile is given
+    profile_dedicated if @config['profile'].to_array.include? 'dedicated'
 
     postgresql_conf = ''
     @config['postgresql.conf'].each do |key, value|
@@ -144,11 +160,11 @@ class Postgres < Recipe
 
   # try to find good values (but don't overwrite if set in config file) for
   # shared_buffers, work_mem and maintenance_work_mem, effective_cache_size and wal_buffers
-  def calculate_values
+  def profile_dedicated
     @node.collect_facts :quiet => true
     system_mem = ::Dust.convert_size(@node['memorysize']).to_f
 
-    ::Dust.print_msg "calculating recommended settings for #{kb2mb system_mem} ram\n"
+    ::Dust.print_msg "calculating recommended settings for a dedicated databse server with #{kb2mb system_mem} ram\n"
 
     # every connection uses up to work_mem memory, so make sure that even if
     # max_connections is reached, there's still a bit left.
@@ -184,13 +200,6 @@ class Postgres < Recipe
   def set_permissions
     @node.chown @config['dbuser'], @config['postgresql.conf']['data_directory'] if @config['dbuser']
     @node.chmod 'u+Xrw,g-rwx,o-rwx', @config['postgresql.conf']['data_directory']
-  end
-
-  # create archive dir
-  def create_archive
-    @node.mkdir @config['archive_directory']
-    @node.chown @config['dbuser'], @config['archive_directory'] if @config['dbuser']
-    @node.chmod 'u+Xrw,g-rwx,o-rwx', @config['archive_directory']
   end
 
   # deploy the pacemaker script
