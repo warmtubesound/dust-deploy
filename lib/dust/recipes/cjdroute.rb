@@ -78,10 +78,10 @@ class Cjdroute< Recipe
         'authType' => 1
       },
 
-      # waaghals, expires 01.05.2012
-      '37.34.49.56:61530' => {
-        'password' => 'public-expires-may-ghsfYATSvjh65SFgd',
-        'publicKey' => 'jcvn5bvvfkxt3pmhj8bqzm6y20unc7cd5vuyhg01tmbh7bvswqq0.k',
+      #  ds500ss 
+      '87.208.234.24:28078' => {
+        'password' => 'freedomnetsrai9yah4Kic5Kojah5que4xoCh',
+        'publicKey' => 'qb426vh42usw995jy60ll6rtslguv1ylpvwp44ymzky6f0u5qvq0.k',
         'trust' => 5000,
         'authType' => 1
       }
