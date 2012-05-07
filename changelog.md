@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.11.1
+------------
+
+-  updates list of public peers for cjdroute recipe
+
+
 0.11.0
 ------------
 
