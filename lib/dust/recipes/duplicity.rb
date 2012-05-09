@@ -85,9 +85,9 @@ class Duplicity < Recipe
       ::Dust.print_result( (ret[:exit_code] == 0 and ret[:stdout].length > 0) )
 
       if options.long?
-        ::Dust.print_msg "#{::Dust.black}#{ret[:stdout]}#{::Dust.none}", :indent => 0
+        ::Dust.print_msg ret[:stdout], :indent => 0
       else
-        ::Dust.print_msg "\t#{::Dust.black}#{ret[:stdout].sub(/^\s+([a-zA-Z]+)\s+(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+\s+\d+)\s+(\d+)$/, 'Last backup: \1 (\3 sets) on \2')}#{::Dust.none}", :indent => 0
+        ::Dust.print_msg "\t" + ret[:stdout].sub(/^\s+([a-zA-Z]+)\s+(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+\s+\d+)\s+(\d+)$/, 'Last backup: \1 (\3 sets) on \2'), :indent => 0
       end
 
       puts
