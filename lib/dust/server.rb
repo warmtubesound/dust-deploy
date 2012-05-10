@@ -405,6 +405,9 @@ module Dust
       elsif uses_pacman?
         # pacman has no --yes option that i know of, so echoing y
         ret = exec 'echo y |pacman -Su', options
+      elsif uses_opkg?
+        # upgrading openwrt is very experimental, and should not used normally
+        ret = exec 'opkg upgrade $(echo $(opkg list-upgradable |cut -d' ' -f1 |grep -v Multiple))', options
       else
         Dust.print_failed 'system not (yet) supported', options
         return false
