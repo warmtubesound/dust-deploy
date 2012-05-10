@@ -261,7 +261,11 @@ class Iptables < Recipe
 
     # overwrite openwrt firewall configuration
     # and only use our script
-    @node.write '/etc/config/firewall', "config include\n\toption path /etc/firewall.user" if @node.uses_opkg?
+    if @node.uses_opkg?
+      @node.write '/etc/config/firewall',
+                  "config include\n\toption path /etc/iptables\n\n" +
+                  "config include\n\toption path /etc/ip6tables\n\n"
+    end
 
     @node.write target, @script, :quiet => true
 
@@ -280,7 +284,7 @@ class Iptables < Recipe
 
   # prepend iptables command on non-centos-like machines
   def prepend_cmd
-    @script.gsub! /^/, "#{cmd} " unless @node.uses_rpm?
+    @script.gsub! /^/, "#{cmd_path} " unless @node.uses_rpm?
   end
 
   # apply newly pushed rules
@@ -310,7 +314,6 @@ class Iptables < Recipe
     target = "/etc/#{cmd}"
     target = "/etc/network/if-pre-up.d/#{cmd}" if @node.uses_apt?
     target = "/etc/sysconfig/#{cmd}" if @node.uses_rpm?
-    target = "/etc/firewall.user" if @node.uses_opkg?
     target
   end
 
@@ -319,4 +322,16 @@ class Iptables < Recipe
     return 'ip6tables' if @ip_version == 6
   end
 
+  def cmd_path
+    # get full iptables/ip6tables path using which
+    ret = @node.exec("which #{cmd}")
+    return ret[:stdout].chomp if ret[:exit_code] == 0
+
+    # PATH is not set correctly when executing stuff via ssh on openwrt
+    # thus returning full path manually
+    return "/usr/sbin/#{cmd}" if @node.uses_opkg?
+
+    # if nothing was found, just use "iptables" resp. "ip6tables"
+    return cmd
+  end
 end
