@@ -8,11 +8,11 @@ require 'tempfile'
 module Dust
   class Server
     attr_reader :ssh
-  
+
     def default_options options = {}
       { :quiet => false, :indent => 1 }.merge options
     end
-    
+
     def initialize node
       @node = node
       @node['user'] ||= 'root'
@@ -21,7 +21,7 @@ module Dust
       @node['sudo'] ||= false
     end
 
-    def connect 
+    def connect
       Dust.print_hostname @node['hostname']
       begin
         # connect to proxy if given
@@ -45,11 +45,11 @@ module Dust
 
       true
     end
-  
+
     def disconnect
       @ssh.close
     end
-  
+
     def exec command, options={:live => false, :as_user => false}
       sudo_authenticated = false
       stdout = ''
@@ -67,14 +67,14 @@ module Dust
         # command is wrapped in ", escapes " in the command string
         # and then executed using "sh -c", so that
         # the use of > < && || | and ; doesn't screw things up
-        if @node['sudo']          
+        if @node['sudo']
           channel.request_pty
           command = "sudo sh -c \"#{command.gsub('"','\\"')}\""
         end
 
         channel.exec command do |ch, success|
           abort "FAILED: couldn't execute command (ssh.channel.exec)" unless success
-          
+
           channel.on_data do |ch, data|
             # only send password if sudo mode is enabled,
             # sudo password string matches
@@ -97,11 +97,11 @@ module Dust
           channel.on_request('exit-signal') { |ch, data| exit_signal = data.read_long }
         end
       end
-  
+
       @ssh.loop
 
       # sudo usage provokes a heading newline that's unwanted.
-      stdout.sub! /^(\r\n|\n|\r)/, '' if @node['sudo'] 
+      stdout.sub! /^(\r\n|\n|\r)/, '' if @node['sudo']
 
       { :stdout => stdout, :stderr => stderr, :exit_code => exit_code, :exit_signal => exit_signal }
     end
@@ -123,15 +123,15 @@ module Dust
 
     def append destination, newcontent, options = {}
       options = default_options.merge options
-      
+
       Dust.print_msg "appending to #{File.basename destination}", options
-      
+
       content = exec("cat #{destination}")[:stdout]
       content.concat newcontent
-      
-      Dust.print_result write(destination, content, :quiet => true), options      
+
+      Dust.print_result write(destination, content, :quiet => true), options
     end
- 
+
     def scp source, destination, options = {}
       options = default_options.merge options
 
@@ -141,7 +141,7 @@ module Dust
       Dust.print_msg "deploying #{File.basename source}", options
 
       # save permissions if the file already exists
-      ret = exec "stat -c %a:%u:%g #{destination}" 
+      ret = exec "stat -c %a:%u:%g #{destination}"
       if ret[:exit_code] == 0
         permissions, user, group = ret[:stdout].chomp.split ':'
       else
@@ -150,8 +150,8 @@ module Dust
       end
 
       # if in sudo mode, copy file to temporary place, then move using sudo
-      if @node['sudo'] 
-        ret = exec 'mktemp --tmpdir dust.XXXXXXXXXX' 
+      if @node['sudo']
+        ret = exec 'mktemp --tmpdir dust.XXXXXXXXXX'
         if ret[:exit_code] != 0
           ::Dust.print_failed 'could not create temporary file (needed for sudo)'
           return false
@@ -188,7 +188,7 @@ module Dust
       Dust.print_msg "downloading #{File.basename source}", options
       Dust.print_result @ssh.scp.download!(source, destination), options
     end
- 
+
     def symlink source, destination, options = {}
       options = default_options.merge options
 
@@ -197,7 +197,7 @@ module Dust
       restorecon destination, options # restore SELinux labels
       ret
     end
-  
+
     def chmod mode, file, options = {}
       options = default_options.merge options
 
@@ -262,10 +262,10 @@ module Dust
       Dust.print_msg "restoring selinux labels for #{path}", options
       Dust.print_result exec("#{ret[:stdout].chomp} -R #{path}")[:exit_code], options
     end
- 
+
     def get_system_users options = {}
       options = default_options.merge options
- 
+
       Dust.print_msg "getting all system users", options
       ret = exec 'getent passwd |cut -d: -f1'
       Dust.print_result ret[:exit_code], options
@@ -301,11 +301,11 @@ module Dust
 
       Dust.print_failed '', options
     end
- 
+
     def install_package package, options = {}
       options = default_options.merge options
       options[:env] ||= ''
-      
+
       if package_installed? package, :quiet => true
         return Dust.print_ok "package #{package} already installed", options
       end
@@ -384,15 +384,15 @@ module Dust
       else
         Dust.print_result ret[:exit_code], options
       end
- 
+
       ret[:exit_code]
     end
 
     def system_update options = {}
       options = default_options.merge(:live => true).merge(options)
-    
+
       update_repos
-      
+
       Dust.print_msg 'installing system updates', options
       puts if options[:live]
 
@@ -413,7 +413,7 @@ module Dust
         return false
       end
 
-      if options[:live] 
+      if options[:live]
         puts
       else
         Dust.print_result ret[:exit_code], options
@@ -463,11 +463,11 @@ module Dust
       Dust.print_msg 'determining whether node uses opkg', options
       @uses_opkg = Dust.print_result exec('test -e /etc/opkg.conf')[:exit_code], options
     end
-  
+
     def is_os? os_list, options = {}
       options = default_options(:quiet => true).merge options
 
-      Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options      
+      Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options
       return Dust.print_failed '', options unless collect_facts options
 
       os_list.each do |os|
@@ -479,35 +479,35 @@ module Dust
       Dust.print_failed '', options
       false
     end
-  
+
     def is_debian? options = {}
       options = default_options(:quiet => true).merge options
 
       return false unless uses_apt?
       is_os? ['debian'], options
     end
-  
+
     def is_ubuntu? options = {}
       options = default_options(:quiet => true).merge options
 
       return false unless uses_apt?
       is_os? ['ubuntu'], options
     end
-  
+
     def is_gentoo? options = {}
       options = default_options(:quiet => true).merge options
 
       return false unless uses_emerge?
       is_os? ['gentoo'], options
     end
-  
+
     def is_centos? options = {}
       options = default_options(:quiet => true).merge options
 
       return false unless uses_rpm?
       is_os? ['centos'], options
     end
-  
+
     def is_scientific? options = {}
       options = default_options(:quiet => true).merge options
 
@@ -528,14 +528,14 @@ module Dust
       return false unless uses_pacman?
       is_os? ['archlinux'], options
     end
-  
+
     def is_executable? file, options = {}
       options = default_options.merge options
 
       Dust.print_msg "checking if file #{file} exists and is executeable", options
       Dust.print_result exec("test -x $(which #{file})")[:exit_code], options
     end
-  
+
     def file_exists? file, options = {}
       options = default_options.merge options
 
@@ -549,7 +549,7 @@ module Dust
       Dust.print_msg "checking if directory #{dir} exists", options
       Dust.print_result exec("test -d #{dir}")[:exit_code], options
     end
- 
+
     def autostart_service service, options = {}
       options = default_options.merge options
 
@@ -576,7 +576,7 @@ module Dust
       end
     end
 
-    # invoke 'command' on the service (e.g. @node.service 'postgresql', 'restart') 
+    # invoke 'command' on the service (e.g. @node.service 'postgresql', 'restart')
     def service service, command, options = {}
       options = default_options.merge options
 
@@ -640,7 +640,7 @@ module Dust
       options = default_options.merge options
       options[:home] ||= nil
       options[:shell] ||= nil
-      
+
       return true if user_exists? user, options
 
       Dust.print_msg "creating user #{user}", :indent => options[:indent]
@@ -653,7 +653,7 @@ module Dust
     # returns the home directory of this user
     def get_home user, options = {}
       options = default_options(:quiet => true).merge options
-      
+
       Dust.print_msg "getting home directory of #{user}", options
       ret = exec "getent passwd |cut -d':' -f1,6 |grep '^#{user}' |head -n1 |cut -d: -f2"
       if Dust.print_result ret[:exit_code], options
@@ -706,27 +706,27 @@ module Dust
     # if it's an file.erb exists, render template and push to server
     def deploy_file file, destination, options = {}
       options = default_options(:binding => binding).merge options
-      
+
       if File.exists? file
         scp file, destination, options
-        
+
       elsif File.exists? "#{file}.erb"
         template = ERB.new( File.read("#{file}.erb"), nil, '%<>')
         write destination, template.result(options[:binding]), options
-        
+
       else
         ::Dust.print_failed "'#{file}' was not found."
       end
     end
-    
-    
+
+
     private
-    
+
     def method_missing method, *args, &block
       # make server nodeibutes accessible via server.nodeibute
       if @node[method.to_s]
         @node[method.to_s]
-   
+
       # and as server['nodeibute']
       elsif @node[args.first]
         @node[args.first]
