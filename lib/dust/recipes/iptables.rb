@@ -259,6 +259,10 @@ class Iptables < Recipe
     prepend_cmd
     prepend_header
 
+    # overwrite openwrt firewall configuration
+    # and only use our script
+    @node.write '/etc/config/firewall', "config include\n\toption path /etc/firewall.user" if @node.uses_opkg?
+
     @node.write target, @script, :quiet => true
 
     if @node.uses_rpm?
@@ -306,6 +310,7 @@ class Iptables < Recipe
     target = "/etc/#{cmd}"
     target = "/etc/network/if-pre-up.d/#{cmd}" if @node.uses_apt?
     target = "/etc/sysconfig/#{cmd}" if @node.uses_rpm?
+    target = "/etc/firewall.user" if @node.uses_opkg?
     target
   end
 
