@@ -457,6 +457,7 @@ module Dust
     end
 
     def uses_opkg? options = {}
+      options = default_options(:quiet => true).merge options
 
       return @uses_opkg if defined? @uses_opkg
       Dust.print_msg 'determining whether node uses opkg', options
