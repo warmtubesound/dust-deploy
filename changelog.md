@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.12.0
+------------
+
+-  introduces basic openwrt support!
+-  fixes duplicity status bug
+
+
 0.11.1
 ------------
 
