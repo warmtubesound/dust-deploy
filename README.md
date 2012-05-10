@@ -59,7 +59,14 @@ you can then save the file, and tell dust to get to work:
      - checking if rsync is installed [ ok ]
 
 you should see dust connecting to the node, checking if the requested packages are installed, and if not, install them.
-dust works with aptitude, yum and emerge systems at the moment (testet with ubuntu, debian, gentoo, scientificlinux, centos).
+
+## supported distributions
+
+dust works with **aptitude**, **yum**, **emerge**, **pacman** (since 0.10.3) and **opkg** (since 0.12.0) systems at the moment (testet with recent versions of **ubuntu**, **debian**, **gentoo**, **fedora**, **scientificlinux**, **centos** and **archlinux** as well as **openwrt**). should work on rhel without any problem, too.
+
+
+## contribute
+
 feel free to contribute to dust, so that your system is also supported. contribution is easy! just send me a github pull request. You can find the repository here: https://github.com/kechagia/dust-deploy
 
 
