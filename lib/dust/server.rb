@@ -294,6 +294,8 @@ module Dust
           return Dust.print_ok '', options if exec("rpm -q #{package}")[:exit_code] == 0
         elsif uses_pacman?
           return Dust.print_ok '', options if exec("pacman -Q #{package}")[:exit_code] == 0
+        elsif uses_opkg?
+          return Dust.print_ok '', options unless exec("opkg status #{package}")[:stdout].empty?
         end
       end
 
@@ -318,6 +320,8 @@ module Dust
         exec "yum install -y #{package}"
       elsif uses_pacman?
         exec "echo y |pacman -S #{package}"
+      elsif uses_opkg?
+        exec "opkg install #{package}"
       else
         puts
         return Dust.print_failed "install_package only supports apt, emerge and yum systems at the moment",
@@ -344,6 +348,8 @@ module Dust
         Dust.print_result exec("yum erase -y #{package}")[:exit_code], options
       elsif uses_pacman?
         Dust.print_result exec("echo y |pacman -R #{package}")[:exit_code], options
+      elsif uses_opkg?
+        Dust.print_result exec("opkg remove #{package}")[:exit_code], options
       else
         Dust.print_failed '', options
       end
@@ -367,6 +373,8 @@ module Dust
         ret[:exit_code] = 0 if ret[:exit_code] == 100
       elsif uses_pacman?
         ret = exec 'pacman -Sy', options
+      elsif uses_opkg?
+        ret =  exec 'opkg update', options
       else
         return Dust.print_failed '', options
       end
@@ -443,6 +451,13 @@ module Dust
       return @uses_pacman if defined? @uses_pacman
       Dust.print_msg 'determining whether node uses pacman', options
       @uses_pacman = Dust.print_result exec('test -e /etc/arch-release')[:exit_code], options
+    end
+
+    def uses_opkg? options = {}
+
+      return @uses_opkg if defined? @uses_opkg
+      Dust.print_msg 'determining whether node uses opkg', options
+      @uses_opkg = Dust.print_result exec('test -e /etc/opkg.conf')[:exit_code], options
     end
   
     def is_os? os_list, options = {}
