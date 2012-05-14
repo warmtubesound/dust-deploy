@@ -44,50 +44,6 @@ class Cjdroute< Recipe
     }
   end
 
-  def public_peers
-    # list of public peers, taken from https://wiki.projectmeshnet.org/Public_peers
-    {
-      # derps nodes 
-      '173.255.219.67:10000' => {
-        'password' => 'null',
-        'publicKey' => 'lj52930v1vmg3jqyb399us501svntt499bvgk0c1fud4pmy42gj0.k',
-        'trust' => 5000,
-        'authType' => 1
-      },
-
-      '96.126.112.124:10000' => {
-        'password' => 'null',
-        'publicKey' => '7zy1gb9bw4xp82kjvh66w01jdgh6y3lk7cfnl0pgb0xnn26b2jn0.k',
-        'trust' => 5000,
-        'authType' => 1
-      },
-
-      # rainfly x
-      '76.105.229.241:13982' => {
-        'password' => 'general_public_1985',
-        'publicKey' => '7pu8nlqphgd1bux9sdpjg0c104217r3b3m1bvmdtbn7uwcj5cky0.k',
-        'trust' => 5000,
-        'authType' => 1
-      },
-
-      # grey
-      '199.180.252.227:19081' => {
-        'password' => 'public_7h4yTNEnRSEUvfFLtsM3',
-        'publicKey' => 'z5htnv9jsj85b64cf61lbnl3dmqk5lpv3vxtz9g1jqlvb3b30b90.k',
-        'trust' => 5000,
-        'authType' => 1
-      },
-
-      #  ds500ss 
-      '87.208.234.24:28078' => {
-        'password' => 'freedomnetsrai9yah4Kic5Kojah5que4xoCh',
-        'publicKey' => 'qb426vh42usw995jy60ll6rtslguv1ylpvwp44ymzky6f0u5qvq0.k',
-        'trust' => 5000,
-        'authType' => 1
-      }
-    }
-  end
-
   # installs cmake, git and other building tools needed
   def install_dependencies
     ::Dust.print_msg "installing build dependencies\n"
@@ -186,11 +142,6 @@ class Cjdroute< Recipe
 
     # parse generated json
     cjdroute_conf = JSON.parse ret[:stdout]
-
-    # add some public peers, so we can get started directly
-    ::Dust.print_msg 'adding public peers', :indent => 2
-    cjdroute_conf['interfaces']['UDPInterface']['connectTo'] = public_peers
-    ::Dust.print_ok
 
     # exchange tun0 with configured tun device
     cjdroute_conf['router']['interface']['tunDevice'] = @config['tun']
