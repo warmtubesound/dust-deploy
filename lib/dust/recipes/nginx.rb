@@ -4,7 +4,7 @@ class Nginx < Recipe
     # abort if nginx cannot be installed
     return unless @node.install_package 'nginx'
 
-    @node.scp "#{@template_path}/nginx.conf", '/etc/nginx/nginx.conf'
+    @node.deploy_file "#{@template_path}/nginx.conf", '/etc/nginx/nginx.conf'
 
     # remove old sites that may be present
     ::Dust.print_msg 'deleting old sites in /etc/nginx/sites-*'
