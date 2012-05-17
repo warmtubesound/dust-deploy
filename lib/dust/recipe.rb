@@ -16,6 +16,9 @@ class Recipe < Thor
       @config = config
     end
 
+    # prepare messaging class for this recipe
+    @node.messages.start_recipe(recipe)
+    
     # run task
     send context
   end

@@ -7,7 +7,7 @@ require 'tempfile'
 
 module Dust
   class Server
-    attr_reader :ssh
+    attr_reader :ssh, :messages
 
     def default_options options = {}
       { :quiet => false, :indent => 1 }.merge options
@@ -19,10 +19,12 @@ module Dust
       @node['port'] ||= 22
       @node['password'] ||= ''
       @node['sudo'] ||= false
+      
+      @messages = Messages.new
     end
 
     def connect
-      Dust.print_hostname @node['hostname']
+      messages.add("\n[ #{@node['hostname'].blue} ]\n\n", :indent => 0)
       begin
         # connect to proxy if given
         if @node['proxy']
@@ -109,13 +111,13 @@ module Dust
     def write destination, content, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "deploying #{File.basename destination}", options
+      msg = messages.add("deploying #{File.basename destination}", options)
 
       f = Tempfile.new 'dust-write'
       f.print content
       f.close
 
-      ret = Dust.print_result scp(f.path, destination, :quiet => true), options
+      ret = msg.parse_result(scp(f.path, destination, :quiet => true), options)
       f.unlink
 
       ret
@@ -138,7 +140,7 @@ module Dust
       # make sure scp is installed on client
       install_package 'openssh-clients', :quiet => true if uses_rpm?
 
-      Dust.print_msg "deploying #{File.basename source}", options
+      msg = messages.add("deploying #{File.basename source}", options)
 
       # save permissions if the file already exists
       ret = exec "stat -c %a:%u:%g #{destination}"
@@ -153,7 +155,7 @@ module Dust
       if @node['sudo']
         ret = exec 'mktemp --tmpdir dust.XXXXXXXXXX'
         if ret[:exit_code] != 0
-          ::Dust.print_failed 'could not create temporary file (needed for sudo)'
+          msg.add('could not create temporary file (needed for sudo)').failed
           return false
         end
 
@@ -164,11 +166,11 @@ module Dust
         chown @node['user'], tmpfile, :quiet => true
         @ssh.scp.upload! source, tmpfile
         chown 'root', tmpfile, :quiet => true
-        Dust.print_result exec("mv -f #{tmpfile} #{destination}")[:exit_code], options
+        msg.parse_result(exec("mv -f #{tmpfile} #{destination}")[:exit_code])
 
       else
         @ssh.scp.upload! source, destination
-        Dust.print_ok '', options
+        msg.ok
       end
 
       # set file permissions
@@ -715,7 +717,7 @@ module Dust
         write destination, template.result(options[:binding]), options
 
       else
-        ::Dust.print_failed "'#{file}' was not found."
+        messages.add("'#{file}' was not found.", options).failed
       end
     end
 
