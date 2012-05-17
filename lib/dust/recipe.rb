@@ -8,7 +8,7 @@ class Recipe < Thor
     @node = node
     @options = options
 
-    # if this recipe just was defined as true, yes or 'enabled', 
+    # if this recipe just was defined as true, yes or 'enabled',
     # continue with empty @config, so defaults get used
     if config.is_a? TrueClass or config == 'enabled'
       @config = {}
@@ -18,7 +18,7 @@ class Recipe < Thor
 
     # prepare messaging class for this recipe
     @node.messages.start_recipe(recipe)
-    
+
     # run task
     send context
   end
