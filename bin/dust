@@ -56,10 +56,10 @@ module  Dust
 
       @nodes.each do |node|
         # connect to server
-        server = Server.new node
-        next unless server.connect
-        server.system_update
-        server.disconnect
+        node['server'] = Server.new node
+        next unless node['server'].connect
+        node['server'].system_update
+        node['server'].disconnect
       end
     end
 
@@ -76,10 +76,10 @@ module  Dust
 
       @nodes.each do |node|
         # connect to server
-        server = Server.new node
-        next unless server.connect
-        server.exec cmd, :live => true
-        server.disconnect
+        node['server'] = Server.new node
+        next unless node['server'].connect
+        node['server'].exec cmd, :live => true
+        node['server'].disconnect
       end
     end
 
@@ -122,18 +122,18 @@ module  Dust
         next if recipes.empty?
 
         # connect to server
-        server = Server.new node
-        next unless server.connect
+        node['server'] = Server.new node
+        next unless node['server'].connect
 
         # runs the method with the recipe name, defined and included in recipe/*.rb
         # call recipes for each recipe that is defined for this node
         recipes.each do |recipe, config|
-          server.messages.add("|#{recipe}|\n".green, :indent => 0)
-          send recipe, 'prepare', server, recipe, context, config, options
+          node['server'].messages.add("|#{recipe}|\n".green, :indent => 0)
+          send recipe, 'prepare', node['server'], recipe, context, config, options
           puts
         end
 
-        server.disconnect
+        node['server'].disconnect
       end
     end
 
