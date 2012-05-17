@@ -9,7 +9,7 @@ class Apt < Recipe
     proxy @config.delete('proxy')
 
     @config.each do |name, settings|
-      ::Dust.print_msg "deploying apt settings #{name}\n"
+      @node.messages.add("deploying apt settings #{name}\n")
       conf = ''
       settings.to_array.each do |setting|
         conf << "#{setting}\n"
@@ -40,7 +40,7 @@ class Apt < Recipe
 
     @node.install_package 'unattended-upgrades'
 
-    ::Dust.print_msg "deploying unattended upgrades configuration\n"
+    @node.messages.add("deploying unattended upgrades configuration\n")
     periodic = ''
     periodic << "APT::Periodic::Enable \"#{config['enable']}\";\n"
     periodic << "APT::Periodic::Update-Package-Lists \"#{config['update-package-lists']}\";\n"
@@ -60,13 +60,13 @@ class Apt < Recipe
       # skip 02proxy, because we're going to overwrite it anyways
       next if file == '/etc/apt/apt.conf.d/02proxy'
 
-      ::Dust.print_warning "found proxy configuration in file #{file}, commenting out"
+      @node.messages.add("found proxy configuration in file #{file}, commenting out").warning
       @node.exec "sed -i 's/^\\(acquire::http::proxy.*\\)/#\\1/i' #{file}"
     end
 
     return if config.is_a? FalseClass or config == 'disabled'
     
-    ::Dust.print_msg "deploying proxy configuration\n"
+    @node.messages.add("deploying proxy configuration\n")
     proxy = "Acquire::http::Proxy \"#{config}\";\n"
 
     @node.write '/etc/apt/apt.conf.d/02proxy', proxy, :indent => 2

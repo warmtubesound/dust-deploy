@@ -10,11 +10,11 @@ class Redis < Recipe
   desc 'redis:status', 'displays redis-cli info'
   def status
     return false unless @node.package_installed? 'redis-server'
-    ::Dust.print_msg 'running "redis-cli info"'
+    msg = @node.messages.add('running "redis-cli info"')
     ret = @node.exec 'redis-cli info'
-    ::Dust.print_result ret[:exit_code]
+    msg.parse_result(ret[:exit_code])
 
-    ::Dust.print_msg ret[:stdout], :indent => 0 unless ret[:stdout].empty?
+    @node.messages.add(ret[:stdout], :indent => 0) unless ret[:stdout].empty?
   end
   
   
@@ -75,12 +75,12 @@ class Redis < Recipe
   # redis complains if vm.overcommit_memory != 1
   def configure_sysctl
     if @node.uses_apt?
-      ::Dust.print_msg "setting redis sysctl keys\n"
+      @node.messages.add("setting redis sysctl keys\n")
       
-      ::Dust.print_msg 'setting overcommit memory to 1', :indent => 2
-      ::Dust.print_result @node.exec('sysctl -w vm.overcommit_memory=1')[:exit_code]
-      ::Dust.print_msg 'setting swappiness to 0', :indent => 2
-      ::Dust.print_result @node.exec('sysctl -w vm.swappiness=0')[:exit_code]
+      msg = @node.messages.add('setting overcommit memory to 1', :indent => 2)
+      msg.parse_result(@node.exec('sysctl -w vm.overcommit_memory=1')[:exit_code])
+      msg = @node.messages.add('setting swappiness to 0', :indent => 2)
+      msg.parse_result(@node.exec('sysctl -w vm.swappiness=0')[:exit_code])
       
       file = ''
       file << "vm.overcommit_memory=1\n"
@@ -89,7 +89,7 @@ class Redis < Recipe
       @node.write "/etc/sysctl.d/30-redis.conf", file
       
     else
-      ::Dust.print_warning 'sysctl configuration not supported for your os'
+      @node.messages.add('sysctl configuration not supported for your os').warning
     end
   end
 end

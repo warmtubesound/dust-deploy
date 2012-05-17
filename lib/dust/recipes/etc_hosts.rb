@@ -12,9 +12,9 @@ class EtcHosts < Recipe
 
   desc 'etc_hosts:status', 'shows current /etc/hosts'
   def status
-    ::Dust.print_msg 'getting /etc/hosts'
+    msg = @node.messages.add('getting /etc/hosts')
     ret = @node.exec 'cat /etc/hosts'
-    ::Dust.print_result ret[:exit_code]
-    ::Dust.print_ret ret
+    msg.parse_result(ret[:exit_code])
+    msg.print_output(ret)
   end
 end

@@ -7,7 +7,6 @@ class Skel < Recipe
         next unless File.file? file
         @node.deploy_file file, "/#{@node.get_home user}/#{File.basename file}", { :binding => binding, :indent => 2 }
       end
-      puts
     end
   end
 end

@@ -24,7 +24,7 @@ class Iptables < Recipe
       @script = ''
       @ip_version = v
 
-      ::Dust.print_msg "generating ipv#{@ip_version} rules\n"
+      @node.messages.add("generating ipv#{@ip_version} rules\n")
 
       clear_all
       populate_rule_defaults
@@ -32,18 +32,15 @@ class Iptables < Recipe
 
       deploy_script
       apply_rules
-
-      puts
     end
   end
 
   desc 'iptables:status', 'displays iptables rules'
   def status
-    ::Dust.print_ok 'displaying iptables rules (ipv4)'
-    ::Dust.print_msg @node.exec('iptables -L -v -n')[:stdout], :indent => 0
-    puts
-    ::Dust.print_ok 'displaying iptables rules (ipv6)'
-    ::Dust.print_msg @node.exec('ip6tables -L -v -n')[:stdout], :indent => 0
+    @node.messages.add('displaying iptables rules (ipv4)').ok
+    @node.messages.add(@node.exec('iptables -L -v -n')[:stdout], :indent => 0)
+    @node.messages.add('displaying iptables rules (ipv6)').ok
+    @node.messages.add(@node.exec('ip6tables -L -v -n')[:stdout], :indent => 0)
   end
 
   private
@@ -152,14 +149,13 @@ class Iptables < Recipe
       rules = get_rules_for_table chain_rules, table
       next if rules.empty?
 
-      #::Dust.print_msg "#{::Dust.pink}#{chain}#{::Dust.none} rules\n", :indent => 3
       rules.sort.each do |name, rule|
         next unless rule['table'].include? table
         next unless check_ip_version rule
 
-        ::Dust.print_msg "adding rule: #{name}", :indent => 2
+        msg = @node.messages.add("adding rule: #{name}", :indent => 2)
         generate_iptables_string chain, rule
-        ::Dust.print_ok
+        msg.ok
       end
     end
     @script << "COMMIT\n" if @node.uses_rpm?
@@ -187,7 +183,6 @@ class Iptables < Recipe
   # generates the iptables string out of a rule
   def generate_iptables_string chain, rule
     parse_rule(rule).each do |r|
-      #::Dust.print_msg "#{::Dust.grey}#{r.join ' '}#{::Dust.none}\n", :indent => 5
       @script << "--append #{chain.upcase} #{r.join ' '}\n"
     end
   end
@@ -290,22 +285,22 @@ class Iptables < Recipe
   # apply newly pushed rules
   def apply_rules
     if @options.restart?
-      ::Dust.print_msg "applying ipv#{@ip_version} rules"
+      msg = @node.messages.add("applying ipv#{@ip_version} rules")
 
       if @node.uses_rpm?
-        ::Dust.print_result @node.exec("/etc/init.d/#{cmd} restart")[:exit_code]
+        msg.parse_result(@node.exec("/etc/init.d/#{cmd} restart")[:exit_code])
 
       else
         ret = @node.exec get_target
-        ::Dust.print_result( (ret[:exit_code] == 0 and ret[:stdout].empty? and ret[:stderr].empty?) )
+        msg.parse_result( (ret[:exit_code] == 0 and ret[:stdout].empty? and ret[:stderr].empty?) )
       end
     end
 
     # on gentoo, rules have to be saved using the init script,
     # otherwise they won't get re-applied on next startup
     if @node.uses_emerge?
-      ::Dust.print_msg "saving ipv#{@ip_version} rules"
-      ::Dust.print_result @node.exec("/etc/init.d/#{cmd} save")[:exit_code]
+      msg = @node.messages.add("saving ipv#{@ip_version} rules")
+      msg.parse_result(@node.exec("/etc/init.d/#{cmd} save")[:exit_code])
     end
   end
 

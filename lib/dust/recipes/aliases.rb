@@ -5,15 +5,15 @@ class Aliases < Recipe
     
     @node.deploy_file "#{@template_path}/aliases", '/etc/aliases', :binding => binding
 
-    ::Dust.print_msg 'running newaliases'
-    ::Dust.print_result @node.exec('newaliases')[:exit_code]
+    msg = @node.messages.add('running newaliases')
+    msg.parse_result(@node.exec('newaliases')[:exit_code])
   end
   
   desc 'aliases:status', 'shows current aliases'
   def status
-    ::Dust.print_msg 'getting /etc/aliases'
+    msg = @node.messages.add('getting /etc/aliases')
     ret = @node.exec 'cat /etc/aliases'
-    ::Dust.print_result ret[:exit_code]
-    ::Dust.print_ret ret
+    msg.parse_result(ret[:exit_code])
+    msg.print_output(ret)
   end
 end

@@ -1,5 +1,5 @@
 class HashCheck < Recipe
-  
+
   desc 'hash_check:deploy', 'checks /etc/shadow for weak hashes'
   def deploy
     # those keys indicate that no password is set, or login is disabled
@@ -8,7 +8,7 @@ class HashCheck < Recipe
     weak_passwords = File.open "#{@template_path}/weak_passwords", 'r'
 
     shadow = @node.exec('getent shadow')[:stdout]
-    ::Dust.print_msg "checking for weak password hashes\n"
+    msg = @node.messages.add("checking for weak password hashes\n")
 
     found_weak = false
     shadow.each_line do |line|
@@ -25,17 +25,16 @@ class HashCheck < Recipe
         ret = @node.exec("python -c \"import crypt; print(crypt.crypt('#{password}', '\\$#{method}\\$#{salt}\\$'));\"")
 
         unless ret[:exit_code] == 0
-          ::Dust.print_failed 'error during hash creation (is python installed?)'
-          return false
+          return msg.failed('error during hash creation (is python installed?)')
         end
         if hash == ret[:stdout].chomp
-          ::Dust.print_failed "user #{user} has a weak password! (#{password})", :indent => 2
+          msg.failed("user #{user} has a weak password! (#{password})")
           found_weak = true
         end
       end
     end
 
     weak_passwords.close
-    ::Dust.print_ok 'none found.', :indent => 2 unless found_weak
+    msg.ok('none found.') unless found_weak
   end
 end

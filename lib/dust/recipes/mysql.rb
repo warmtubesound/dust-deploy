@@ -6,11 +6,11 @@ class Mysql < Recipe
 
     @config = default_config.deep_merge @config
 
-    ::Dust.print_msg "configuring mysql\n"
-    ::Dust.print_ok "listen on #{@config['mysqld']['bind-address']}:#{@config['mysqld']['port']}", :indent => 2
+    @node.messages.add("configuring mysql\n")
+    @node.messages.add("listen on #{@config['mysqld']['bind-address']}:#{@config['mysqld']['port']}", :indent => 2).ok
 
     @config['mysqld']['innodb_buffer_pool_size'] ||= get_innodb_buffer_pool_size
-    ::Dust.print_ok "set innodb buffer pool to '#{@config['mysqld']['innodb_buffer_pool_size']}'", :indent => 2
+    @node.messages.add("set innodb buffer pool to '#{@config['mysqld']['innodb_buffer_pool_size']}'", :indent => 2).ok
 
     @node.write '/etc/mysql/my.cnf', generate_my_cnf
 
@@ -78,7 +78,7 @@ class Mysql < Recipe
     # allocate 70% of the available ram to mysql
     # but leave max 1gb to system
     unless @config['mysqld']['innodb_buffer_pool_size']
-      ::Dust.print_msg 'autoconfiguring innodb buffer size', :indent => 2
+      msg = @node.messages.add('autoconfiguring innodb buffer size', :indent => 2)
       @node.collect_facts :quiet => true
 
       # get system memory (in kb)
@@ -87,7 +87,7 @@ class Mysql < Recipe
       # allocate 80% of the available ram to mysql
       buffer_pool = (system_mem * 0.7).to_i
 
-      ::Dust.print_ok
+      msg.ok
       "#{buffer_pool / 1024}M"
     end
   end

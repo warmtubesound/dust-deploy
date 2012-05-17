@@ -6,7 +6,7 @@ class Postgres < Recipe
     # profile: [ dedicated|standard, zabbix, pacemaker ]
     # service_name: "service name for init scripts"
 
-    return ::Dust.print_failed 'please specify version in your config file, e.g. "version: 9.1"' unless @config['version']
+    return @node.messages.add('please specify version in your config file, e.g. "version: 9.1"').failed unless @config['version']
     return unless install_postgres
 
     # default cluster on debian-like systems is 'main'
@@ -52,7 +52,7 @@ class Postgres < Recipe
     elsif @node.uses_emerge?
       package = 'postgresql-server'
     else
-      return ::Dust.print_failed 'os not supported, please specify "package: <package name>" in your config'
+      return @node.messages.add('os not supported, please specify "package: <package name>" in your config').failed
     end
 
     @node.install_package package
@@ -75,7 +75,7 @@ class Postgres < Recipe
       @config['service_name'] ||= "postgresql-#{@config['version']}"
     else
       # on non-debian and non-emerge systems, print a warning since I'm not sure if service name is correct.
-      Dust.print_warning 'service_name not specified in config, defaulting to "postgresql"' unless @node.uses_apt?
+      @node.messages.add('service_name not specified in config, defaulting to "postgresql"').warning unless @node.uses_apt?
       @config['service_name'] ||= 'postgresql'
     end
 
@@ -164,31 +164,31 @@ class Postgres < Recipe
     @node.collect_facts :quiet => true
     system_mem = ::Dust.convert_size(@node['memorysize']).to_f
 
-    ::Dust.print_msg "calculating recommended settings for a dedicated databse server with #{kb2mb system_mem} ram\n"
+    msg = @node.messages.add("calculating recommended settings for a dedicated databse server with #{kb2mb system_mem} ram\n")
 
     # every connection uses up to work_mem memory, so make sure that even if
     # max_connections is reached, there's still a bit left.
     # total available memory / (2 * max_connections)
     @config['postgresql.conf']['work_mem'] ||= kb2mb(system_mem * 0.9 / @config['postgresql.conf']['max_connections'])
-    ::Dust.print_ok "work_mem: #{@config['postgresql.conf']['work_mem']}", :indent => 2
+    @node.messages.add("work_mem: #{@config['postgresql.conf']['work_mem']}", :indent => 2).ok
 
     # shared_buffers should be 0.2 - 0.3 of system ram
     # unless ram is lower than 1gb, then less (32mb maybe)
     @config['postgresql.conf']['shared_buffers'] ||= kb2mb(system_mem * 0.25)
-    ::Dust.print_ok "shared_buffers: #{@config['postgresql.conf']['shared_buffers']}", :indent => 2
+    @node.messages.add("shared_buffers: #{@config['postgresql.conf']['shared_buffers']}", :indent => 2).ok
 
     # maintenance_work_mem, should be a lot higher than work_mem
     # recommended value: 50mb for each 1gb of system ram
     @config['postgresql.conf']['maintenance_work_mem'] ||= kb2mb(system_mem / 1024 * 50)
-    ::Dust.print_ok "maintenance_work_mem: #{@config['postgresql.conf']['maintenance_work_mem']}", :indent => 2
+    @node.messages.add("maintenance_work_mem: #{@config['postgresql.conf']['maintenance_work_mem']}", :indent => 2).ok
 
     # effective_cache_size between 0.6 and 0.8 of system ram
     @config['postgresql.conf']['effective_cache_size'] ||= kb2mb(system_mem * 0.75)
-    ::Dust.print_ok "effective_cache_size: #{@config['postgresql.conf']['effective_cache_size']}", :indent => 2
+    @node.messages.add("effective_cache_size: #{@config['postgresql.conf']['effective_cache_size']}", :indent => 2).ok
 
     # wal_buffers should be between 2-16mb
     @config['postgresql.conf']['wal_buffers'] ||= '12MB'
-    ::Dust.print_ok "wal_buffers: #{@config['postgresql.conf']['wal_buffers']}", :indent => 2
+    @node.messages.add("wal_buffers: #{@config['postgresql.conf']['wal_buffers']}", :indent => 2).ok
   end
 
   # converts plain kb value to "1234MB"
@@ -221,35 +221,35 @@ class Postgres < Recipe
   # adds zabbix user to postgres group
   # creates zabbix user in postgres and grant access to postgres database
   def configure_for_zabbix
-    ::Dust.print_msg "configuring postgres for zabbix monitoring\n"
-    ::Dust.print_msg 'adding zabbix user to postgres group', :indent => 2
-    ::Dust.print_result @node.exec('usermod -a -G postgres zabbix')[:exit_code]
+    @node.messages.add("configuring postgres for zabbix monitoring\n")
+    msg = @node.messages.add('adding zabbix user to postgres group', :indent => 2)
+    msg.parse_result(@node.exec('usermod -a -G postgres zabbix')[:exit_code])
 
     if is_master? :indent => 2
-      ::Dust.print_msg 'checking if zabbix user exists in postgres', :indent => 3
-      ret = ::Dust.print_result @node.exec('psql -U postgres -c ' +
+      msg = @node.messages.add('checking if zabbix user exists in postgres', :indent => 3)
+      ret = msg.parse_result(@node.exec('psql -U postgres -c ' +
                                            '  "SELECT usename FROM pg_user WHERE usename = \'zabbix\'"' +
-                                           '  postgres |grep -q zabbix')[:exit_code]
+                                           '  postgres |grep -q zabbix')[:exit_code])
 
       # if user was not found, create him
       unless ret
-        ::Dust.print_msg 'create zabbix user in postgres', :indent => 4
-        ::Dust.print_result @node.exec('createuser -U postgres zabbix -RSD')[:exit_code]
+        msg = @node.messages.add('create zabbix user in postgres', :indent => 4)
+        msg.parse_result(@node.exec('createuser -U postgres zabbix -RSD')[:exit_code])
       end
 
-      ::Dust.print_msg 'GRANT zabbix user access to postgres database', :indent => 3
-      ::Dust.print_result( @node.exec('psql -U postgres -c "GRANT SELECT ON pg_stat_database TO zabbix" postgres')[:exit_code] )
+      msg = @node.messages.add('GRANT zabbix user access to postgres database', :indent => 3)
+      msg.parse_result(@node.exec('psql -U postgres -c "GRANT SELECT ON pg_stat_database TO zabbix" postgres')[:exit_code])
     end
   end
 
   # checks if this server is a postgres master
   def is_master? options = {}
-    ::Dust.print_msg 'checking if this host is the postgres master: ', options
+    msg = @node.messages.add('checking if this host is the postgres master: ', options)
     if @node.file_exists? "#{@config['postgresql.conf']['data_directory']}/recovery.done", :quiet => true
-      ::Dust.print_ok 'yes', :indent => 0
+      msg.ok('yes')
       return true
       else
-      ::Dust.print_ok 'no', :indent => 0
+      msg.ok('no')
       return false
     end
   end
