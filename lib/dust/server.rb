@@ -19,7 +19,7 @@ module Dust
       @node['port'] ||= 22
       @node['password'] ||= ''
       @node['sudo'] ||= false
-      
+
       @messages = Messages.new
     end
 
@@ -86,13 +86,13 @@ module Dust
               sudo_authenticated = true
             else
               stdout += data
-              Dust.print_msg data.green, :indent => 0 if options[:live] and not data.empty?
+              messages.add(data.green, :indent => 0) if options[:live] and not data.empty?
             end
           end
 
           channel.on_extended_data do |ch, type, data|
             stderr += data
-            Dust.print_msg data.red, :indent => 0 if options[:live] and not data.empty?
+            messages.add(data.red, :indent => 0) if options[:live] and not data.empty?
           end
 
           channel.on_request('exit-status') { |ch, data| exit_code = data.read_long }
@@ -126,12 +126,12 @@ module Dust
     def append destination, newcontent, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "appending to #{File.basename destination}", options
+      messages.add("appending to #{File.basename destination}", options)
 
       content = exec("cat #{destination}")[:stdout]
       content.concat newcontent
 
-      Dust.print_result write(destination, content, :quiet => true), options
+      msg.parse_result(write(destination, content, :quiet => true))
     end
 
     def scp source, destination, options = {}
@@ -155,7 +155,7 @@ module Dust
       if @node['sudo']
         ret = exec 'mktemp --tmpdir dust.XXXXXXXXXX'
         if ret[:exit_code] != 0
-          msg.add('could not create temporary file (needed for sudo)').failed
+          msg.failed('could not create temporary file (needed for sudo)')
           return false
         end
 
@@ -187,15 +187,15 @@ module Dust
       # make sure scp is installed on client
       install_package 'openssh-clients', :quiet => true if uses_rpm?
 
-      Dust.print_msg "downloading #{File.basename source}", options
-      Dust.print_result @ssh.scp.download!(source, destination), options
+      msg = messages.add("downloading #{File.basename source}", options)
+      msg.parse_result(@ssh.scp.download!(source, destination))
     end
 
     def symlink source, destination, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "symlinking #{File.basename source} to '#{destination}'", options
-      ret = Dust.print_result exec("ln -s #{source} #{destination}")[:exit_code], options
+      msg = messages.add("symlinking #{File.basename source} to '#{destination}'", options)
+      ret = msg.parse_result(exec("ln -s #{source} #{destination}")[:exit_code])
       restorecon destination, options # restore SELinux labels
       ret
     end
@@ -203,22 +203,22 @@ module Dust
     def chmod mode, file, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "setting mode of #{File.basename file} to #{mode}", options
-      Dust.print_result exec("chmod -R #{mode} #{file}")[:exit_code], options
+      msg = messages.add("setting mode of #{File.basename file} to #{mode}", options)
+      msg.parse_result(exec("chmod -R #{mode} #{file}")[:exit_code])
     end
 
     def chown user, file, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "setting owner of #{File.basename file} to #{user}", options
-      Dust.print_result exec("chown -R #{user} #{file}")[:exit_code], options
+      msg = messages.add("setting owner of #{File.basename file} to #{user}", options)
+      msg.parse_result(exec("chown -R #{user} #{file}")[:exit_code])
     end
 
     def rm file, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "deleting #{file}", options
-      Dust.print_result exec("rm -rf #{file}")[:exit_code], options
+      msg = messages.add("deleting #{file}", options)
+      msg.parse_result(exec("rm -rf #{file}")[:exit_code])
     end
 
     def cp source, destination, options = {}
@@ -227,8 +227,8 @@ module Dust
       # get rid of overly careful aliases
       exec 'unalias -a'
 
-      Dust.print_msg "copying #{source} to #{destination}", options
-      Dust.print_result exec("cp -a #{source} #{destination}")[:exit_code], options
+      msg = messages.add("copying #{source} to #{destination}", options)
+      msg.parse_result(exec("cp -a #{source} #{destination}")[:exit_code])
     end
 
     def mv source, destination, options = {}
@@ -237,8 +237,8 @@ module Dust
       # get rid of overly careful aliases
       exec 'unalias -a'
 
-      Dust.print_msg "moving #{source} to #{destination}", options
-      Dust.print_result exec("mv #{source} #{destination}")[:exit_code], options
+      msg = messages.add("moving #{source} to #{destination}", options)
+      msg.parse_result(exec("mv #{source} #{destination}")[:exit_code])
     end
 
     def mkdir dir, options = {}
@@ -246,8 +246,8 @@ module Dust
 
       return true if dir_exists? dir, :quiet => true
 
-      Dust.print_msg "creating directory #{dir}", options
-      ret = Dust.print_result exec("mkdir -p #{dir}")[:exit_code], options
+      msg = messages.add("creating directory #{dir}", options)
+      ret = msg.parse_result(exec("mkdir -p #{dir}")[:exit_code])
       restorecon dir, options # restore SELinux labels
       ret
     end
@@ -261,16 +261,16 @@ module Dust
       ret = exec 'which restorecon'
       return true unless ret[:exit_code] == 0
 
-      Dust.print_msg "restoring selinux labels for #{path}", options
-      Dust.print_result exec("#{ret[:stdout].chomp} -R #{path}")[:exit_code], options
+      msg = messages.add("restoring selinux labels for #{path}", options)
+      msg.parse_result(exec("#{ret[:stdout].chomp} -R #{path}")[:exit_code])
     end
 
     def get_system_users options = {}
       options = default_options.merge options
 
-      Dust.print_msg "getting all system users", options
+      msg = messages.add("getting all system users", options)
       ret = exec 'getent passwd |cut -d: -f1'
-      Dust.print_result ret[:exit_code], options
+      msg.parse_result(ret[:exit_code])
 
       users = []
       ret[:stdout].each do |user|
@@ -285,23 +285,23 @@ module Dust
 
       packages = [ packages ] if packages.is_a? String
 
-      Dust.print_msg "checking if #{packages.join(' or ')} is installed", options
+      msg = messages.add("checking if #{packages.join(' or ')} is installed", options)
 
       packages.each do |package|
         if uses_apt?
-          return Dust.print_ok '', options if exec("dpkg -l #{package} |grep '^ii'")[:exit_code] == 0
+          return msg.ok if exec("dpkg -l #{package} |grep '^ii'")[:exit_code] == 0
         elsif uses_emerge?
-          return Dust.print_ok '', options unless exec("qlist -I #{package}")[:stdout].empty?
+          return msg.ok unless exec("qlist -I #{package}")[:stdout].empty?
         elsif uses_rpm?
-          return Dust.print_ok '', options if exec("rpm -q #{package}")[:exit_code] == 0
+          return msg.ok if exec("rpm -q #{package}")[:exit_code] == 0
         elsif uses_pacman?
-          return Dust.print_ok '', options if exec("pacman -Q #{package}")[:exit_code] == 0
+          return msg.ok if exec("pacman -Q #{package}")[:exit_code] == 0
         elsif uses_opkg?
-          return Dust.print_ok '', options unless exec("opkg status #{package}")[:stdout].empty?
+          return msg.ok unless exec("opkg status #{package}")[:stdout].empty?
         end
       end
 
-      Dust.print_failed '', options
+      msg.failed
     end
 
     def install_package package, options = {}
@@ -309,10 +309,10 @@ module Dust
       options[:env] ||= ''
 
       if package_installed? package, :quiet => true
-        return Dust.print_ok "package #{package} already installed", options
+        return messages.add("package #{package} already installed", options).ok
       end
 
-      Dust.print_msg "installing #{package}", options
+      msg = messages.add("installing #{package}", options)
 
       if uses_apt?
         exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
@@ -325,43 +325,40 @@ module Dust
       elsif uses_opkg?
         exec "opkg install #{package}"
       else
-        puts
-        return Dust.print_failed "install_package only supports apt, emerge and yum systems at the moment",
-                                 { :quiet => options[:quiet], :indent => options[:indent] + 1 }
+        return msg.failed("install_package only supports apt, emerge and yum systems at the moment")
       end
 
       # check if package actually was installed
-      Dust.print_result package_installed?(package, :quiet => true), options
+      msg.parse_result(package_installed?(package, :quiet => true))
     end
 
     def remove_package package, options = {}
       options = default_options.merge options
 
       unless package_installed? package, :quiet => true
-        return Dust.print_ok "package #{package} not installed", options
+        return messages.add("package #{package} not installed", options).ok
       end
 
-      Dust.print_msg "removing #{package}", options
+      msg = messages.add("removing #{package}", options)
       if uses_apt?
-        Dust.print_result exec("DEBIAN_FRONTEND=noninteractive aptitude purge -y #{package}")[:exit_code], options
+        msg.parse_result(exec("DEBIAN_FRONTEND=noninteractive aptitude purge -y #{package}")[:exit_code])
       elsif uses_emerge?
-        Dust.print_result exec("emerge --unmerge #{package}")[:exit_code], options
+        msg.parse_result(exec("emerge --unmerge #{package}")[:exit_code])
       elsif uses_rpm?
-        Dust.print_result exec("yum erase -y #{package}")[:exit_code], options
+        msg.parse_result(exec("yum erase -y #{package}")[:exit_code])
       elsif uses_pacman?
-        Dust.print_result exec("echo y |pacman -R #{package}")[:exit_code], options
+        msg.parse_result(exec("echo y |pacman -R #{package}")[:exit_code])
       elsif uses_opkg?
-        Dust.print_result exec("opkg remove #{package}")[:exit_code], options
+        msg.parse_result(exec("opkg remove #{package}")[:exit_code])
       else
-        Dust.print_failed '', options
+        msg.failed
       end
     end
 
     def update_repos options = {}
       options = default_options.merge options
 
-      Dust.print_msg 'updating system repositories', options
-      puts if options[:live]
+      msg = messages.add('updating system repositories', options)
 
       if uses_apt?
         ret = exec 'aptitude update', options
@@ -378,13 +375,11 @@ module Dust
       elsif uses_opkg?
         ret =  exec 'opkg update', options
       else
-        return Dust.print_failed '', options
+        return msg.failed
       end
 
-      if options[:live]
-        puts
-      else
-        Dust.print_result ret[:exit_code], options
+      unless options[:live]
+        msg.parse_result(ret[:exit_code])
       end
 
       ret[:exit_code]
@@ -395,8 +390,7 @@ module Dust
 
       update_repos
 
-      Dust.print_msg 'installing system updates', options
-      puts if options[:live]
+      msg = messages.add('installing system updates', options)
 
       if uses_apt?
         ret = exec 'DEBIAN_FRONTEND=noninteractive aptitude full-upgrade -y', options
@@ -411,14 +405,12 @@ module Dust
         # upgrading openwrt is very experimental, and should not used normally
         ret = exec 'opkg upgrade $(echo $(opkg list-upgradable |cut -d' ' -f1 |grep -v Multiple))', options
       else
-        Dust.print_failed 'system not (yet) supported', options
+        msg.failed('system not (yet) supported')
         return false
       end
 
-      if options[:live]
-        puts
-      else
-        Dust.print_result ret[:exit_code], options
+      unless options[:live]
+        msg.parse_result(ret[:exit_code])
       end
 
       ret[:exit_code]
@@ -430,55 +422,55 @@ module Dust
       options = default_options(:quiet => true).merge options
 
       return @uses_apt if defined? @uses_apt
-      Dust.print_msg 'determining whether node uses apt', options
-      @uses_apt = Dust.print_result exec('test -e /etc/debian_version')[:exit_code], options
+      msg = messages.add('determining whether node uses apt', options)
+      @uses_apt = msg.parse_result(exec('test -e /etc/debian_version')[:exit_code])
     end
 
     def uses_rpm? options = {}
       options = default_options(:quiet => true).merge options
 
       return @uses_rpm if defined? @uses_rpm
-      Dust.print_msg 'determining whether node uses rpm', options
-      @uses_rpm = Dust.print_result exec('test -e /etc/redhat-release')[:exit_code], options
+      msg = messages.add('determining whether node uses rpm', options)
+      @uses_rpm = msg.parse_result(exec('test -e /etc/redhat-release')[:exit_code])
     end
 
     def uses_emerge? options = {}
       options = default_options(:quiet => true).merge options
 
       return @uses_emerge if defined? @uses_emerge
-      Dust.print_msg 'determining whether node uses emerge', options
-      @uses_emerge = Dust.print_result exec('test -e /etc/gentoo-release')[:exit_code], options
+      msg = messages.add('determining whether node uses emerge', options)
+      @uses_emerge = msg.parse_result(exec('test -e /etc/gentoo-release')[:exit_code])
     end
 
     def uses_pacman? options = {}
       options = default_options(:quiet => true).merge options
 
       return @uses_pacman if defined? @uses_pacman
-      Dust.print_msg 'determining whether node uses pacman', options
-      @uses_pacman = Dust.print_result exec('test -e /etc/arch-release')[:exit_code], options
+      msg = messages.add('determining whether node uses pacman', options)
+      @uses_pacman = msg.parse_result(exec('test -e /etc/arch-release')[:exit_code])
     end
 
     def uses_opkg? options = {}
       options = default_options(:quiet => true).merge options
 
       return @uses_opkg if defined? @uses_opkg
-      Dust.print_msg 'determining whether node uses opkg', options
-      @uses_opkg = Dust.print_result exec('test -e /etc/opkg.conf')[:exit_code], options
+      msg = messages.add('determining whether node uses opkg', options)
+      @uses_opkg = msg.parse_result(exec('test -e /etc/opkg.conf')[:exit_code])
     end
 
     def is_os? os_list, options = {}
       options = default_options(:quiet => true).merge options
 
-      Dust.print_msg "checking if this machine runs #{os_list.join(' or ')}", options
-      return Dust.print_failed '', options unless collect_facts options
+      msg = messages.add("checking if this machine runs #{os_list.join(' or ')}", options)
+      return msg.failed unless collect_facts options
 
       os_list.each do |os|
         if @node['operatingsystem'].downcase == os.downcase
-          return Dust.print_ok '', options
+          return msg.ok
         end
       end
 
-      Dust.print_failed '', options
+      msg.failed
       false
     end
 
@@ -534,47 +526,47 @@ module Dust
     def is_executable? file, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "checking if file #{file} exists and is executeable", options
-      Dust.print_result exec("test -x $(which #{file})")[:exit_code], options
+      msg = messages.add("checking if file #{file} exists and is executeable", options)
+      msg.parse_result(exec("test -x $(which #{file})")[:exit_code])
     end
 
     def file_exists? file, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "checking if file #{file} exists", options
-      Dust.print_result exec("test -e #{file}")[:exit_code], options
+      msg = messages.add("checking if file #{file} exists", options)
+      msg.parse_result(exec("test -e #{file}")[:exit_code])
     end
 
     def dir_exists? dir, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "checking if directory #{dir} exists", options
-      Dust.print_result exec("test -d #{dir}")[:exit_code], options
+      msg = messages.add("checking if directory #{dir} exists", options)
+      msg.parse_result(exec("test -d #{dir}")[:exit_code])
     end
 
     def autostart_service service, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "autostart #{service} on boot", options
+      msg = messages.add("autostart #{service} on boot", options)
 
       if uses_rpm?
         if file_exists? '/bin/systemctl', :quiet => true
-          Dust.print_result exec("systemctl enable #{service}.service")[:exit_code], options
+          msg.parse_result(exec("systemctl enable #{service}.service")[:exit_code])
         else
-          Dust.print_result exec("chkconfig #{service} on")[:exit_code], options
+          msg.parse_result(exec("chkconfig #{service} on")[:exit_code])
         end
 
       elsif uses_apt?
-        Dust.print_result exec("update-rc.d #{service} defaults")[:exit_code], options
+        msg.parse_result(exec("update-rc.d #{service} defaults")[:exit_code])
 
       elsif uses_emerge?
-        Dust.print_result exec("rc-update add #{service} default")[:exit_code], options
+        msg.parse_result(exec("rc-update add #{service} default")[:exit_code])
 
       # archlinux needs his autostart daemons in /etc/rc.conf, in the DAEMONS line
       #elsif uses_pacman?
 
       else
-        Dust.print_failed '', options
+        msg.failed
       end
     end
 
@@ -582,31 +574,31 @@ module Dust
     def service service, command, options = {}
       options = default_options.merge options
 
-      return ::Dust.print_failed "service: '#{service}' unknown", options unless service.is_a? String
+      return messages.add("service: '#{service}' unknown", options).failed unless service.is_a? String
 
       # try systemd, then upstart, then sysvconfig, then rc.d, then initscript
       if file_exists? '/bin/systemctl', :quiet => true
-        Dust.print_msg "#{command}ing #{service} (via systemd)", options
+        msg = messages.add("#{command}ing #{service} (via systemd)", options)
         ret = exec("systemctl #{command} #{service}.service")
 
       elsif file_exists? "/etc/init/#{service}", :quiet => true
-        Dust.print_msg "#{command}ing #{service} (via upstart)", options
+        msg = messages.add("#{command}ing #{service} (via upstart)", options)
         ret = exec("#{command} #{service}")
 
       elsif file_exists? '/sbin/service', :quiet => true or file_exists? '/usr/sbin/service', :quiet => true
-        Dust.print_msg "#{command}ing #{service} (via sysvconfig)", options
+        msg = messages.add("#{command}ing #{service} (via sysvconfig)", options)
         ret = exec("service #{service} #{command}")
 
       elsif file_exists? '/usr/sbin/rc.d', :quiet => true
-        Dust.print_msg "#{command}ing #{service} (via rc.d)", options
+        msg = messages.add("#{command}ing #{service} (via rc.d)", options)
         ret = exec("rc.d #{command} #{service}")
 
       else
-        Dust.print_msg "#{command}ing #{service} (via initscript)", options
+        msg = messages.add("#{command}ing #{service} (via initscript)", options)
         ret = exec("/etc/init.d/#{service} #{command}")
       end
 
-      Dust.print_result ret[:exit_code], options
+      msg.parse_result(ret[:exit_code])
       ret
     end
 
@@ -625,7 +617,7 @@ module Dust
     def print_service_status service, options = {}
       options = default_options.merge options
       ret = service service, 'status', options
-      Dust.print_ret ret, options
+      messages.print_output(ret, options)
       ret
     end
 
@@ -633,8 +625,8 @@ module Dust
     def user_exists? user, options = {}
       options = default_options.merge options
 
-      Dust.print_msg "checking if user #{user} exists", options
-      Dust.print_result exec("id #{user}")[:exit_code], options
+      msg = messages.add("checking if user #{user} exists", options)
+      msg.parse_result(exec("id #{user}")[:exit_code])
     end
 
     # create a user
@@ -645,20 +637,20 @@ module Dust
 
       return true if user_exists? user, options
 
-      Dust.print_msg "creating user #{user}", :indent => options[:indent]
+      msg = messages.add("creating user #{user}", :indent => options[:indent])
       cmd = "useradd #{user} -m"
       cmd += " -d #{options[:home]}" if options[:home]
       cmd += " -s #{options[:shell]}" if options[:shell]
-      Dust.print_result exec(cmd)[:exit_code], options
+      msg.parse_result(exec(cmd)[:exit_code])
     end
 
     # returns the home directory of this user
     def get_home user, options = {}
       options = default_options(:quiet => true).merge options
 
-      Dust.print_msg "getting home directory of #{user}", options
+      msg = messages.add("getting home directory of #{user}", options)
       ret = exec "getent passwd |cut -d':' -f1,6 |grep '^#{user}' |head -n1 |cut -d: -f2"
-      if Dust.print_result ret[:exit_code], options
+      if msg.parse_result(ret[:exit_code])
         return ret[:stdout].chomp
       else
         return false
@@ -669,9 +661,9 @@ module Dust
     def get_shell user, options = {}
       options = default_options(:quiet => true).merge options
 
-      Dust.print_msg "getting shell of #{user}", options
+      msg = messages.add("getting shell of #{user}", options)
       ret = exec "getent passwd |cut -d':' -f1,7 |grep '^#{user}' |head -n1 |cut -d: -f2"
-      if Dust.print_result ret[:exit_code], options
+      if msg.parse_result(ret[:exit_code])
         return ret[:stdout].chomp
       else
         return false
@@ -695,13 +687,13 @@ module Dust
         return false unless install_package 'facter', :quiet => false
       end
 
-      Dust.print_msg "collecting additional system facts (using facter)", options
+      msg = messages.add("collecting additional system facts (using facter)", options)
 
       # run facter with -y for yaml output, and merge results into @node
       ret = exec 'facter -y'
       @node.merge! YAML.load ret[:stdout]
 
-      Dust.print_result ret[:exit_code], options
+      msg.parse_result(ret[:exit_code])
     end
 
     # if file is a regular file, copy it using scp
