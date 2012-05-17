@@ -12,7 +12,7 @@ module Dust
     def add(msg, options = {})
       m = Message.new(msg, options)
 
-      if @recipe
+      if @current_recipe
         @store[@current_recipe] ||= []
         @store[@current_recipe] << m
       else
@@ -22,37 +22,66 @@ module Dust
 
       m
     end
-    
+
     def start_recipe(name)
       @current_recipe = name
+    end
+
+    def collect
+      puts "collecting errors"
+      @store.each do |recipe, messages|
+        messages.each { |msg| puts "|#{recipe}| ".green + msg.text if msg.status == 'warning' }
+      end
     end
   end
 
   class Message
+    attr_reader :text, :status
 
     def initialize(msg, options = {})
-      # autoflush
-      $stdout.sync = true
-
       # merge default options
       @options = { :quiet => false, :indent => 1 }.merge options
 
-      @msg = msg
-      print indent + @msg
+      # autoflush
+      $stdout.sync = true
+
+      # default status is 'message'
+      @status = 'message'
+
+      # just return if quiet mode is on
+      unless @options[:quiet]
+        @text = indent + msg
+        print @text
+      end
     end
 
-    def ok
-      puts ' [ ok ]'.green
+    def ok(msg = '')
+      unless @options[:quiet]
+        @text << "#{msg} [ ok ]".green
+        puts "#{msg} [ ok ]".green
+      end
+
+      @status = 'ok'
       true
     end
 
-    def warning
-      puts ' [ warning ]'.yellow
+    def warning(msg = '')
+      unless @options[:quiet]
+        @text << "#{msg} [ warning ]".yellow
+        puts "#{msg} [ warning ]".yellow
+      end
+
+      @status = 'warning'
       true
     end
 
-    def failed
-      puts ' [ failed ]'.red
+    def failed(msg = '')
+      unless @options[:quiet]
+        @text << "#{msg} [ failed ]".red
+        puts "#{msg} [ failed ]".red
+      end
+
+      @status = 'failed'
       false
     end
 
@@ -63,8 +92,11 @@ module Dust
 
     # prints stdout in grey and stderr in red (if existend)
     def print_output(ret)
-      puts indent + '  ' + ret[:stdout].chomp.green unless ret[:stdout].empty?
-      puts indent + '  ' + ret[:stderr].chomp.red unless ret[:stderr].empty?
+      @text << indent + ret[:stdout].chomp.green unless ret[:stdout].empty?
+      @text << indent + ret[:stderr].chomp.red unless ret[:stderr].empty?
+
+      puts indent + ret[:stdout].chomp.green unless ret[:stdout].empty?
+      puts indent + ret[:stderr].chomp.red unless ret[:stderr].empty?
     end
 
 

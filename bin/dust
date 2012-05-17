@@ -135,6 +135,10 @@ module  Dust
 
         node['server'].disconnect
       end
+
+      @nodes.each do |node|
+        node['server'].messages.collect
+      end      
     end
 
     # generate list of recipes for this node

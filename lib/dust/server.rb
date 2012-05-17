@@ -24,7 +24,7 @@ module Dust
     end
 
     def connect
-      messages.add("\n[ #{@node['hostname'].blue} ]\n\n", :indent => 0)
+      msg = messages.add("\n[ #{@node['hostname'].blue} ]\n\n", :indent => 0)
       begin
         # connect to proxy if given
         if @node['proxy']
@@ -41,7 +41,7 @@ module Dust
       rescue Exception
         error_message = "coudln't connect to #{@node['fqdn']}"
         error_message += " (via socks5 proxy #{@node['proxy']})" if proxy
-        Dust.print_failed error_message
+        msg.failed(error_message)
         return false
       end
 
@@ -117,7 +117,7 @@ module Dust
       f.print content
       f.close
 
-      ret = msg.parse_result(scp(f.path, destination, :quiet => true), options)
+      ret = msg.parse_result(scp(f.path, destination, :quiet => true))
       f.unlink
 
       ret

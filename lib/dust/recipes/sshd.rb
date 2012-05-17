@@ -81,7 +81,7 @@ class Sshd < Recipe
   def check_hostkeys
     @config['HostKey'].each do |hostkey|
       unless @node.file_exists? hostkey, :quiet => true
-        ::Dust.print_warning "hostkey '#{hostkey}' not found. removing from config"
+        @node.messages.add("hostkey '#{hostkey}' not found. removing from config").warning
         @config['HostKey'].delete hostkey
       end
     end
