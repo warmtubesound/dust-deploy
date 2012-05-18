@@ -62,11 +62,11 @@ module Dust
       # autoflush
       $stdout.sync = true
 
-      # default status is 'message'
-      @status = 'message'
-
       # just return if quiet mode is on
       unless @options[:quiet]
+        # default status is 'message'
+        @status = 'message'
+
         @text = indent + msg
         print @text unless $summary
       end
@@ -76,9 +76,9 @@ module Dust
       unless @options[:quiet]
         @text << msg + ' [ ok ]'.green
         puts msg + ' [ ok ]'.green unless $summary
+        @status = 'ok'
       end
 
-      @status = 'ok'
       true
     end
 
@@ -86,9 +86,9 @@ module Dust
       unless @options[:quiet]
         @text << msg + ' [ warning ]'.yellow
         puts msg + ' [ warning ]'.yellow unless $summary
+        @status = 'warning'
       end
 
-      @status = 'warning'
       true
     end
 
@@ -96,9 +96,9 @@ module Dust
       unless @options[:quiet]
         @text << msg + ' [ failed ]'.red
         puts msg + ' [ failed ]'.red unless $summary
+        @status = 'failed'
       end
 
-      @status = 'failed'
       false
     end
 
