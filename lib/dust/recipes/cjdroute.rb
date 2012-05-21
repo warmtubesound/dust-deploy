@@ -80,6 +80,10 @@ class Cjdroute< Recipe
       end
 
       # git pull latest changes
+      ::Dust.print_msg "checking out branch '#{@config['git_branch']}'"
+      ret = @node.exec("cd #{@config['build_dir']}; git checkout #{@config['git_branch']}")[:exit_code]
+      return unless Dust.print_result(ret)
+
       ::Dust.print_msg "pulling latest changes from repository\n"
       ret = @node.exec "cd #{@config['build_dir']}; git pull", :live => true
       return ::Dust.print_failed 'error pulling from git repository' unless ret[:exit_code] == 0
