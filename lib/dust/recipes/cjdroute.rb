@@ -15,7 +15,6 @@ class Cjdroute< Recipe
     return unless @node.mkdir "#{@config['build_dir']}/build"
 
     # compiling action
-    return unless run_cmake
     return unless run_make
 
     stop_cjdroute
@@ -112,17 +111,9 @@ class Cjdroute< Recipe
     true
   end
 
-
-  def run_cmake
-    msg = @node.messages.add("running cmake\n")
-    ret = @node.exec "export Log_LEVEL=#{@config['loglevel']}; cd #{@config['build_dir']}/build; cmake ..", :live => true
-    return msg.failed('error running cmake') unless ret[:exit_code] == 0
-    true
-  end
-
   def run_make
     msg = @node.messages.add("compiling cjdns\n")
-    ret = @node.exec "export Log_LEVEL=#{@config['loglevel']}; cd #{@config['build_dir']}/build; make", :live => true
+    ret = @node.exec "export Log_LEVEL=#{@config['loglevel']}; cd #{@config['build_dir']}; ./do", :live => true
     return msg.failed('error compiling cjdroute') unless ret[:exit_code] == 0
     true
   end
