@@ -15,11 +15,14 @@ module  Dust
     default_task :list
     check_unknown_options!
 
-    desc 'deploy [--yaml server.yaml] [--filter key=value,value2] [--recipes recipe1 recipe2] [--proxy host:port]',
-         'deploy all recipes to the node(s) specified in server.yaml or to all nodes defined in ./nodes/'
+    desc 'deploy', 'deploy all recipes to the node(s) specified in server.yaml or to all nodes defined in ./nodes/'
 
-    method_options :yaml => :string, :filter => :hash, :recipes => :array, :proxy => :string,
-                   :restart => :boolean, :reload => :boolean
+    method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
+    method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
+    method_option 'recipes', :type => :array, :desc => 'only deploy these recipes'
+    method_option 'proxy', :type => :array, :desc => 'socks proxy to use'
+    method_option 'restart', :type => :boolean, :desc => 'restart services after deploy'
+    method_option 'reload', :type => :boolean, :desc => 'reload services after deploy'
 
     def deploy
       return unless check_dust_dir
@@ -30,10 +33,12 @@ module  Dust
     end
 
 
-    desc 'status [--yaml server.yaml] [--filter key=value,value2] [--recipes recipe1 recipe2] [--proxy host:port]',
-         'display status of recipes specified by filter'
+    desc 'status', 'display status of recipes specified by filter'
 
-    method_options :yaml => :string, :filter => :hash, :recipes => :array, :proxy => :string
+    method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
+    method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
+    method_option 'recipes', :type => :array, :desc => 'only deploy these recipes'
+    method_option 'proxy', :type => :array, :desc => 'socks proxy to use'
 
     def status
       return unless check_dust_dir
@@ -44,10 +49,11 @@ module  Dust
     end
 
 
-    desc 'system_update [--yaml server.yaml] [--filter key=value,vale2] [--proxy host:port]',
-         'perform a full system upgrade (using aptitude, emerge, yum)'
+    desc 'system_update', 'perform a full system upgrade (using aptitude, emerge, yum)'
 
-    method_options :yaml => :string, :filter => :hash, :proxy => :string
+    method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
+    method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
+    method_option 'proxy', :type => :array, :desc => 'socks proxy to use'
 
     def system_update
       return unless check_dust_dir
@@ -64,10 +70,12 @@ module  Dust
     end
 
 
-    desc 'exec <command> [--yaml server.yaml] [--filter key=value,vale2] [--proxy host:port]',
          'run a command on the server'
+    desc 'exec <command>', 'run a command on the server'
 
-    method_options :yaml => :string, :filter => :hash, :proxy => :string
+    method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
+    method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
+    method_option 'proxy', :type => :array, :desc => 'socks proxy to use'
 
     def exec cmd, yaml=''
       return unless check_dust_dir
