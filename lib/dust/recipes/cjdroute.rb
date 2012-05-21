@@ -153,6 +153,7 @@ class Cjdroute< Recipe
 
   # fire up cjdroute
   def start_cjdroute
+    sleep 2 # sleep to make sure old cjdroute is dead
     ::Dust.print_msg 'fireing up cjdroute'
     ::Dust.print_result @node.exec("nohup #{@config['bin_dir']}/cjdroute < #{@config['etc_dir']}/cjdroute.conf &> /dev/null &")[:exit_code]
   end
