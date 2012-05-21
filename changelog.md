@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.12.2
+------------
+
+-  makes cjdroute wait 2s before firing up again, should fix issues with cjdroute not coming up after upgrading
+
+
 0.12.1
 ------------
 
