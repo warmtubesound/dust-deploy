@@ -1,6 +1,30 @@
 Changelog
 =============
 
+=======
+0.12.2
+------------
+
+-  makes cjdroute wait 2s before firing up again, should fix issues with cjdroute not coming up after upgrading
+
+
+0.12.1
+------------
+
+-  introduces limits recipe, to maintain /etc/security/limits.d/*
+
+    recipes:
+      limits:
+        nginx:
+          - { domain: www-data, type: soft, item: nofile, value: 200000 }
+          - { domain: www-data, type: hard, item: nofile, value: 700000 } 
+
+-  nginx recipe now supports erb templates for nginx.conf as well
+-  removes cjdroute public peers, since they are not supported anymore.
+   you should find some friends on irc (efnet #cjdns)
+-  modifies cjdroute recipe, to work with new ./do building setup
+
+
 0.12.0
 ------------
 
