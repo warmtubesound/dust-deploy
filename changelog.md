@@ -1,8 +1,35 @@
 Changelog
 =============
 
-0.12.3
+0.13.0
 ------------
+
+-  introduces --parallel and --summary
+   --summary -> warning e.g. shows a summary with all errors and warnings after completion
+
+   --parallel -> deploy to all hosts in parallel, using threads
+
+-  switches to new messaging system. using ::Dust.pring_* methods is now deprecated
+   please migrate your recipes to the new @node.messages.add() system
+
+    ::Dust.print_msg('checking something')
+    ::Dust.print_ok
+
+    msg = @node.messages.add('checking something')
+    msg.ok
+
+
+    ::Dust.print_ok('this went well')
+
+    @node.message.add('this went well').ok
+
+
+    ::Dust.print_message('executing something')
+    ::Dust.print_result(ret)
+
+    msg = @node.message.add('executing something')
+    msg.parse_result(ret)
+    
 
 -  redis doesn't configure sysctl anymore, please use sysctl redis template
 
