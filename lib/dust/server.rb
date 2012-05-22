@@ -24,7 +24,7 @@ module Dust
     end
 
     def connect
-      msg = messages.add("\n[ #{@node['hostname'].blue} ]\n\n", :indent => 0)
+      msg = messages.add("\n[ #{@node['hostname'].blue} ]\n", :indent => 0)
 
       begin
         # connect to proxy if given
