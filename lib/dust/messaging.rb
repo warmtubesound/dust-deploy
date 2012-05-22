@@ -7,24 +7,24 @@ module Dust
 
     def initialize
       @store = {}
+
+      # store non-recipe messages in _node
+      start_recipe('_node')
     end
 
     def add(msg, options = {})
       m = Message.new(msg, options)
-
-      if @current_recipe
-        @store[@current_recipe] ||= []
-        @store[@current_recipe] << m
-      else
-        @store['_node'] ||= []
-        @store['_node'] << m
-      end
-
+      @store[@current_recipe] << m
       m
     end
 
-    def start_recipe(name)
-      @current_recipe = name
+    def start_recipe(recipe)
+      @current_recipe = recipe
+
+      # display recipe header, unless we're starting non-recipe messages
+      msg = (recipe == '_node') ? "\n" : "\n|#{recipe}|\n".green
+      
+      @store[@current_recipe] = [ Message.new(msg, :indent => 0) ]
     end
 
     def collect(level = 'all')
