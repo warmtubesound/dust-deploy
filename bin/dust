@@ -20,7 +20,7 @@ module  Dust
     method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
     method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
     method_option 'recipes', :type => :array, :desc => 'only deploy these recipes'
-    method_option 'proxy', :type => :array, :desc => 'socks proxy to use'
+    method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
     method_option 'restart', :type => :boolean, :desc => 'restart services after deploy'
     method_option 'reload', :type => :boolean, :desc => 'reload services after deploy'
 
@@ -38,7 +38,7 @@ module  Dust
     method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
     method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
     method_option 'recipes', :type => :array, :desc => 'only deploy these recipes'
-    method_option 'proxy', :type => :array, :desc => 'socks proxy to use'
+    method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
 
     def status
       return unless check_dust_dir
@@ -53,7 +53,7 @@ module  Dust
 
     method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
     method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
-    method_option 'proxy', :type => :array, :desc => 'socks proxy to use'
+    method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
 
     def system_update
       return unless check_dust_dir
@@ -75,7 +75,7 @@ module  Dust
 
     method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
     method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
-    method_option 'proxy', :type => :array, :desc => 'socks proxy to use'
+    method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
 
     def exec cmd, yaml=''
       return unless check_dust_dir
