@@ -12,7 +12,6 @@ class Cjdroute< Recipe
     # clean up building directory, if --restart is given
     # using --restart, since there's no --cleanup
     return unless make_clean if @options.restart?
-    return unless @node.mkdir "#{@config['build_dir']}/build"
 
     # compiling action
     return unless run_make
@@ -83,9 +82,9 @@ class Cjdroute< Recipe
       ret = @node.exec("cd #{@config['build_dir']}; git checkout #{@config['git_branch']}")[:exit_code]
       return unless msg.parse_result(ret)
 
-      msg = @node.messages.add("pulling latest changes from repository\n")
-      ret = @node.exec "cd #{@config['build_dir']}; git pull", :live => true
-      return msg.failed('error pulling from git repository') unless ret[:exit_code] == 0
+      msg = @node.messages.add('pulling latest changes from repository')
+      ret = @node.exec("cd #{@config['build_dir']}; git pull", :live => true)[:exit_code]
+      return unless msg.parse_result(ret)
 
     else
       # create build directory
@@ -94,9 +93,9 @@ class Cjdroute< Recipe
       end
 
       # git clone cjdns repository
-      msg = @node.messages.add("cloning cjdns repository into #{@config['build_dir']}\n")
-      ret = @node.exec "git clone #{@config['git_repo']} -b #{@config['git_branch']} #{@config['build_dir']}", :live => true
-      return msg.failed('error cloning git repository') unless ret[:exit_code] == 0
+      msg = @node.messages.add("cloning cjdns repository into #{@config['build_dir']}")
+      ret = @node.exec("git clone #{@config['git_repo']} -b #{@config['git_branch']} #{@config['build_dir']}", :live => true)
+      return unless msg.parse_result(ret[:exit_code])
     end
 
     # reset to the wanted commit if given
@@ -111,15 +110,12 @@ class Cjdroute< Recipe
   # remove and recreate building directory
   def make_clean
     msg = @node.messages.add('cleaning up')
-    return false unless msg.parse_result(@node.exec("rm -rf #{@config['build_dir']}/build")[:exit_code])
-    true
+    msg.parse_result(@node.exec("rm -rf #{@config['build_dir']}/build")[:exit_code])
   end
 
   def run_make
-    msg = @node.messages.add("compiling cjdns\n")
-    ret = @node.exec "export Log_LEVEL=#{@config['loglevel']}; cd #{@config['build_dir']}; ./do", :live => true
-    return msg.failed('error compiling cjdroute') unless ret[:exit_code] == 0
-    true
+    msg = @node.messages.add('compiling cjdns')
+    msg.parse_result(@node.exec("export Log_LEVEL=#{@config['loglevel']}; cd #{@config['build_dir']}; ./do", :live => true)[:exit_code])
   end
 
   # generate cjdroute.conf
@@ -147,11 +143,14 @@ class Cjdroute< Recipe
   def stop_cjdroute
     msg = @node.messages.add('stopping cjdroute')
     msg.parse_result(@node.exec('killall cjdroute')[:exit_code])
+
+    msg = @node.messages.add('waiting 2 seconds for cjdroute to finish')
+    sleep 2
+    msg.ok
   end
 
   # fire up cjdroute
   def start_cjdroute
-    sleep 2 # sleep to make sure old cjdroute is dead
     msg = @node.messages.add('fireing up cjdroute')
     msg.parse_result(@node.exec("nohup #{@config['bin_dir']}/cjdroute < #{@config['etc_dir']}/cjdroute.conf &> /dev/null &")[:exit_code])
   end
