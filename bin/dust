@@ -155,7 +155,7 @@ module  Dust
       node['recipes'].each do |recipe, config|
 
         # in case --recipes was set, skip unwanted recipes
-        next unless options[:recipes].include?(recipe) if options[:recipes]
+        next unless options['recipes'].include?(recipe) if options['recipes']
 
         # skip disabled recipes
         next if config == 'disabled' or config.is_a? FalseClass
@@ -183,11 +183,11 @@ module  Dust
       # if the argument is empty, load all yaml files in the ./nodes/ directory
       # if the argument is a directory, load yaml files in this directory
       # if the argument is a file, load the file.
-      if options[:yaml]
-        if File.directory? options[:yaml]
-          yaml_files = Dir["#{options[:yaml]}/**/*.yaml"]
-        elsif File.exists? options[:yaml]
-          yaml_files = options[:yaml]
+      if options['yaml']
+        if File.directory? options['yaml']
+          yaml_files = Dir["#{options['yaml']}/**/*.yaml"]
+        elsif File.exists? options['yaml']
+          yaml_files = options['yaml']
         end
       else
         yaml_files = Dir['./nodes/**/*.yaml']
@@ -237,7 +237,7 @@ module  Dust
           end
 
           # pass command line proxy option
-          n['proxy'] = options[:proxy] if options[:proxy]
+          n['proxy'] = options['proxy'] if options['proxy']
 
           # add this node to the global node array
           @nodes.push n unless filtered? n
@@ -251,10 +251,10 @@ module  Dust
     def filtered? node
 
       # if filter is not specified, instantly return false
-      return false unless options[:filter]
+      return false unless options['filter']
 
       # remove items if other filter arguments don't match
-      options[:filter].each do |k, v|
+      options['filter'].each do |k, v|
         next unless v # skip empty filters
 
         # filter if this node doesn't even have the attribute
