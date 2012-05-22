@@ -6,9 +6,9 @@ class Motd < Recipe
   
   desc 'motd:status', 'shows current message of the day'
   def status
-    ::Dust.print_msg 'getting /etc/motd'
+    msg = @node.messages.add('getting /etc/motd')
     ret = @node.exec 'cat /etc/motd'
-    ::Dust.print_result ret[:exit_code]
-    ::Dust.print_ret ret
+    msg.parse_result(ret[:exit_code])
+    msg.print_output(ret)
   end  
 end

@@ -5,10 +5,9 @@ class SshAuthorizedKeys < Recipe
   def deploy
 
     @config.each do |remote_user, ssh_users|
-      ::Dust.print_msg "generating authorized_keys for #{remote_user}\n"
+      @node.messages.add("generating authorized_keys for #{remote_user}\n")
       authorized_keys = generate_authorized_keys ssh_users
       deploy_authorized_keys remote_user, authorized_keys
-      puts
     end
   end
   
@@ -23,14 +22,14 @@ class SshAuthorizedKeys < Recipe
     # create the authorized_keys hash for this user
     ssh_users.to_array.each do |ssh_user|
       users[ssh_user]['name'] ||= ssh_user
-      ::Dust.print_msg "adding user #{users[ssh_user]['name']}", :indent => 2
+      msg = @node.messages.add("adding user #{users[ssh_user]['name']}", :indent => 2)
       users[ssh_user]['keys'].each do |key|
         authorized_keys << "#{key}"
         authorized_keys << " #{users[ssh_user]['name']}" if users[ssh_user]['name']
         authorized_keys << " <#{users[ssh_user]['email']}>" if users[ssh_user]['email']
         authorized_keys << "\n"
       end
-      ::Dust.print_ok
+      msg.ok
     end
 
     authorized_keys    
@@ -57,7 +56,7 @@ class SshAuthorizedKeys < Recipe
   # TODO: add this option  
   def cleanup
     if options.cleanup?
-      ::Dust.print_msg "deleting other authorized_keys files\n"
+      msg = @node.messages.add("deleting other authorized_keys files\n")
       @node.get_system_users(:quiet => true).each do |user|
         next if users.keys.include? user
         home = @node.get_home user

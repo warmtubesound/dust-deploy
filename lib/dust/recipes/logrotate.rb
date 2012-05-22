@@ -4,10 +4,10 @@ class Logrotate < Recipe
     return unless @node.install_package 'logrotate'
     
     @config.each do |name, rule|
-      ::Dust.print_msg "deploying logrotate entry for '#{name}'\n"
+      @node.messages.add("deploying logrotate entry for '#{name}'\n")
 
       unless rule['path']
-        ::Dust.print_failed 'path not specified', :indent => 2
+        @node.messages.add('path not specified', :indent => 2).failed
         next
       end
       
@@ -30,7 +30,7 @@ class Logrotate < Recipe
 
   desc 'logrotate:status', 'displays filenames of installed logrotate rules'
   def status
-    ::Dust.print_ret @node.exec('ls /etc/logrotate.d/*')
+    @node.messages.add.print_output(@node.exec('ls /etc/logrotate.d/*'))
   end
 
 

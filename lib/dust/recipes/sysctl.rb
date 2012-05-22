@@ -3,7 +3,7 @@ class Sysctl < Recipe
   def deploy
     # we need support for /etc/sysctl.d/
     unless @node.dir_exists? '/etc/sysctl.d/'
-      return ::Dust.print_warning 'sysctl configuration not supported for your linux distribution'
+      return @node.messages.add('sysctl configuration not supported for your linux distribution').warning
     end
 
     # seperate templates from sysctls
@@ -13,14 +13,13 @@ class Sysctl < Recipe
     # apply template sysctls
     if templates
       templates.to_array.each do |template|
-        ::Dust.print_msg "configuring sysctls for template #{template}\n"
+        @node.messages.add("configuring sysctls for template #{template}\n")
         apply template, self.send(template)
-        puts
       end
     end
 
     # apply plain sysctls
-    ::Dust.print_msg "configuring plain sysctls\n"
+    @node.messages.add("configuring plain sysctls\n")
     apply 'dust', sysctls
   end
 
@@ -30,13 +29,13 @@ class Sysctl < Recipe
   def apply name, sysctl
     sysctl_conf = ''
     sysctl.each do |key, value|
-      ::Dust.print_msg "setting #{key} = #{value}", :indent => 2
-      ::Dust.print_result @node.exec("sysctl -w #{key}=#{value}")[:exit_code]
+      msg = @node.messages.add("setting #{key} = #{value}", :indent => 2)
+      msg.parse_result(@node.exec("sysctl -w #{key}=#{value}")[:exit_code])
       sysctl_conf << "#{key} = #{value}\n"
     end
 
-    ::Dust.print_msg "saving settings to /etc/sysctl.d/10-#{name}.conf", :indent => 2
-    ::Dust.print_result @node.write("/etc/sysctl.d/10-#{name}.conf", sysctl_conf, :quiet => true)
+    msg = @node.messages.add("saving settings to /etc/sysctl.d/10-#{name}.conf", :indent => 2)
+    msg.parse_result(@node.write("/etc/sysctl.d/10-#{name}.conf", sysctl_conf, :quiet => true))
   end
 
 

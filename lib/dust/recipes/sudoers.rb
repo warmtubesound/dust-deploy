@@ -6,7 +6,7 @@ class Sudoers < Recipe
     remove_rules
     
     @config.each do |name, rule|
-      ::Dust.print_msg "deploying sudo rules '#{name}'\n"
+      @node.messages.add("deploying sudo rules '#{name}'\n")
       
       # rulename: 'myrule' 
       if rule.is_a? String
@@ -15,7 +15,7 @@ class Sudoers < Recipe
       # rulename: { user: [ user1, user2 ], command: [ cmd1, cmd2 ] }
       else
         unless rule['user'] and rule['command']
-          ::Dust.print_failed 'user or command missing', :indent => 2
+          @node.messages.add('user or command missing', :indent => 2).failed
           next
         end
         

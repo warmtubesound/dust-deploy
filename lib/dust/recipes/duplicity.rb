@@ -18,13 +18,13 @@ class Duplicity < Recipe
 
       # check whether backend is specified, skip to next scenario if not
       unless config['backend'] and config['passphrase']
-        ::Dust.print_failed "scenario #{scenario}: backend or passphrase missing.", 1
+        @node.messages.add("scenario #{scenario}: backend or passphrase missing.").failed
         next
       end
 
       # check if interval is correct
       unless [ 'monthly', 'weekly', 'daily', 'hourly' ].include? config['interval']
-        return ::Dust.print_failed "invalid interval: '#{config['interval']}'"
+        return @node.messages.add("invalid interval: '#{config['interval']}'").failed
       end
 
       # check whether we need ncftp
@@ -35,8 +35,8 @@ class Duplicity < Recipe
 
       # add hostkey to known_hosts
       if config['hostkey']
-        ::Dust.print_msg 'checking if ssh key is in known_hosts'
-        unless ::Dust.print_result @node.exec("grep -q '#{config['hostkey']}' /root/.ssh/known_hosts")[:exit_code] == 0
+        msg = @node.messages.add('checking if ssh key is in known_hosts')
+        unless msg.parse_result(@node.exec("grep -q '#{config['hostkey']}' /root/.ssh/known_hosts")[:exit_code] == 0)
           @node.mkdir '/root/.ssh', :indent => 2
           @node.append '/root/.ssh/known_hosts', "#{config['hostkey']}\n", :indent => 2
         end
@@ -46,14 +46,13 @@ class Duplicity < Recipe
       cronjob_path = "/etc/cron.#{config['interval']}/duplicity-#{scenario}"
 
       # adjust and upload cronjob
-      ::Dust.print_msg "adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n"
-      config['options'].to_array.each { |option| ::Dust.print_ok "adding option: #{option}", :indent => 2 }
+      @node.messages.add("adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n")
+      config['options'].to_array.each { |option| @node.messages.add("adding option: #{option}", :indent => 2).ok }
 
       @node.deploy_file "#{@template_path}/cronjob", cronjob_path, :binding => binding
 
       # making cronjob executeable
       @node.chmod '0700', cronjob_path
-      puts
     end
   end
 
@@ -70,9 +69,9 @@ class Duplicity < Recipe
       config['directory'] ||= "#{@node['hostname']}-#{scenario}"
 
       # check whether backend is specified, skip to next scenario if not
-      return ::Dust.print_failed 'no backend specified.' unless config['backend']
+      return @node.messages.add('no backend specified.').failed unless config['backend']
 
-      ::Dust.print_msg "running collection-status for scenario '#{scenario}'"
+      msg = @node.messages.add("running collection-status for scenario '#{scenario}'")
       cmd = "nice -n #{config['nice']} duplicity collection-status " +
             "--archive-dir #{config['archive']} " +
             "#{File.join(config['backend'], config['directory'])}"
@@ -82,15 +81,14 @@ class Duplicity < Recipe
       ret = @node.exec cmd
 
       # check exit code and stdout shouldn't be empty
-      ::Dust.print_result( (ret[:exit_code] == 0 and ret[:stdout].length > 0) )
+      msg.parse_result( (ret[:exit_code] == 0 and ret[:stdout].length > 0) )
 
       if options.long?
-        ::Dust.print_msg ret[:stdout], :indent => 0
+        @node.messages.add(ret[:stdout], :indent => 0)
       else
-        ::Dust.print_msg "\t" + ret[:stdout].sub(/^\s+([a-zA-Z]+)\s+(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+\s+\d+)\s+(\d+)$/, 'Last backup: \1 (\3 sets) on \2'), :indent => 0
+        @node.messages.add("\t" + ret[:stdout].sub(/^\s+([a-zA-Z]+)\s+(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+\s+\d+)\s+(\d+)$/, 'Last backup: \1 (\3 sets) on \2'), :indent => 0)
       end
 
-      puts
     end
   end
 
@@ -111,9 +109,9 @@ class Duplicity < Recipe
 
   # removes all duplicity cronjobs
   def remove_duplicity_cronjobs
-    ::Dust.print_msg 'deleting old duplicity cronjobs'
+    msg = @node.messages.add('deleting old duplicity cronjobs')
     @node.rm '/etc/cron.*/duplicity*', :quiet => true
-    ::Dust.print_ok
+    msg.ok
   end
 
 end

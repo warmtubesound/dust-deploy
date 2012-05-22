@@ -2,7 +2,7 @@ require 'json'
 
 class Cjdroute< Recipe
   desc 'cjdroute:deploy', 'installs / updates cjdns'
-  def deploy 
+  def deploy
     # apply default configuration
     @config = default_config.merge @config
 
@@ -32,7 +32,7 @@ class Cjdroute< Recipe
 
   private
   def default_config
-    { 
+    {
       'git_repo' => 'git://github.com/cjdelisle/cjdns.git',
       'git_branch' => 'master',
       'build_dir' => '/tmp/cjdns-tmp',
@@ -45,14 +45,14 @@ class Cjdroute< Recipe
 
   # installs cmake, git and other building tools needed
   def install_dependencies
-    ::Dust.print_msg "installing build dependencies\n"
+    @node.messages.add("installing build dependencies\n")
 
     return false unless @node.install_package 'cmake', :indent => 2
 
     # check cmake version
     ret = @node.exec 'cmake --version'
     ver = ret[:stdout].match(/2.[0-9]/)[0].to_f
-    return ::Dust.print_failed 'cjdroute requires cmake 2.8 or higher' if ver < 2.8
+    return @node.messages.add('cjdroute requires cmake 2.8 or higher').failed if ver < 2.8
 
 
     if @node.uses_apt?
@@ -66,7 +66,6 @@ class Cjdroute< Recipe
       return false unless @node.install_package 'make', :indent => 2
     end
 
-    puts
     true
   end
 
@@ -76,64 +75,63 @@ class Cjdroute< Recipe
 
       # check if build directory is maintained by git
       unless @node.dir_exists? "#{@config['build_dir']}/.git", :quiet => true
-        return ::Dust.print_failed "#{@config['build_dir']} doesn't appear to be a git repository"
+        return @node.messages.add("#{@config['build_dir']} doesn't appear to be a git repository").failed
       end
 
       # git pull latest changes
-      ::Dust.print_msg "checking out branch '#{@config['git_branch']}'"
+      msg = @node.messages.add("checking out branch '#{@config['git_branch']}'")
       ret = @node.exec("cd #{@config['build_dir']}; git checkout #{@config['git_branch']}")[:exit_code]
-      return unless Dust.print_result(ret)
+      return unless msg.parse_result(ret)
 
-      ::Dust.print_msg "pulling latest changes from repository\n"
+      msg = @node.messages.add("pulling latest changes from repository\n")
       ret = @node.exec "cd #{@config['build_dir']}; git pull", :live => true
-      return ::Dust.print_failed 'error pulling from git repository' unless ret[:exit_code] == 0
+      return msg.failed('error pulling from git repository') unless ret[:exit_code] == 0
 
     else
       # create build directory
       unless @node.mkdir @config['build_dir']
-        return ::Dust.print_failed "couldn't create build directory #{@config['build_dir']}"
+        return @node.messages.add("couldn't create build directory #{@config['build_dir']}").failed
       end
 
       # git clone cjdns repository
-      ::Dust.print_msg "cloning cjdns repository into #{@config['build_dir']}\n"
+      msg = @node.messages.add("cloning cjdns repository into #{@config['build_dir']}\n")
       ret = @node.exec "git clone #{@config['git_repo']} -b #{@config['git_branch']} #{@config['build_dir']}", :live => true
-      return ::Dust.print_failed 'error cloning git repository' unless ret[:exit_code] == 0
+      return msg.failed('error cloning git repository') unless ret[:exit_code] == 0
     end
 
     # reset to the wanted commit if given
     if @config['commit']
-      ::Dust.print_msg "resetting to commit: #{@config['commit']}"
-      ::Dust.print_result @node.exec("cd #{@config['build_dir']}; git reset --hard #{@config['commit']}")[:exit_code]
+      msg = @node.messages.add("resetting to commit: #{@config['commit']}")
+      msg.parse_result(@node.exec("cd #{@config['build_dir']}; git reset --hard #{@config['commit']}")[:exit_code])
     end
 
-    puts
     true
   end
 
   # remove and recreate building directory
   def make_clean
-    ::Dust.print_msg 'cleaning up'
-    return false unless ::Dust.print_result @node.exec("rm -rf #{@config['build_dir']}/build")[:exit_code]
+    msg = @node.messages.add('cleaning up')
+    return false unless msg.parse_result(@node.exec("rm -rf #{@config['build_dir']}/build")[:exit_code])
     true
   end
 
   def run_make
-    ::Dust.print_msg "compiling cjdns\n"
+    msg = @node.messages.add("compiling cjdns\n")
     ret = @node.exec "export Log_LEVEL=#{@config['loglevel']}; cd #{@config['build_dir']}; ./do", :live => true
-    return ::Dust.print_failed 'error compiling cjdroute' unless ret[:exit_code] == 0
+    return msg.failed('error compiling cjdroute') unless ret[:exit_code] == 0
     true
   end
 
   # generate cjdroute.conf
   def generate_config
     if @node.file_exists? "#{@config['etc_dir']}/cjdroute.conf", :quiet => true
-      ::Dust.print_warning 'found a cjdroute.conf, not overwriting'
+      @node.messages.add('found a cjdroute.conf, not overwriting').warning
       return true
     end
-    
-    ::Dust.print_msg 'generating config file'
+
+    msg = @node.messages.add('generating config file')
     ret = @node.exec("#{@config['bin_dir']}/cjdroute --genconf")
-    return false unless ::Dust.print_result ret[:exit_code]
+    return false unless msg.parse_result(ret[:exit_code])
 
     # parse generated json
     cjdroute_conf = JSON.parse ret[:stdout]
@@ -147,14 +145,14 @@ class Cjdroute< Recipe
 
   # kill any cjdroute processes that might be running
   def stop_cjdroute
-    ::Dust.print_msg 'stopping cjdroute'
-    ::Dust.print_result @node.exec('killall cjdroute')[:exit_code]
+    msg = @node.messages.add('stopping cjdroute')
+    msg.parse_result(@node.exec('killall cjdroute')[:exit_code])
   end
 
   # fire up cjdroute
   def start_cjdroute
     sleep 2 # sleep to make sure old cjdroute is dead
-    ::Dust.print_msg 'fireing up cjdroute'
-    ::Dust.print_result @node.exec("nohup #{@config['bin_dir']}/cjdroute < #{@config['etc_dir']}/cjdroute.conf &> /dev/null &")[:exit_code]
+    msg = @node.messages.add('fireing up cjdroute')
+    msg.parse_result(@node.exec("nohup #{@config['bin_dir']}/cjdroute < #{@config['etc_dir']}/cjdroute.conf &> /dev/null &")[:exit_code])
   end
 end

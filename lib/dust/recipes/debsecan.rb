@@ -6,7 +6,7 @@ class Debsecan < Recipe
     if @node.is_os? ['ubuntu', 'debian']
       @node.install_package 'debsecan'
 
-      ::Dust.print_msg 'configuring debsecan'
+      msg = @node.messages.add('configuring debsecan')
 
       # if config is simply set to "true", use defaults
       config = {} unless config.is_a? Hash
@@ -21,7 +21,7 @@ class Debsecan < Recipe
       # configures whether daily reports are sent
       config_file << "# If true, enable daily reports, sent by email.\n" +
                      "REPORT=#{config['report'].to_s}\n\n"
-     
+
       # configures the suite
       config_file << "# For better reporting, specify the correct suite here, using the code\n" +
                      "# name (that is, \"sid\" instead of \"unstable\").\n" +
@@ -37,9 +37,9 @@ class Debsecan < Recipe
                      "SOURCE=#{config['source']}\n\n"
 
       @node.write '/etc/default/debsecan', config_file, :quiet => true
-      ::Dust.print_ok
+      msg.ok
     else
-      ::Dust.print_failed 'os not supported'
+      msg.failed('os not supported')
     end
   end
 end

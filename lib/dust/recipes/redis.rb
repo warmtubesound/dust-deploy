@@ -9,11 +9,11 @@ class Redis < Recipe
   desc 'redis:status', 'displays redis-cli info'
   def status
     return false unless @node.package_installed? 'redis-server'
-    ::Dust.print_msg 'running "redis-cli info"'
+    msg = @node.messages.add('running "redis-cli info"')
     ret = @node.exec 'redis-cli info'
-    ::Dust.print_result ret[:exit_code]
+    msg.parse_result(ret[:exit_code])
 
-    ::Dust.print_msg ret[:stdout], :indent => 0 unless ret[:stdout].empty?
+    @node.messages.add(ret[:stdout], :indent => 0) unless ret[:stdout].empty?
   end
   
   

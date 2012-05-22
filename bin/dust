@@ -62,10 +62,10 @@ module  Dust
 
       @nodes.each do |node|
         # connect to server
-        server = Server.new node
-        next unless server.connect
-        server.system_update
-        server.disconnect
+        node['server'] = Server.new node
+        next unless node['server'].connect
+        node['server'].system_update
+        node['server'].disconnect
       end
     end
 
@@ -84,10 +84,10 @@ module  Dust
 
       @nodes.each do |node|
         # connect to server
-        server = Server.new node
-        next unless server.connect
-        server.exec cmd, :live => true
-        server.disconnect
+        node['server'] = Server.new node
+        next unless node['server'].connect
+        node['server'].exec cmd, :live => true
+        node['server'].disconnect
       end
     end
 
@@ -123,49 +123,53 @@ module  Dust
       @nodes.each do |node|
         # skip this node if there are no recipes found
         next unless node['recipes']
-          
+
         recipes = generate_recipes node, context
 
         # skip this node unless we're actually having recipes to cook
         next if recipes.empty?
 
         # connect to server
-        server = Server.new node
-        next unless server.connect
+        node['server'] = Server.new node
+        next unless node['server'].connect
 
         # runs the method with the recipe name, defined and included in recipe/*.rb
         # call recipes for each recipe that is defined for this node
         recipes.each do |recipe, config|
-          ::Dust.print_recipe recipe
-          send recipe, 'prepare', server, recipe, context, config, options
+          node['server'].messages.add("|#{recipe}|\n".green, :indent => 0)
+          send recipe, 'prepare', node['server'], recipe, context, config, options
           puts
         end
 
-        server.disconnect
+        node['server'].disconnect
       end
+
+      @nodes.each do |node|
+        node['server'].messages.collect
+      end      
     end
-    
+
     # generate list of recipes for this node
     def generate_recipes node, context
-      recipes = {}  
+      recipes = {}
       node['recipes'].each do |recipe, config|
-      
+
         # in case --recipes was set, skip unwanted recipes
         next unless options[:recipes].include?(recipe) if options[:recipes]
-      
+
         # skip disabled recipes
         next if config == 'disabled' or config.is_a? FalseClass
-      
+
         # check if method and thor task actually exist
         k = Thor::Util.find_by_namespace recipe
         next unless k
         next unless k.method_defined? context
-      
+
         recipes[recipe] = config
       end
       recipes
     end
-    
+
 
     # overwrite thorfiles to look for tasks in the recipes directories
     def thorfiles(relevant_to=nil, skip_lookup=false)
@@ -203,7 +207,7 @@ module  Dust
         # if there is not hostname field in the yaml file,
         # treat this node file as a template, and skip to the next one
         next unless node['hostname']
-  
+
         # look for the inherits field in the yaml file,
         # and merge the templates recursively into this node
         if node['inherits']

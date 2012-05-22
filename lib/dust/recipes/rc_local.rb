@@ -3,13 +3,13 @@ class RcLocal < Recipe
   def deploy
 
     if @node.uses_apt?
-      ::Dust.print_msg "configuring custom startup script\n"
+      @node.messages.add("configuring custom startup script\n")
 
       rc = ''
       @config.to_array.each do |cmd|
-        ::Dust.print_msg "adding command: #{cmd}", :indent => 2
+        msg = @node.messages.add("adding command: #{cmd}", :indent => 2)
         rc << "#{cmd}\n"
-        ::Dust.print_ok
+        msg.ok
       end
       rc << "\nexit 0\n"
 
@@ -17,15 +17,15 @@ class RcLocal < Recipe
       @node.chown 'root:root', '/etc/rc.local'
       @node.chmod '755', '/etc/rc.local'
     else
-      ::Dust.print_failed 'os not supported'
+      @node.messages.add('os not supported').failed
     end
   end
-  
+
   desc 'rc_local:status', 'shows current /etc/rc.local'
   def status
-    ::Dust.print_msg 'getting /etc/rc.local'
+    msg = @node.messages.add('getting /etc/rc.local')
     ret = @node.exec 'cat /etc/rc.local'
-    ::Dust.print_result ret[:exit_code]
-    ::Dust.print_ret ret
+    msg.parse_result(ret[:exit_code])
+    msg.print_output(ret)
   end
 end
