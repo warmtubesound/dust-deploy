@@ -3,7 +3,6 @@ class Redis < Recipe
   def deploy
     @node.install_package 'redis-server'
     @node.write '/etc/redis/redis.conf', generate_redis_conf
-    configure_sysctl
     @node.restart_service 'redis-server' if @options.restart
   end
 
@@ -71,25 +70,6 @@ class Redis < Recipe
     
     redis_conf
   end
-  
-  # redis complains if vm.overcommit_memory != 1
-  def configure_sysctl
     if @node.uses_apt?
-      @node.messages.add("setting redis sysctl keys\n")
-      
       msg = @node.messages.add('setting overcommit memory to 1', :indent => 2)
-      msg.parse_result(@node.exec('sysctl -w vm.overcommit_memory=1')[:exit_code])
-      msg = @node.messages.add('setting swappiness to 0', :indent => 2)
-      msg.parse_result(@node.exec('sysctl -w vm.swappiness=0')[:exit_code])
-      
-      file = ''
-      file << "vm.overcommit_memory=1\n"
-      file << "vm.swappiness=0\n"
-      
-      @node.write "/etc/sysctl.d/30-redis.conf", file
-      
-    else
-      @node.messages.add('sysctl configuration not supported for your os').warning
-    end
-  end
 end

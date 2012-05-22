@@ -46,6 +46,11 @@ class Sysctl < Recipe
     database.merge 'vm.overcommit_memory' => 2
   end
 
+  # redis complains if vm.overcommit_memory != 1
+  def redis
+    { 'vm.overcommit_memory' => 1, 'vm.swappiness' => 0 }
+  end
+
   def mysql
     database
   end
