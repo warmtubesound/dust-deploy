@@ -4,6 +4,7 @@ require 'net/scp'
 require 'net/ssh/proxy/socks5'
 require 'erb'
 require 'tempfile'
+require 'colorize'
 
 module Dust
   class Server
