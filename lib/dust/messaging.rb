@@ -30,7 +30,7 @@ module Dust
     def collect(level = 'all')
       case level
       when 'all'
-        l = [ 'ok', 'warning', 'failed' ]
+        l = [ 'none', 'ok', 'warning', 'failed' ]
       when 'warning'
         l = [ 'warning', 'failed' ]
       when 'failed'
@@ -65,7 +65,7 @@ module Dust
       # just return if quiet mode is on
       unless @options[:quiet]
         # default status is 'message'
-        @status = 'message'
+        @status = 'none'
 
         @text = indent + msg
         print @text unless $summary
@@ -74,7 +74,7 @@ module Dust
 
     def ok(msg = '')
       unless @options[:quiet]
-        @text << msg + ' [ ok ]'.green
+        @text << msg + ' [ ok ]'.green + "\n"
         puts msg + ' [ ok ]'.green unless $summary
         @status = 'ok'
       end
@@ -84,7 +84,7 @@ module Dust
 
     def warning(msg = '')
       unless @options[:quiet]
-        @text << msg + ' [ warning ]'.yellow
+        @text << msg + ' [ warning ]'.yellow + "\n"
         puts msg + ' [ warning ]'.yellow unless $summary
         @status = 'warning'
       end
@@ -94,7 +94,7 @@ module Dust
 
     def failed(msg = '')
       unless @options[:quiet]
-        @text << msg + ' [ failed ]'.red
+        @text << msg + ' [ failed ]'.red + "\n"
         puts msg + ' [ failed ]'.red unless $summary
         @status = 'failed'
       end
@@ -109,13 +109,10 @@ module Dust
 
     # prints stdout in grey and stderr in red (if existend)
     def print_output(ret)
-      @text << indent + ret[:stdout].chomp.green unless ret[:stdout].empty?
-      @text << indent + ret[:stderr].chomp.red unless ret[:stderr].empty?
+      @text << indent + ret[:stdout].chomp.green + "\n" unless ret[:stdout].empty?
+      @text << indent + ret[:stderr].chomp.red + "\n" unless ret[:stderr].empty?
 
-      unless $summary
-        puts indent + ret[:stdout].chomp.green unless ret[:stdout].empty?
-        puts indent + ret[:stderr].chomp.red unless ret[:stderr].empty?
-      end
+      print @text unless $summary
     end
 
 
