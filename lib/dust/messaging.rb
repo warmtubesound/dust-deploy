@@ -68,14 +68,14 @@ module Dust
         @status = 'none'
 
         @text = indent + msg
-        print @text unless $summary
+        print @text unless $parallel
       end
     end
 
     def ok(msg = '')
       unless @options[:quiet]
         @text << msg + ' [ ok ]'.green + "\n"
-        puts msg + ' [ ok ]'.green unless $summary
+        puts msg + ' [ ok ]'.green unless $parallel
         @status = 'ok'
       end
 
@@ -85,7 +85,7 @@ module Dust
     def warning(msg = '')
       unless @options[:quiet]
         @text << msg + ' [ warning ]'.yellow + "\n"
-        puts msg + ' [ warning ]'.yellow unless $summary
+        puts msg + ' [ warning ]'.yellow unless $parallel
         @status = 'warning'
       end
 
@@ -95,7 +95,7 @@ module Dust
     def failed(msg = '')
       unless @options[:quiet]
         @text << msg + ' [ failed ]'.red + "\n"
-        puts msg + ' [ failed ]'.red unless $summary
+        puts msg + ' [ failed ]'.red unless $parallel
         @status = 'failed'
       end
 
@@ -112,7 +112,7 @@ module Dust
       @text << indent + ret[:stdout].chomp.green + "\n" unless ret[:stdout].empty?
       @text << indent + ret[:stderr].chomp.red + "\n" unless ret[:stderr].empty?
 
-      print @text unless $summary
+      print @text unless $parallel
     end
 
 
