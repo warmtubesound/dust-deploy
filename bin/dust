@@ -8,6 +8,7 @@ require 'erb'
 require 'fileutils'
 require 'ipaddress'
 require 'dust'
+require 'colorize'
 
 module  Dust
   class Deploy < Thor::Runner
@@ -23,13 +24,38 @@ module  Dust
     method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
     method_option 'restart', :type => :boolean, :desc => 'restart services after deploy'
     method_option 'reload', :type => :boolean, :desc => 'reload services after deploy'
+    method_option 'parallel', :type => :boolean, :desc => 'deploy to all hosts at the same time using threads'
+    method_option 'summary', :type => :string, :desc => 'print summary of all events (all, warning, failed)'
 
     def deploy
       return unless check_dust_dir
       initialize_thorfiles
       Dust.print_failed 'no servers match this filter' if load_servers.empty?
 
-      run_recipes 'deploy'
+      # set global variables
+      $summary = options['summary']
+      $parallel = options['parallel']
+      $summary = 'all' if $parallel and not $summary
+
+      threads = []
+      @nodes.each_with_index do |node, i|
+        if $parallel
+          threads[i] = Thread.new do
+            run_recipes node, 'deploy'
+            Thread.current['hostname'] = node['hostname']
+          end
+        else
+          run_recipes node, 'deploy'
+        end
+      end
+
+      if $parallel
+        print 'waiting for servers: '
+        threads.each { |t| t.join; print t['hostname'].blue + ' ' }
+        puts
+      end
+
+      display_summary($summary) if $summary
     end
 
 
@@ -39,13 +65,38 @@ module  Dust
     method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
     method_option 'recipes', :type => :array, :desc => 'only deploy these recipes'
     method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
+    method_option 'parallel', :type => :boolean, :desc => 'deploy to all hosts at the same time using threads'
+    method_option 'summary', :type => :string, :desc => 'print summary of all events (all, warning, failed)'
 
     def status
       return unless check_dust_dir
       initialize_thorfiles
       Dust.print_failed 'no servers match this filter' if load_servers.empty?
 
-      run_recipes 'status'
+      # set global variables
+      $summary = options['summary']
+      $parallel = options['parallel']
+      $summary = 'all' if $parallel and not $summary
+
+      threads = []
+      @nodes.each_with_index do |node, i|
+        if $parallel
+          threads[i] = Thread.new do
+            run_recipes node, 'status'
+            Thread.current['hostname'] = node['hostname']
+          end          
+        else
+          run_recipes node, 'status'
+        end
+      end
+
+      if $parallel
+        print 'waiting for servers: '
+        threads.each { |t| t.join; print t['hostname'].blue + ' ' }
+        puts
+      end
+
+      display_summary($summary) if $summary
     end
 
 
@@ -54,41 +105,78 @@ module  Dust
     method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
     method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
     method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
+    method_option 'parallel', :type => :boolean, :desc => 'deploy to all hosts at the same time using threads'
+    method_option 'summary', :type => :string, :desc => 'print summary of all events (all, warning, failed)'
 
     def system_update
       return unless check_dust_dir
       initialize_thorfiles
       Dust.print_failed 'no servers match this filter' if load_servers.empty?
 
-      @nodes.each do |node|
-        # connect to server
-        node['server'] = Server.new node
-        next unless node['server'].connect
-        node['server'].system_update
-        node['server'].disconnect
+      # set global variables
+      $summary = options['summary']
+      $parallel = options['parallel']
+      $summary = 'all' if $parallel and not $summary
+
+      threads = []
+      @nodes.each_with_index do |node, i|
+        if $parallel
+          threads[i] = Thread.new do
+            run_system_update(node)
+            Thread.current['hostname'] = node['hostname']
+          end          
+        else
+          run_system_update(node)
+        end
       end
+
+      if $parallel
+        print 'waiting for servers: '
+        threads.each { |t| t.join; print t['hostname'].blue + ' ' }
+        puts
+      end
+
+      display_summary($summary) if $summary
     end
 
 
-         'run a command on the server'
     desc 'exec <command>', 'run a command on the server'
 
     method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
     method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
     method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
+    method_option 'parallel', :type => :boolean, :desc => 'deploy to all hosts at the same time using threads'
+    method_option 'summary', :type => :string, :desc => 'print summary of all events (all, warning, failed)'
 
     def exec cmd, yaml=''
       return unless check_dust_dir
       initialize_thorfiles
       Dust.print_failed 'no servers match this filter' if load_servers.empty?
 
-      @nodes.each do |node|
-        # connect to server
-        node['server'] = Server.new node
-        next unless node['server'].connect
-        node['server'].exec cmd, :live => true
-        node['server'].disconnect
+      # set global variables
+      $summary = options['summary']
+      $parallel = options['parallel']
+      $summary = 'all' if $parallel and not $summary
+
+      threads = []
+      @nodes.each_with_index do |node, i|
+        if $parallel
+          threads[i] = Thread.new do
+            run_exec(node, cmd)
+            Thread.current['hostname'] = node['hostname']
+          end                    
+        else
+          run_exec(node, cmd)
+        end
       end
+
+      if $parallel
+        print 'waiting for servers: '
+        threads.each { |t| t.join; print t['hostname'].blue + ' ' }
+        puts
+      end
+
+      display_summary($summary) if $summary
     end
 
 
@@ -119,34 +207,40 @@ module  Dust
     end
 
     # run specified recipes in the given context
-    def run_recipes context
-      @nodes.each do |node|
-        # skip this node if there are no recipes found
-        next unless node['recipes']
+    def run_recipes(node, context)
+      # skip this node if there are no recipes found
+      return unless node['recipes']
 
-        recipes = generate_recipes node, context
+      recipes = generate_recipes node, context
 
-        # skip this node unless we're actually having recipes to cook
-        next if recipes.empty?
+      # skip this node unless we're actually having recipes to cook
+      return if recipes.empty?
 
-        # connect to server
-        node['server'] = Server.new node
-        next unless node['server'].connect
+      # connect to server
+      node['server'] = Server.new node
+      return unless node['server'].connect
 
-        # runs the method with the recipe name, defined and included in recipe/*.rb
-        # call recipes for each recipe that is defined for this node
-        recipes.each do |recipe, config|
-          node['server'].messages.add("|#{recipe}|\n".green, :indent => 0)
-          send recipe, 'prepare', node['server'], recipe, context, config, options
-          puts
-        end
-
-        node['server'].disconnect
+      # runs the method with the recipe name, defined and included in recipe/*.rb
+      # call recipes for each recipe that is defined for this node
+      recipes.each do |recipe, config|
+        send recipe, 'prepare', node['server'], recipe, context, config, options
       end
 
-      @nodes.each do |node|
-        node['server'].messages.collect
-      end      
+      node['server'].disconnect
+    end
+
+    def run_system_update(node)
+      node['server'] = Server.new(node)
+      return unless node['server'].connect
+      node['server'].system_update
+      node['server'].disconnect
+    end
+
+    def run_exec(node, cmd)
+      node['server'] = Server.new(node)
+      return unless node['server'].connect
+      node['server'].exec(cmd, :live => true)
+      node['server'].disconnect
     end
 
     # generate list of recipes for this node
@@ -170,6 +264,23 @@ module  Dust
       recipes
     end
 
+    def display_summary(level)
+      puts "\n\n------------------------------ SUMMARY ------------------------------".red unless $parallel
+
+      @nodes.each do |node|
+        messages = node['server'].messages.collect(level)
+        next if messages.empty?
+
+        # display non-recipe messages first
+        #msgs = messages.delete '_node'
+        #msgs.each { |m| print m }
+
+        # display messages from recipes
+        messages.each do |recipe, msgs|
+          msgs.each { |m| print m }
+        end
+      end
+    end
 
     # overwrite thorfiles to look for tasks in the recipes directories
     def thorfiles(relevant_to=nil, skip_lookup=false)
