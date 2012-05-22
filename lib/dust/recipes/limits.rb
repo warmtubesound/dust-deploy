@@ -12,6 +12,8 @@ class Limits < Recipe
       return @node.messages.add('your system does not support /etc/security/limits.d').failed
     end
 
+    clean
+
     @config.each do |name, rules|
       limits_conf = ''
       @node.messages.add("assembling system limits according to rule '#{name}'\n")
@@ -50,4 +52,12 @@ class Limits < Recipe
     end
   end
 
+
+  private
+
+  # removes all files in /etc/security/limits.d
+  def clean
+    msg = @node.messages.add('cleaning all files from /etc/security/limits.d')
+    msg.parse_result(@node.rm('/etc/security/limits.d/*', :quiet => true))
+  end
 end
