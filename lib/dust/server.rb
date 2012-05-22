@@ -25,11 +25,12 @@ module Dust
 
     def connect
       msg = messages.add("\n[ #{@node['hostname'].blue} ]\n\n", :indent => 0)
+
       begin
         # connect to proxy if given
         if @node['proxy']
           host, port = @node['proxy'].split ':'
-          proxy = Net::SSH::Proxy::SOCKS5.new host, port
+          proxy = Net::SSH::Proxy::SOCKS5.new(host, port)
         else
           proxy = nil
         end
@@ -40,7 +41,7 @@ module Dust
                                 :proxy => proxy }
       rescue Exception
         error_message = "coudln't connect to #{@node['fqdn']}"
-        error_message += " (via socks5 proxy #{@node['proxy']})" if proxy
+        error_message << " (via socks5 proxy #{@node['proxy']})" if proxy
         msg.failed(error_message)
         return false
       end
