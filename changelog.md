@@ -1,6 +1,16 @@
 Changelog
 =============
 
+0.12.3
+------------
+
+-  redis doesn't configure sysctl anymore, please use sysctl redis template
+
+    recipes:
+      sysctl:
+        templates: redis
+
+
 0.12.2
 ------------
 
