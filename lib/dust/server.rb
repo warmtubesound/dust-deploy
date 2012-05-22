@@ -60,6 +60,9 @@ module Dust
       exit_code = nil
       exit_signal = nil
 
+      # prepend a newline, if output is live
+      messages.add("\n", :indent => 0) if options[:live]
+
       @ssh.open_channel do |channel|
 
         # if :as_user => user is given, execute as user (be aware of ' usage)
