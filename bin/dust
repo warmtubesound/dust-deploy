@@ -84,7 +84,7 @@ module  Dust
           threads[i] = Thread.new do
             run_recipes node, 'status'
             Thread.current['hostname'] = node['hostname']
-          end          
+          end
         else
           run_recipes node, 'status'
         end
@@ -124,7 +124,7 @@ module  Dust
           threads[i] = Thread.new do
             run_system_update(node)
             Thread.current['hostname'] = node['hostname']
-          end          
+          end
         else
           run_system_update(node)
         end
@@ -164,7 +164,7 @@ module  Dust
           threads[i] = Thread.new do
             run_exec(node, cmd)
             Thread.current['hostname'] = node['hostname']
-          end                    
+          end
         else
           run_exec(node, cmd)
         end

@@ -114,7 +114,7 @@ module Dust
 
       print @text unless $parallel
     end
-
+    
 
     private
 
