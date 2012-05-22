@@ -56,7 +56,7 @@ class SshAuthorizedKeys < Recipe
   # TODO: add this option  
   def cleanup
     if options.cleanup?
-      msg = @node.messages.add("deleting other authorized_keys files\n")
+      @node.messages.add("deleting other authorized_keys files\n")
       @node.get_system_users(:quiet => true).each do |user|
         next if users.keys.include? user
         home = @node.get_home user

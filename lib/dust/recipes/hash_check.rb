@@ -8,7 +8,7 @@ class HashCheck < Recipe
     weak_passwords = File.open "#{@template_path}/weak_passwords", 'r'
 
     shadow = @node.exec('getent shadow')[:stdout]
-    msg = @node.messages.add("checking for weak password hashes\n")
+    @node.messages.add("checking for weak password hashes\n")
 
     found_weak = false
     shadow.each_line do |line|
@@ -28,13 +28,13 @@ class HashCheck < Recipe
           return msg.failed('error during hash creation (is python installed?)')
         end
         if hash == ret[:stdout].chomp
-          msg.failed("user #{user} has a weak password! (#{password})")
+          @node.messages.add("user #{user} has a weak password! (#{password})", :indent => 2).failed
           found_weak = true
         end
       end
     end
 
     weak_passwords.close
-    msg.ok('none found.') unless found_weak
+    @node.messages.add('none found.', :indent => 2).ok unless found_weak
   end
 end
