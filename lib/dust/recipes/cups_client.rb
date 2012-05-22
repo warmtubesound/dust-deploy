@@ -3,7 +3,7 @@ class CupsClient < Recipe
   def deploy 
     return false unless install
     
-    return @node.messages.add('no printserver specified.') unless @config
+    return @node.messages.add('no printserver specified.').failed unless @config
     
     @node.messages.add("setting servername to: #{@config}").ok
     @node.write '/etc/cups/client.conf', "ServerName #{@config}\n"
