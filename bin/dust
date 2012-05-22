@@ -271,12 +271,15 @@ module  Dust
         messages = node['server'].messages.collect(level)
         next if messages.empty?
 
+        node['server'].messages.print_hostname_header(node['hostname'])
+
         # display non-recipe messages first
-        #msgs = messages.delete '_node'
-        #msgs.each { |m| print m }
+        msgs = messages.delete '_node'
+        msgs.each { |m| print m } if msgs
 
         # display messages from recipes
         messages.each do |recipe, msgs|
+          node['server'].messages.print_recipe_header(recipe)
           msgs.each { |m| print m }
         end
       end

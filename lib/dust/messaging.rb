@@ -22,9 +22,19 @@ module Dust
       @current_recipe = recipe
 
       # display recipe header, unless we're starting non-recipe messages
-      msg = (recipe == '_node') ? "\n" : "\n|#{recipe}|\n".green
+      print_recipe_header(recipe) if recipe != '_node' and not $parallel 
       
-      @store[@current_recipe] = [ Message.new(msg, :indent => 0) ]
+      @store[@current_recipe] = []
+    end
+    
+    # print hostname
+    def print_hostname_header(host)
+      puts "\n\n[ #{host} ]".blue
+    end
+    
+    # print recipe name
+    def print_recipe_header(recipe)
+      puts "\n|#{recipe}|".green
     end
 
     def collect(level = 'all')
