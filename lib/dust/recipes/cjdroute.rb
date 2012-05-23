@@ -42,6 +42,50 @@ class Cjdroute< Recipe
     }
   end
 
+  def public_peers
+    # list of public peers, taken from https://wiki.projectmeshnet.org/Public_peers
+    {
+      # derps nodes 
+      '173.255.219.67:10000' => {
+        'password' => 'null',
+        'publicKey' => 'lj52930v1vmg3jqyb399us501svntt499bvgk0c1fud4pmy42gj0.k'
+      },
+
+      '96.126.112.124:10000' => {
+        'password' => 'null',
+        'publicKey' => '7zy1gb9bw4xp82kjvh66w01jdgh6y3lk7cfnl0pgb0xnn26b2jn0.k'
+      },
+
+      # rainfly x
+      '76.105.229.241:13982' => {
+        'password' => 'general_public_1985',
+        'publicKey' => '7pu8nlqphgd1bux9sdpjg0c104217r3b3m1bvmdtbn7uwcj5cky0.k'
+      },
+
+      #  ds500ss 
+      '87.208.234.24:28078' => {
+        'password' => 'freedomnetsrai9yah4Kic5Kojah5que4xoCh',
+        'publicKey' => 'qb426vh42usw995jy60ll6rtslguv1ylpvwp44ymzky6f0u5qvq0.k'
+      },
+
+      # Dans nodes
+      '199.83.100.24:41902' => {
+        'password' => 'znuhtpf005705tp8snzbywynm6',
+        'publicKey' => 'xltnfur6xh2n36g79y1qpht910c13sq7lb049662x7trfx3gf190.k'
+      },
+
+      '173.192.138.43:26099' => {
+        'password' => 'fjhgf77nsnsp8mrkvyxbwj5jw0',
+        'publicKey' => 'bzmd25v05dctt77nqlgl8rxm24g0q8hwlkkcc64ss7pybbx2ndg0.k'
+      },
+
+      '74.221.208.153:51674' => {
+        'password' => 'jljwnfutfpt1nz3yjsj0dscpf7',
+        'publicKey' => '8hgr62ylugxjyyhxkz254qtz60p781kbswmhhywtbb5rpzc5lxj0.k'
+      }
+    }
+  end
+
   # installs cmake, git and other building tools needed
   def install_dependencies
     @node.messages.add("installing build dependencies\n")
@@ -131,6 +175,11 @@ class Cjdroute< Recipe
 
     # parse generated json
     cjdroute_conf = JSON.parse ret[:stdout]
+
+    # add some public peers, so we can get started directly
+    msg = @node.messages.add('adding public peers', :indent => 2)
+    cjdroute_conf['interfaces']['UDPInterface']['connectTo'] = public_peers
+    msg.ok
 
     # exchange tun0 with configured tun device
     cjdroute_conf['router']['interface']['tunDevice'] = @config['tun']
