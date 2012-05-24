@@ -1,6 +1,14 @@
 Changelog
 =============
 
+0.13.1
+------------
+
+-  fixes small bug in summary
+-  readds and updates cjdroute public peers
+-  adds dnsmasq recipe
+
+
 0.13.0
 ------------
 
