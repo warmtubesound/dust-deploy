@@ -188,6 +188,11 @@ module  Dust
       Dust.print_ok
     end
 
+    desc 'version', 'displays version number'
+    def version
+      puts "dust-deploy-#{Dust::VERSION}, running on ruby-#{RUBY_VERSION}"
+    end
+
 
     private
 
