@@ -696,7 +696,7 @@ module Dust
 
       # run facter with -y for yaml output, and merge results into @node
       ret = exec 'facter -y'
-      @node.merge! YAML.load ret[:stdout]
+      @node = YAML.load(ret[:stdout]).merge(@node)
 
       msg.parse_result(ret[:exit_code])
     end
