@@ -41,8 +41,7 @@ module  Dust
       @nodes.each_with_index do |node, i|
         if $parallel
           threads[i] = Thread.new do
-            run_recipes node, 'deploy'
-            Thread.current['hostname'] = node['hostname']
+            Thread.current['hostname'] = node['hostname'] if run_recipes node, 'deploy'
           end
         else
           run_recipes node, 'deploy'
@@ -51,7 +50,10 @@ module  Dust
 
       if $parallel
         print 'waiting for servers: '
-        threads.each { |t| t.join; print t['hostname'].blue + ' ' }
+        threads.each do |t|
+          t.join # wait for thread
+          print t['hostname'].blue + ' ' if t['hostname']
+        end
         puts
       end
 
@@ -82,8 +84,7 @@ module  Dust
       @nodes.each_with_index do |node, i|
         if $parallel
           threads[i] = Thread.new do
-            run_recipes node, 'status'
-            Thread.current['hostname'] = node['hostname']
+            Thread.current['hostname'] = node['hostname'] if run_recipes node, 'deploy'
           end
         else
           run_recipes node, 'status'
@@ -92,7 +93,10 @@ module  Dust
 
       if $parallel
         print 'waiting for servers: '
-        threads.each { |t| t.join; print t['hostname'].blue + ' ' }
+        threads.each do |t|
+          t.join # wait for thread
+          print t['hostname'].blue + ' ' if t['hostname']
+        end
         puts
       end
 
@@ -132,7 +136,10 @@ module  Dust
 
       if $parallel
         print 'waiting for servers: '
-        threads.each { |t| t.join; print t['hostname'].blue + ' ' }
+        threads.each do |t|
+          t.join # wait for thread
+          print t['hostname'].blue + ' ' if t['hostname']
+        end
         puts
       end
 
@@ -172,7 +179,10 @@ module  Dust
 
       if $parallel
         print 'waiting for servers: '
-        threads.each { |t| t.join; print t['hostname'].blue + ' ' }
+        threads.each do |t|
+          t.join # wait for thread
+          print t['hostname'].blue + ' ' if t['hostname']
+        end
         puts
       end
 
@@ -212,18 +222,20 @@ module  Dust
     end
 
     # run specified recipes in the given context
+    # returns false if no recipes where found
+    # true if recipes were run (doesn't indicate, whether the run was sucessful or not)
     def run_recipes(node, context)
       # skip this node if there are no recipes found
-      return unless node['recipes']
+      return false unless node['recipes']
 
       recipes = generate_recipes node, context
 
       # skip this node unless we're actually having recipes to cook
-      return if recipes.empty?
+      return false if recipes.empty?
 
       # connect to server
       node['server'] = Server.new(node)
-      return unless node['server'].connect
+      return true unless node['server'].connect
 
       # runs the method with the recipe name, defined and included in recipe/*.rb
       # call recipes for each recipe that is defined for this node
@@ -232,6 +244,7 @@ module  Dust
       end
 
       node['server'].disconnect
+      true
     end
 
     def run_system_update(node)
