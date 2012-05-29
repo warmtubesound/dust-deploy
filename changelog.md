@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.13.2
+------------
+
+-  does not overwrite already present node variables (like hostname) when using facter anymore
+-  adds "dust version"
+
+
 0.13.1
 ------------
 
