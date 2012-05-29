@@ -76,7 +76,7 @@ module Dust
         # the use of > < && || | and ; doesn't screw things up
         if @node['sudo']
           channel.request_pty
-          command = "sudo sh -c \"#{command.gsub('"','\\"')}\""
+          command = "sudo -k -- sh -c \"#{command.gsub('"','\\"')}\""
         end
 
         channel.exec command do |ch, success|
