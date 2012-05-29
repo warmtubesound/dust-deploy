@@ -222,7 +222,7 @@ module  Dust
       return if recipes.empty?
 
       # connect to server
-      node['server'] = Server.new node
+      node['server'] = Server.new(node)
       return unless node['server'].connect
 
       # runs the method with the recipe name, defined and included in recipe/*.rb
