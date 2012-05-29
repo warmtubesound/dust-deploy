@@ -14,7 +14,7 @@ class Locale < Recipe
       @node.write '/etc/sysconfig/i18n', "LANG=\"#{@config}\"\nLC_ALL=\"#{@config}\"\nSYSFONT=\"latarcyrheb-sun16\"\n", :quiet => true
       msg.ok
     else
-      @node.message.add('os not supported').failed
+      @node.messages.add('os not supported').failed
     end
   end
 

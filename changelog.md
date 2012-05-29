@@ -29,13 +29,13 @@ Changelog
 
     ::Dust.print_ok('this went well')
 
-    @node.message.add('this went well').ok
+    @node.messages.add('this went well').ok
 
 
     ::Dust.print_message('executing something')
     ::Dust.print_result(ret)
 
-    msg = @node.message.add('executing something')
+    msg = @node.messages.add('executing something')
     msg.parse_result(ret)
     
 
