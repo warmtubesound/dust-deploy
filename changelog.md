@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.13.3
+------------
+
+-  only display hostname in "waiting for servers" message, when there is actually something to deploy
+
+
 0.13.2
 ------------
 
