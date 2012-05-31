@@ -74,6 +74,11 @@ class String
   rescue NameError
     false
   end
+
+  # checks if string is a valid integer
+  def is_int?
+    true if Integer(self) rescue false
+  end
 end
 
 
