@@ -1,6 +1,16 @@
 Changelog
 =============
 
+0.13.4
+------------
+
+-  adds cron recipe that maintains cronjobs
+
+    recipes:
+      cron:
+        mycronjob_name: { minute: '*/1', command: 'my command' }
+
+
 0.13.3
 ------------
 
