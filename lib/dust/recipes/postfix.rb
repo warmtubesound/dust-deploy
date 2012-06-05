@@ -13,15 +13,20 @@ class Postfix < Recipe
     end
 
     if @config['master.cf']
-      master_cf = ''
+      master_cf = "# service\ttype\tprivate\tunpriv\tchroot\twakeup\tmaxproc\tcommand\n\n"
       @config['master.cf'].each do |s|
         return @node.messages.add("service missing: #{s.inspect}").failed unless s['service']
         s = default_service(s['service']).merge s
 
-        master_cf << "#{s['service']} #{s['type']} #{s['private']} " +
-                     "#{s['unpriv']} #{s['chroot']} #{s['wakeup']} " +
-                     "#{s['maxproc']} #{s['command']}\n"
-        s['args'].to_array.each { |a|  master_cf << "  #{a}\n" } if s['args']
+        master_cf << "#{s['service']}\t" +
+                     "#{s['service'].length > 7 ? '' : "\t"}" + # adds second tab if needed
+                     "#{s['type']}\t#{s['private']}\t" +
+                     "#{s['unpriv']}\t#{s['chroot']}\t#{s['wakeup']}\t" +
+                     "#{s['maxproc']}\t#{s['command']}\n"
+        if s['args']
+          s['args'].to_array.each { |a|  master_cf << "  #{a}\n" }
+          master_cf << "\n"
+        end
       end
 
       @node.write "#{@config['etc_dir']}/master.cf", master_cf
