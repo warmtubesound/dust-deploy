@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.13.5
+------------
+
+-  adds postfix recipe (for maintaining main.cf and master.cf)
+-  adds dovecot recipe
+
+
 0.13.4
 ------------
 
