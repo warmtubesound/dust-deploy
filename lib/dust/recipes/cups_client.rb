@@ -1,12 +1,15 @@
 class CupsClient < Recipe
   desc 'cups_client:deploy', 'maintains /etc/cups/client.conf'
   def deploy 
-    return false unless install
-    
     return @node.messages.add('no printserver specified.').failed unless @config
-    
-    @node.messages.add("setting servername to: #{@config}").ok
-    @node.write '/etc/cups/client.conf', "ServerName #{@config}\n"
+
+    if @config == 'remove'
+      @node.rm('/etc/cups/client.conf')
+    else
+      return false unless install
+      @node.messages.add("setting servername to: #{@config}").ok
+      @node.write '/etc/cups/client.conf', "ServerName #{@config}\n"
+    end
   end
   
   desc 'cups_client:status', 'shows current /etc/cups/client.conf'
