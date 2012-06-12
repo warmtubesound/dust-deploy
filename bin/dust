@@ -84,7 +84,7 @@ module  Dust
       @nodes.each_with_index do |node, i|
         if $parallel
           threads[i] = Thread.new do
-            Thread.current['hostname'] = node['hostname'] if run_recipes node, 'deploy'
+            Thread.current['hostname'] = node['hostname'] if run_recipes node, 'status'
           end
         else
           run_recipes node, 'status'
