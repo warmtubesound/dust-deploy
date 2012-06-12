@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.13.6
+------------
+
+-  fixes bug with dust status --parallel
+
+
 0.13.5
 ------------
 
