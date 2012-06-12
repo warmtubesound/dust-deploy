@@ -5,7 +5,7 @@ class EtcHosts < Recipe
 
     # restart dns service
     if @options.restart? and @config.is_a? String
-      @node.package_installed? @config
+      @node.install_package @config
       @node.restart_service @config
     end
   end
