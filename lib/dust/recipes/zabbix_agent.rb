@@ -88,12 +88,20 @@ class ZabbixAgent < Recipe
       'UserParameter' => []
     }
 
-    if @node.uses_apt?
+    if @node.dir_exists?('/var/run/zabbix-agent', :quiet => true)
       defaults['PidFile'] ||= '/var/run/zabbix-agent/zabbix_agentd.pid'
-      defaults['LogFile'] ||= '/var/log/zabbix-agent/zabbix_agentd.log'
-    elsif @node.uses_emerge? or @node.uses_rpm?
+    elsif @node.dir_exists?('/var/run/zabbix', :quiet => true)
       defaults['PidFile'] ||= '/var/run/zabbix/zabbix_agentd.pid'
+    else
+      defaults['PidFile'] ||= '/var/run/zabbix_agentd.pid'
+    end
+
+    if @node.dir_exists?('/var/log/zabbix-agent', :quiet => true)
+      defaults['LogFile'] ||= '/var/log/zabbix-agent/zabbix_agentd.log'
+    elsif @node.dir_exists?('/var/log/zabbix', :quiet => true)
       defaults['LogFile'] ||= '/var/log/zabbix/zabbix_agentd.log'
+    else
+      defaults['LogFile'] ||= '/var/log/zabbix_agentd.log'
     end
 
     defaults
