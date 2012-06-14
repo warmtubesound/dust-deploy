@@ -1,7 +1,7 @@
 Changelog
 =============
 
-0.13.7
+0.13.8
 ------------
 
 -  introduces @node.package_min_version? to check if a package is at least version x.

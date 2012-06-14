@@ -62,7 +62,10 @@ class Iptables < Recipe
               '/etc/network/if-pre-up.d/ip6tables' ]
 
     files.each do |file|
-      @node.rm(file) if @node.file_exists?(file, :quiet => true)
+      if @node.file_exists?(file, :quiet => true)
+        @node.messages.add("found old iptables script '#{file}', removing").warning
+        @node.rm(file, :indent => 2)
+      end
     end
   end
 
