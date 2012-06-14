@@ -17,8 +17,10 @@ class Iptables < Recipe
     @tables['ipv6']['mangle'] = [ 'INPUT', 'OUTPUT', 'FORWARD', 'PREROUTING', 'POSTROUTING' ]
     @tables['ipv6']['raw'] = [ 'OUTPUT', 'PREROUTING' ]
 
-
     return unless install
+
+    # remove iptables scripts from old dust versions
+    remove_old_scripts
 
     [4, 6].each do |v|
       @script = ''
@@ -26,12 +28,11 @@ class Iptables < Recipe
 
       @node.messages.add("generating ipv#{@ip_version} rules\n")
 
-      clear_all
       populate_rule_defaults
       generate_all_rules
 
       deploy_script
-      apply_rules
+      apply_rules if @options.restart?
     end
   end
 
@@ -48,20 +49,20 @@ class Iptables < Recipe
   # install iptables
   def install
     return false unless @node.install_package 'iptables'
+    return false unless @node.install_package 'iptables-persistent' if @node.uses_apt?
     return false unless @node.install_package 'iptables-ipv6' if @node.uses_rpm? and not @node.is_fedora?
     true
   end
 
-  # deletes all rules/chains
-  def clear_all
-    return if @node.uses_rpm?
+  # TODO: remove soon
+  # remove rules from old iptables recipe
+  def remove_old_scripts
+    files = [ '/etc/iptables', '/etc/ip6tables',
+              '/etc/network/if-pre-up.d/iptables',
+              '/etc/network/if-pre-up.d/ip6tables' ]
 
-    @tables['ipv' + @ip_version.to_s].keys.each do |table|
-      # clear all rules
-      @script << "--flush --table #{table}\n"
-
-      # delete all custom chains
-      @script << "--delete-chain --table #{table}\n" unless @node.uses_rpm?
+    files.each do |file|
+      @node.rm(file) if @node.file_exists?(file, :quiet => true)
     end
   end
 
@@ -84,7 +85,7 @@ class Iptables < Recipe
   # generates all iptables rules
   def generate_all_rules
     @tables['ipv' + @ip_version.to_s].each do |table, chains|
-      @script << "*#{table}\n" if @node.uses_rpm?
+      @script << "*#{table}\n"
       set_chain_policies table
       generate_rules_for_table table
     end
@@ -98,12 +99,7 @@ class Iptables < Recipe
     # build in chains
     @tables['ipv' + @ip_version.to_s][table].each do |chain|
       policy = get_chain_policy table, chain
-
-      if @node.uses_rpm?
-        @script << ":#{chain.upcase} #{policy} [0:0]\n"
-      else
-        @script << "--table #{table} --policy #{chain.upcase} #{policy}\n"
-      end
+      @script << ":#{chain.upcase} #{policy} [0:0]\n"
     end
 
     # custom chains
@@ -121,11 +117,7 @@ class Iptables < Recipe
       end
       next unless chain_used_in_table
 
-      if @node.uses_rpm?
-        @script << ":#{chain.upcase} - [0:0]\n"
-      else
-        @script << "--table #{table} --new-chain #{chain.upcase}\n"
-      end
+      @script << ":#{chain.upcase} - [0:0]\n"
     end
   end
 
@@ -158,7 +150,7 @@ class Iptables < Recipe
         msg.ok
       end
     end
-    @script << "COMMIT\n" if @node.uses_rpm?
+    @script << "COMMIT\n"
   end
 
   def get_rules_for_table rules, table
@@ -195,7 +187,7 @@ class Iptables < Recipe
     # map r[key] = value to '--key value'
     r.each do |k, v|
       next if k == 'ip-version' # skip ip-version, since its not iptables option
-      next if k == 'table' if @node.uses_rpm? # rpm-firewall takes table argument with *table
+      next if k == 'table' # iptables-restore takes table argument with *table
 
       with_dashes[k] = r[k].map do |v|
         value = v.to_s
@@ -251,82 +243,74 @@ class Iptables < Recipe
   def deploy_script
     target = get_target
 
-    prepend_cmd
-    prepend_header
+    # create directory if not existend
+    @node.mkdir(File.dirname(target)) unless @node.dir_exists?(File.dirname(target), :quiet => true)
 
     # overwrite openwrt firewall configuration
     # and only use our script
     if @node.uses_opkg?
       @node.write '/etc/config/firewall',
-                  "config include\n\toption path /etc/iptables\n\n" +
-                  "config include\n\toption path /etc/ip6tables\n\n"
+                  "config include\n\toption path /etc/firewall.sh\n"
+
+      workaround_script = '/etc/firewall.sh'
+
+    # iptables-persistent < version 0.5.1 doesn't support ipv6
+    # so doing a workaround
+    elsif @node.uses_apt?
+      # check if iptables-persistent is new enough
+      unless @node.package_min_version?('iptables-persistent', '0.5.1', :quiet => true)
+        @node.messages.add('iptables-persistent too old (< 0.5.1), using workaround').warning
+        workaround_script = '/etc/network/if-pre-up.d/iptables'
+      end
     end
 
-    @node.write target, @script, :quiet => true
+    if workaround_script
+      msg = @node.messages.add("deploying workaround script to #{workaround_script}", :indent => 2)
+      msg.parse_result(@node.write(workaround_script,
+                                   "#!/bin/sh\n\n" +
+                                   "iptables-restore < #{target}\n" +
+                                   "ip6tables-restore < #{target}\n", :quiet => true))
 
-    if @node.uses_rpm?
-      @node.chmod '600', target
+      @node.chmod('0700', workaround_script, :indent => 2)
+
+      if @node.uses_apt?
+        # deactivate iptables-persistent initscript
+        msg = @node.messages.add('deactivating iptables-persistent initscript', :indent => 2)
+        msg.parse_result(@node.exec('update-rc.d iptables-persistent remove')[:exit_code])
+      end
     else
-      @node.chmod '700', target
+      @node.autostart_service('iptables-persistent') if @node.uses_apt?
     end
-  end
 
-  # put dust comment at the beginning of the file
-  def prepend_header
-    @script.insert 0, "#!/bin/sh\n" unless @node.uses_rpm?
-    @script.insert 0, "# automatically generated by dust\n\n"
-  end
-
-  # prepend iptables command on non-centos-like machines
-  def prepend_cmd
-    @script.gsub! /^/, "#{cmd_path} " unless @node.uses_rpm?
+    @node.write(target, @script, :quiet => true)
+    @node.chmod('0600', target)
   end
 
   # apply newly pushed rules
   def apply_rules
-    if @options.restart?
-      msg = @node.messages.add("applying ipv#{@ip_version} rules")
-
-      if @node.uses_rpm?
-        msg.parse_result(@node.exec("/etc/init.d/#{cmd} restart")[:exit_code])
-
-      else
-        ret = @node.exec get_target
-        msg.parse_result( (ret[:exit_code] == 0 and ret[:stdout].empty? and ret[:stderr].empty?) )
-      end
-    end
-
-    # on gentoo, rules have to be saved using the init script,
-    # otherwise they won't get re-applied on next startup
-    if @node.uses_emerge?
-      msg = @node.messages.add("saving ipv#{@ip_version} rules")
-      msg.parse_result(@node.exec("/etc/init.d/#{cmd} save")[:exit_code])
-    end
+    msg = @node.messages.add("applying ipv#{@ip_version} rules")
+    msg.parse_result(@node.exec("#{get_cmd}-restore < #{get_target}")[:exit_code])
   end
 
   # set the target file depending on distribution
   def get_target
-    target = "/etc/#{cmd}"
-    target = "/etc/network/if-pre-up.d/#{cmd}" if @node.uses_apt?
-    target = "/etc/sysconfig/#{cmd}" if @node.uses_rpm?
+    if @node.uses_apt?
+      target = "/etc/iptables/rules.v#{@ip_version}"
+
+    elsif @node.uses_rpm?
+      target = "/etc/sysconfig/iptables" if @ip_version == 4
+      target = "/etc/sysconfig/ip6tables" if @ip_version == 6
+
+    else
+      target = "/etc/iptables-rules.ipt" if @ip_version == 4
+      target = "/etc/ip6tables-rules.ipt" if @ip_version == 6
+    end
+
     target
   end
 
-  def cmd
+  def get_cmd
     return 'iptables' if @ip_version == 4
     return 'ip6tables' if @ip_version == 6
-  end
-
-  def cmd_path
-    # get full iptables/ip6tables path using which
-    ret = @node.exec("which #{cmd}")
-    return ret[:stdout].chomp if ret[:exit_code] == 0
-
-    # PATH is not set correctly when executing stuff via ssh on openwrt
-    # thus returning full path manually
-    return "/usr/sbin/#{cmd}" if @node.uses_opkg?
-
-    # if nothing was found, just use "iptables" resp. "ip6tables"
-    return cmd
   end
 end
