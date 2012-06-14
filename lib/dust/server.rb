@@ -339,6 +339,34 @@ module Dust
       msg.parse_result(package_installed?(package, :quiet => true))
     end
 
+    # check if installed package is at least version min_version
+    def package_min_version?(package, min_version, options = {})
+      msg = messages.add("checking if #{package} is at least version #{min_version}", options)
+      return msg.failed unless package_installed?(package, :quiet => true)
+
+      if uses_apt?
+        v = exec("dpkg --list |grep #{package}")[:stdout].chomp
+      elsif uses_rpm?
+        v = exec("rpm -q #{package}")[:stdout].chomp
+      elsif uses_pacman?
+        v = exec("pacman -Q #{package}")[:stdout].chomp
+      else
+        return msg.failed('os not supported')
+      end
+
+      # convert version numbers to arrays
+      current_version = v.to_s.split(/[-. ]/ ).select {|j| j =~ /^[0-9]+$/ }
+      min_version = min_version.to_s.split(/[-. ]/ ).select {|j| j =~ /^[0-9]+$/ }
+
+      # compare
+      min_version.each_with_index do |i, pos|
+        break unless current_version[pos]
+        return msg.failed if i.to_i < current_version[pos].to_i
+      end
+
+      msg.ok
+    end
+
     def remove_package package, options = {}
       options = default_options.merge options
 
