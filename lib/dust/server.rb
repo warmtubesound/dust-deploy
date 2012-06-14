@@ -541,6 +541,10 @@ module Dust
       options = default_options.merge options
 
       msg = messages.add("checking if file #{file} exists", options)
+
+      # don't treat directories as files
+      return msg.failed if dir_exists?(file, :quiet => true)
+
       msg.parse_result(exec("test -e #{file}")[:exit_code])
     end
 
