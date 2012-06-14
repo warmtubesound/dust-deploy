@@ -1,6 +1,14 @@
 Changelog
 =============
 
+0.13.7
+------------
+
+-  introduces @node.package_min_version? to check if a package is at least version x.
+   supports apt, rpm, pacman so far
+-  improves iptables recipe (using iptables-restore now on all systems)
+
+
 0.13.6
 ------------
 
