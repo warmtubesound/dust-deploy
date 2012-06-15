@@ -303,6 +303,8 @@ class Iptables < Recipe
       target = "/etc/sysconfig/#{get_cmd}"
     elsif @node.uses_emerge?
       target = "/var/lib/#{get_cmd}/rules-save"
+    elsif @node.uses_pacman?
+      target = "/etc/iptables/#{get_cmd}.rules"
     else
       target = "/etc/#{get_cmd}-rules.ipt"
     end
