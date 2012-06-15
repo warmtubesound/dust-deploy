@@ -299,14 +299,12 @@ class Iptables < Recipe
   def get_target
     if @node.uses_apt?
       target = "/etc/iptables/rules.v#{@ip_version}"
-
     elsif @node.uses_rpm?
-      target = "/etc/sysconfig/iptables" if @ip_version == 4
-      target = "/etc/sysconfig/ip6tables" if @ip_version == 6
-
+      target = "/etc/sysconfig/#{get_cmd}"
+    elsif @node.uses_emerge?
+      target = "/var/lib/#{get_cmd}/rules-save"
     else
-      target = "/etc/iptables-rules.ipt" if @ip_version == 4
-      target = "/etc/ip6tables-rules.ipt" if @ip_version == 6
+      target = "/etc/#{get_cmd}-rules.ipt"
     end
 
     target
