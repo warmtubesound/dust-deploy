@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.13.10
+------------
+
+-  improves duplicity status
+
+
 0.13.9
 ------------
 
