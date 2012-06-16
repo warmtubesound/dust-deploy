@@ -76,17 +76,21 @@ class Duplicity < Recipe
             "--archive-dir #{config['archive']} " +
             "#{File.join(config['backend'], config['directory'])}"
 
-      cmd << " |tail -n3 |head -n1" unless options.long?
+      cmd << " |tail -n3 |head -n1"
 
       ret = @node.exec cmd
 
       # check exit code and stdout shouldn't be empty
       msg.parse_result( (ret[:exit_code] == 0 and ret[:stdout].length > 0) )
 
-      if options.long?
-        @node.messages.add(ret[:stdout], :indent => 0)
+      # parse backup type, date and number of sets
+      m = ret[:stdout].match(/^\s+([a-zA-Z]+)\s+(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+\s+\d+)\s+(\d+)$/)
+
+      if m
+        type, date, sets = m[1..3]
+        @node.messages.add("Last backup: #{type} (#{sets} sets) on #{date}", :indent => 2).ok
       else
-        @node.messages.add("\t" + ret[:stdout].sub(/^\s+([a-zA-Z]+)\s+(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+\s+\d+)\s+(\d+)$/, 'Last backup: \1 (\3 sets) on \2'), :indent => 0)
+        @node.messages.add('could not get backup chain', :indent => 2).failed
       end
 
     end
