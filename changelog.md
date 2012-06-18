@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.13.11
+------------
+
+-  fixes node.scp issue, when target was a directory instead of a full path (including filename)
+
+
 0.13.10
 ------------
 
