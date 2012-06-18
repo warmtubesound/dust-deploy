@@ -149,9 +149,12 @@ module Dust
 
       msg = messages.add("deploying #{File.basename source}", options)
 
+      # check if destination is a directory
+      is_dir = dir_exists?(destination, :quiet => true)
+
       # save permissions if the file already exists
       ret = exec "stat -c %a:%u:%g #{destination}"
-      if ret[:exit_code] == 0
+      if ret[:exit_code] == 0 and not is_dir
         permissions, user, group = ret[:stdout].chomp.split ':'
       else
         # files = 644, dirs = 755
@@ -173,6 +176,11 @@ module Dust
         chown @node['user'], tmpfile, :quiet => true
         @ssh.scp.upload! source, tmpfile
         chown 'root', tmpfile, :quiet => true
+
+        # if destination is a directory, append real filename
+        destination = "#{destination}/#{File.basename(source)}" if is_dir
+
+        # move the file from the temporary location to where it actually belongs
         msg.parse_result(exec("mv -f #{tmpfile} #{destination}")[:exit_code])
 
       else
