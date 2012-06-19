@@ -30,6 +30,9 @@ class Duplicity < Recipe
       # check whether we need ncftp
       @node.install_package 'ncftp' if config['backend'].include? 'ftp://'
 
+      # scp backend on centos needs python-paramiko
+      @node.install_package 'python-paramiko' if @node.uses_rpm? and config['backend'].include? 'scp://'
+
       # scp backend on centos needs python-pexpect (not needed anymore for newer systems)
       # @node.install_package 'python-pexpect' if config['backend'].include? 'scp://' and @node.uses_rpm?
 
