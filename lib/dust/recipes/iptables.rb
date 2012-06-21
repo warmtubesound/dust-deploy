@@ -49,6 +49,7 @@ class Iptables < Recipe
   # install iptables
   def install
     return false unless @node.install_package 'iptables'
+    return false unless @node.install_package 'ip6tables' if @node.uses_opkg?
     return false unless @node.install_package 'iptables-persistent' if @node.uses_apt?
     return false unless @node.install_package 'iptables-ipv6' if @node.uses_rpm? and not @node.is_fedora?
     true
@@ -283,6 +284,12 @@ class Iptables < Recipe
       end
     else
       @node.autostart_service('iptables-persistent') if @node.uses_apt?
+    end
+
+    # disable firewall hotplug scripts on openwrt
+    if @node.uses_opkg?
+      msg = @node.messages.add('disabling firewall hotplug scripts in /etc/hotplug.d/firewall')
+      msg.parse_result(@node.exec('chmod -x /etc/hotplug.d/firewall/*')[:exit_code])
     end
 
     @node.write(target, @script, :quiet => true)
