@@ -1,8 +1,11 @@
 class Nginx < Recipe
   desc 'nginx:deploy', 'installs and configures nginx web server'
   def deploy
+    # default package to install
+    @config['package'] ||= 'nginx'
+
     # abort if nginx cannot be installed
-    return unless @node.install_package 'nginx'
+    return unless @node.install_package @config['package']
 
     @node.deploy_file "#{@template_path}/nginx.conf", '/etc/nginx/nginx.conf'
 
@@ -11,12 +14,12 @@ class Nginx < Recipe
     @node.rm '/etc/nginx/sites-*/*', :quiet => true
     msg.ok
 
-    @config.each do |state, sites|
+    @config['sites'].each do |state, sites|
       sites.to_array.each do |site|
         @node.deploy_file "#{@template_path}/sites/#{site}", "/etc/nginx/sites-available/#{site}", :binding => binding
 
         # symlink to sites-enabled if this is listed as an enabled site
-        if state == 'sites-enabled'
+        if state == 'enabled'
           msg = @node.messages.add("enabling #{site}", :indent => 2)
           msg.parse_result(@node.exec("cd /etc/nginx/sites-enabled && ln -s ../sites-available/#{site} #{site}")[:exit_code])
         end
