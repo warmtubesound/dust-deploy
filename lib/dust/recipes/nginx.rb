@@ -28,11 +28,12 @@ class Nginx < Recipe
 
     # check configuration and restart nginx
     msg = @node.messages.add('checking nginx configuration')
-    if @node.exec('/etc/init.d/nginx configtest')[:exit_code] == 0
+    ret = @node.exec('/etc/init.d/nginx configtest')
+    if ret[:exit_code] == 0
       msg.ok
       @node.restart_service('nginx') if options.restart?
     else
-      msg.failed
+      msg.failed("\n" + ret[:stderr])
     end
   end
 
