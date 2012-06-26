@@ -5,9 +5,9 @@ class Nginx < Recipe
     @config['package'] ||= 'nginx'
 
     # abort if nginx cannot be installed
-    return unless @node.install_package @config['package']
+    return unless @node.install_package(@config['package'])
 
-    @node.deploy_file "#{@template_path}/nginx.conf", '/etc/nginx/nginx.conf'
+    @node.deploy_file("#{@template_path}/nginx.conf", '/etc/nginx/nginx.conf', :binding => binding)
 
     # remove old sites that may be present
     msg = @node.messages.add('deleting old sites in /etc/nginx/sites-*')
@@ -16,7 +16,7 @@ class Nginx < Recipe
 
     @config['sites'].each do |state, sites|
       sites.to_array.each do |site|
-        @node.deploy_file "#{@template_path}/sites/#{site}", "/etc/nginx/sites-available/#{site}", :binding => binding
+        @node.deploy_file("#{@template_path}/sites/#{site}", "/etc/nginx/sites-available/#{site}", :binding => binding)
 
         # symlink to sites-enabled if this is listed as an enabled site
         if state == 'enabled'
