@@ -1,6 +1,20 @@
 Changelog
 =============
 
+0.13.12
+------------
+
+-  nginx recipe displays error message when configtest fails
+-  nginx recipe supports specifying package to install
+-  nginx recipe now uses binding for deploying nginx.conf (so you can call node.functions)
+
+    recipes:
+      nginx:
+        package: nginx-extras
+        sites:
+          enabled: reverse-proxy
+
+
 0.13.11
 ------------
 
