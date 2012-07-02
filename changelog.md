@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.13.13
+------------
+
+-  adds ssh_config recipe
+-  fixes iptables workaround issues for debian and openwrt, uses workaround for ipv6 only on debian
+
+
 0.13.12
 ------------
 
