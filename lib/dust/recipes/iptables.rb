@@ -22,9 +22,6 @@ class Iptables < Recipe
     # remove iptables scripts from old dust versions
     remove_old_scripts
 
-    # check whether we need a workaround script
-    workaround_check
-
     [4, 6].each do |v|
       @script = ''
       @ip_version = v
@@ -40,12 +37,9 @@ class Iptables < Recipe
       apply_rules if @options.restart?
     end
 
-    if @workaround
-      # deploy workarounds
-      workaround_exec
-    else
-      @node.autostart_service('iptables-persistent') if @node.uses_apt?
-    end
+    # deploy workarounds
+    workaround_exec
+    @node.autostart_service('iptables-persistent') if @node.uses_apt?
   end
 
   desc 'iptables:status', 'displays iptables rules'
@@ -266,23 +260,20 @@ class Iptables < Recipe
     @node.chmod('0600', target)
   end
 
-  # uses a workaround script to call iptables-restore
-  def workaround_check
+  def workaround_setup
     # openwrt always needs the workaround
     if @node.uses_opkg?
       @workaround = { 'path' => '/etc/firewall.sh' }
 
     # iptables-persistent < version 0.5.1 doesn't support ipv6
     # so doing a workaround
-    elsif @node.uses_apt?
+    elsif @node.uses_apt? and @ip_version == 6
       unless @node.package_min_version?('iptables-persistent', '0.5.1', :quiet => true)
-        @node.messages.add('iptables-persistent too old (< 0.5.1), using workaround').warning
-        @workaround = { 'path' => '/etc/network/if-pre-up.d/iptables' }
+        @node.messages.add('iptables-persistent too old (< 0.5.1), using workaround for ipv6').warning
+        @workaround = { 'path' => '/etc/network/if-pre-up.d/ip6tables' }
       end
     end
-  end
 
-  def workaround_setup
     return unless @workaround
 
     @workaround['script'] ||= "#!/bin/sh\n\n"
@@ -292,7 +283,7 @@ class Iptables < Recipe
   def workaround_exec
     return unless @workaround
 
-    @node.messages.add('deploying workaround').warning
+    @node.messages.add('deploying workarounds').warning
     msg = @node.messages.add("deploying script to #{@workaround['path']}", :indent => 2)
     msg.parse_result(@node.write(@workaround['path'], @workaround['script'], :quiet => true))
     @node.chmod('0700', @workaround['path'], :indent => 2)
@@ -300,12 +291,10 @@ class Iptables < Recipe
     if @node.uses_apt?
       # < 0.5.1 uses rules instead of rules.ipver
       # remove old rules script and symlink it to ours
-      @node.rm('/etc/iptables/rules', :indent => 2)
-      @node.symlink('/etc/iptables/rules.v4', '/etc/iptables/rules', :indent => 2)
-
-      # deactivate iptables-persistent initscript
-      msg = @node.messages.add('deactivating iptables-persistent initscript', :indent => 2)
-      msg.parse_result(@node.exec('update-rc.d iptables-persistent remove')[:exit_code])
+      @node.messages.add('iptables-persistent < 0.5.1 uses rules instead of rules.v4, symlinking',
+                         :indent => 2).warning
+      @node.rm('/etc/iptables/rules', :indent => 3)
+      @node.symlink('/etc/iptables/rules.v4', '/etc/iptables/rules', :indent => 3)
 
     elsif @node.uses_opkg?
       # overwrite openwrt firewall configuration
