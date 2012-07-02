@@ -22,6 +22,9 @@ class Iptables < Recipe
     # remove iptables scripts from old dust versions
     remove_old_scripts
 
+    # check whether we need a workaround script
+    workaround_check
+
     [4, 6].each do |v|
       @script = ''
       @ip_version = v
@@ -32,7 +35,16 @@ class Iptables < Recipe
       generate_all_rules
 
       deploy_script
+      workaround_setup
+
       apply_rules if @options.restart?
+    end
+
+    if @workaround
+      # deploy workarounds
+      workaround_exec
+    else
+      @node.autostart_service('iptables-persistent') if @node.uses_apt?
     end
   end
 
@@ -250,50 +262,61 @@ class Iptables < Recipe
     # create directory if not existend
     @node.mkdir(File.dirname(target)) unless @node.dir_exists?(File.dirname(target), :quiet => true)
 
-    # overwrite openwrt firewall configuration
-    # and only use our script
-    if @node.uses_opkg?
-      @node.write '/etc/config/firewall',
-                  "config include\n\toption path /etc/firewall.sh\n"
+    @node.write(target, @script, :quiet => true)
+    @node.chmod('0600', target)
+  end
 
-      workaround_script = '/etc/firewall.sh'
+  # uses a workaround script to call iptables-restore
+  def workaround_check
+    # openwrt always needs the workaround
+    if @node.uses_opkg?
+      @workaround = { 'path' => '/etc/firewall.sh' }
 
     # iptables-persistent < version 0.5.1 doesn't support ipv6
     # so doing a workaround
     elsif @node.uses_apt?
-      # check if iptables-persistent is new enough
       unless @node.package_min_version?('iptables-persistent', '0.5.1', :quiet => true)
         @node.messages.add('iptables-persistent too old (< 0.5.1), using workaround').warning
-        workaround_script = '/etc/network/if-pre-up.d/iptables'
+        @workaround = { 'path' => '/etc/network/if-pre-up.d/iptables' }
       end
     end
+  end
 
-    if workaround_script
-      msg = @node.messages.add("deploying workaround script to #{workaround_script}", :indent => 2)
-      msg.parse_result(@node.write(workaround_script,
-                                   "#!/bin/sh\n\n" +
-                                   "iptables-restore < #{target}\n" +
-                                   "ip6tables-restore < #{target}\n", :quiet => true))
+  def workaround_setup
+    return unless @workaround
 
-      @node.chmod('0700', workaround_script, :indent => 2)
+    @workaround['script'] ||= "#!/bin/sh\n\n"
+    @workaround['script'] << "iptables-restore < #{get_target}\n"
+  end
 
-      if @node.uses_apt?
-        # deactivate iptables-persistent initscript
-        msg = @node.messages.add('deactivating iptables-persistent initscript', :indent => 2)
-        msg.parse_result(@node.exec('update-rc.d iptables-persistent remove')[:exit_code])
-      end
-    else
-      @node.autostart_service('iptables-persistent') if @node.uses_apt?
-    end
+  def workaround_exec
+    return unless @workaround
 
-    # disable firewall hotplug scripts on openwrt
-    if @node.uses_opkg?
-      msg = @node.messages.add('disabling firewall hotplug scripts in /etc/hotplug.d/firewall')
+    @node.messages.add('deploying workaround').warning
+    msg = @node.messages.add("deploying script to #{@workaround['path']}", :indent => 2)
+    msg.parse_result(@node.write(@workaround['path'], @workaround['script'], :quiet => true))
+    @node.chmod('0700', @workaround['path'], :indent => 2)
+
+    if @node.uses_apt?
+      # < 0.5.1 uses rules instead of rules.ipver
+      # remove old rules script and symlink it to ours
+      @node.rm('/etc/iptables/rules', :indent => 2)
+      @node.symlink('/etc/iptables/rules.v4', '/etc/iptables/rules', :indent => 2)
+
+      # deactivate iptables-persistent initscript
+      msg = @node.messages.add('deactivating iptables-persistent initscript', :indent => 2)
+      msg.parse_result(@node.exec('update-rc.d iptables-persistent remove')[:exit_code])
+
+    elsif @node.uses_opkg?
+      # overwrite openwrt firewall configuration
+      # and only use our script
+      @node.write('/etc/config/firewall',
+                  "config include\n\toption path /etc/firewall.sh\n", :indent => 2)
+
+      # disable openwrt firewall hotplug scripts
+      msg = @node.messages.add('disabling firewall hotplug scripts in /etc/hotplug.d/firewall', :indent => 2)
       msg.parse_result(@node.exec('chmod -x /etc/hotplug.d/firewall/*')[:exit_code])
     end
-
-    @node.write(target, @script, :quiet => true)
-    @node.chmod('0600', target)
   end
 
   # apply newly pushed rules
