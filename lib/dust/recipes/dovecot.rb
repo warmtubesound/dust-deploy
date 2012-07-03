@@ -6,10 +6,12 @@ class Dovecot < Recipe
 
     # stip non-config-file values from @config
     service = @config.delete('service')
-    package = @config.delete('package')   
+    package = @config.delete('package')
     etc_dir = @config.delete('etc_dir')
-    
-    return unless @node.install_package(package)
+
+    package.to_array.each do |pkg|
+      return unless @node.install_package(pkg)
+    end
 
     @config.each do |name, config|
       msg = @node.messages.add("configuring #{name}")

@@ -3,8 +3,10 @@ class Postfix < Recipe
   def deploy
     @config = default_config.merge @config
     @config.boolean_to_string! # parse 'no/yes' as string, not as boolean
-    
-    return unless @node.install_package @config['package']
+
+    @config['package'].to_array.each do |package|
+      return unless @node.install_package(package)
+    end
 
     if @config['main.cf']
       main_cf = ''
