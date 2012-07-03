@@ -1,6 +1,16 @@
 Changelog
 =============
 
+0.13.15
+------------
+
+- postfix and dovecot recipes now support multiple packages.
+
+    recipes:
+      dovecot:
+        package: [ dovecot-pgsql, dovecot-imapd ]
+
+
 0.13.14
 ------------
 
