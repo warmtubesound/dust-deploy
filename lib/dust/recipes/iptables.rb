@@ -277,7 +277,7 @@ class Iptables < Recipe
     return unless @workaround
 
     @workaround['script'] ||= "#!/bin/sh\n\n"
-    @workaround['script'] << "iptables-restore < #{get_target}\n"
+    @workaround['script'] << "#{get_cmd}-restore < #{get_target}\n"
   end
 
   def workaround_exec
