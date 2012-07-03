@@ -1,6 +1,16 @@
 Changelog
 =============
 
+0.13.16
+------------
+
+- nginx also supports mulitple packages now
+
+    recipes:
+      nginx:
+        package: [ nginx-extras, php-fpm ]
+
+
 0.13.15
 ------------
 
