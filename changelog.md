@@ -1,6 +1,12 @@
 Changelog
 =============
 
+0.13.14
+------------
+
+-  fixes bug in iptables recipe (debian and ipv6)
+
+
 0.13.13
 ------------
 

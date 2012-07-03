@@ -1,3 +1,3 @@
 module Dust
-  VERSION = "0.13.13"
+  VERSION = "0.13.14"
 end
