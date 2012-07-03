@@ -4,8 +4,9 @@ class Nginx < Recipe
     # default package to install
     @config['package'] ||= 'nginx'
 
-    # abort if nginx cannot be installed
-    return unless @node.install_package(@config['package'])
+    @config['package'].to_array.each do |package|
+      return unless @node.install_package(package)
+    end
 
     @node.deploy_file("#{@template_path}/nginx.conf", '/etc/nginx/nginx.conf', :binding => binding)
 
