@@ -38,8 +38,11 @@ class Duplicity < Recipe
 
       # add hostkey to known_hosts
       if config['hostkey']
-        msg = @node.messages.add('checking if ssh key is in known_hosts')
-        unless msg.parse_result(@node.exec("grep -q '#{config['hostkey']}' /root/.ssh/known_hosts")[:exit_code] == 0)
+        msg = @node.messages.add('checking if ssh key is in known_hosts: ')
+        if @node.exec("grep -q '#{config['hostkey']}' /root/.ssh/known_hosts")[:exit_code] == 0
+          msg.ok('yes')
+        else
+          msg.ok('no')
           @node.mkdir '/root/.ssh', :indent => 2
           @node.append '/root/.ssh/known_hosts', "#{config['hostkey']}\n", :indent => 2
         end
