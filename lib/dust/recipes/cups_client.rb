@@ -7,6 +7,7 @@ class CupsClient < Recipe
       @node.rm('/etc/cups/client.conf')
     else
       return false unless install
+      @node.mkdir('/etc/cups')
       @node.messages.add("setting servername to: #{@config}").ok
       @node.write '/etc/cups/client.conf', "ServerName #{@config}\n"
     end
