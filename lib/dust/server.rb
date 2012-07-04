@@ -133,7 +133,7 @@ module Dust
     def append destination, newcontent, options = {}
       options = default_options.merge options
 
-      messages.add("appending to #{File.basename destination}", options)
+      msg = messages.add("appending to #{File.basename destination}", options)
 
       content = exec("cat #{destination}")[:stdout]
       content.concat newcontent
