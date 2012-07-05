@@ -1,10 +1,32 @@
 Changelog
 =============
 
+0.13.17
+------------
+
+-  small bugfixes
+-  postfix recipe now supports sql backends
+
+    recipes:
+      nginx:
+        postfix:
+          sql:
+            relay_domains.cf:
+              host: /var/run/postgresql
+              user: postfixadmin
+              dbname: postfix
+              query: "SELECT domain FROM domain WHERE domain='%s' and backupmx = true"
+            virtual_alias_maps.cf:
+              host: /var/run/postgresql
+              user: postfixadmin
+              dbname: postfix
+              query: "SELECT goto FROM alias WHERE address='%s' AND active = true"
+
+
 0.13.16
 ------------
 
-- nginx also supports mulitple packages now
+-  nginx also supports mulitple packages now
 
     recipes:
       nginx:
@@ -14,7 +36,7 @@ Changelog
 0.13.15
 ------------
 
-- postfix and dovecot recipes now support multiple packages.
+-  postfix and dovecot recipes now support multiple packages.
 
     recipes:
       dovecot:
