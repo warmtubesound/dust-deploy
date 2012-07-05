@@ -34,6 +34,17 @@ class Postfix < Recipe
       @node.write "#{@config['etc_dir']}/master.cf", master_cf
     end
 
+    if @config['sql']
+      @node.messages.add("configuring sql database\n")
+      @node.mkdir("#{@config['etc_dir']}/sql")
+
+      @config['sql'].each do |file, config|
+        content = ''
+        config.each { |key, value| content << "#{key} = #{value}\n" }
+        @node.write("#{@config['etc_dir']}/sql/#{file}", content, :indent => 2)
+      end
+    end
+
     @node.restart_service @config['service'] if @options.restart?
     @node.reload_service @config['service'] if @options.reload?
   end
