@@ -54,7 +54,8 @@ class Repositories < Recipe
     repo['url'] ||= 'http://archive.ubuntu.com/ubuntu/' if @node.is_ubuntu?
 
     repo['release'] ||= @node['lsbdistcodename']
-    repo['components'] ||= 'main'
+    repo['components'] ||= [ 'main' ]
+    repo['components'] = repo['components'].to_array.join(' ')
 
     # ||= doesn't work for booleans
     repo['source'] = repo['source'].nil? ? true : repo['source']
