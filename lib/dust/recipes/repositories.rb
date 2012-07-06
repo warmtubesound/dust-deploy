@@ -30,13 +30,13 @@ class Repositories < Recipe
 
       # the default repository in /etc/apt/sources.list (debian)
       if name == 'default'
-        msg = @node.messages.add('deploying default repository'        )
+        msg = @node.messages.add('deploying default repository')
         sources = generate_default_repo repo
-        msg.parse_result(@node.write('/etc/apt/sources.list', sources, :quiet => true)        )
+        msg.parse_result(@node.write('/etc/apt/sources.list', sources, :quiet => true))
       else
-        msg = @node.messages.add("adding repository '#{name}' to sources"        )
+        msg = @node.messages.add("adding repository '#{name}' to sources")
         sources = generate_repo repo
-        msg.parse_result(@node.write("/etc/apt/sources.list.d/#{name}.list", sources, :quiet => true)        )
+        msg.parse_result(@node.write("/etc/apt/sources.list.d/#{name}.list", sources, :quiet => true))
         add_repo_key name, repo
       end
     end
