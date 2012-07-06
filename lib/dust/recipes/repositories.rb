@@ -16,7 +16,7 @@ class Repositories < Recipe
   # deletes all .list files under /etc/apt/sources.list.d
   def delete_old_repositories
     msg = @node.messages.add('deleting old repositories')
-    @node.rm '/etc/apt/sources.list.d/*.list', :quiet => true if @node.uses_apt?
+    @node.rm('/etc/apt/sources.list.d/*.list', :quiet => true) if @node.uses_apt?
     msg.ok
   end
 
@@ -26,24 +26,29 @@ class Repositories < Recipe
       # if repo is present but not a hash use defaults
       repo = {} unless repo.is_a? Hash
 
-      merge_with_default_settings repo
+      merge_with_default_settings(repo)
 
       # the default repository in /etc/apt/sources.list (debian)
       if name == 'default'
         msg = @node.messages.add('deploying default repository')
-        sources = generate_default_repo repo
+        sources = generate_default_repo(repo)
         msg.parse_result(@node.write('/etc/apt/sources.list', sources, :quiet => true))
       else
-        msg = @node.messages.add("adding repository '#{name}' to sources")
-        sources = generate_repo repo
-        msg.parse_result(@node.write("/etc/apt/sources.list.d/#{name}.list", sources, :quiet => true))
-        add_repo_key name, repo
+        if repo['ppa']
+          @node.messages.add("adding ppa repository '#{name}'\n")
+          add_ppa(repo['ppa'])
+        else
+          msg = @node.messages.add("adding repository '#{name}' to sources")
+          sources = generate_repo(repo)
+          msg.parse_result(@node.write("/etc/apt/sources.list.d/#{name}.list", sources, :quiet => true))
+          add_repo_key(name, repo)
+        end
       end
     end
   end
 
   # merge repo configuration with default settings
-  def merge_with_default_settings repo
+  def merge_with_default_settings(repo)
     # setting defaults
     repo['url'] ||= 'http://ftp.debian.org/debian/' if @node.is_debian?
     repo['url'] ||= 'http://archive.ubuntu.com/ubuntu/' if @node.is_ubuntu?
@@ -56,7 +61,7 @@ class Repositories < Recipe
     repo['binary'] = repo['binary'].nil? ? true : repo['binary']
   end
 
-  def generate_default_repo repo
+  def generate_default_repo(repo)
     sources = ''
     sources << "deb #{repo['url']} #{repo['release']} #{repo['components']}\n"
     sources << "deb-src #{repo['url']} #{repo['release']} #{repo['components']}\n\n"
@@ -89,7 +94,13 @@ class Repositories < Recipe
     sources
   end
 
-  def generate_repo repo
+  def add_ppa(ppa)
+    return false unless @node.install_package('python-software-properties', :indent => 2)
+    msg = @node.messages.add('running add-apt-repository', :indent => 2)
+    msg.parse_result(@node.exec("add-apt-repository -y ppa:#{ppa}")[:exit_code])
+  end
+
+  def generate_repo(repo)
     # add url to sources.list
     sources = ''
     repo['release'].to_array.each do |release|
@@ -99,14 +110,14 @@ class Repositories < Recipe
     sources
   end
 
-  def add_repo_key name, repo
+  def add_repo_key(name, repo)
     # add the repository key
     if repo['key']
       msg = @node.messages.add("adding #{name} repository key")
 
       # if the key is a .deb, download and install it
       if repo['key'].match /\.deb$/
-        ret = @node.exec 'mktemp --tmpdir dust.XXXXXXXXXX'
+        ret = @node.exec('mktemp --tmpdir dust.XXXXXXXXXX')
         if ret[:exit_code] != 0
           msg.failed('could not create temporary file on server')
           return false
