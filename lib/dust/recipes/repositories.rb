@@ -36,7 +36,7 @@ class Repositories < Recipe
       else
         if repo['ppa']
           @node.messages.add("adding ppa repository '#{name}'\n")
-          add_ppa(repo['ppa'])
+          add_ppa(repo)
         else
           msg = @node.messages.add("adding repository '#{name}' to sources")
           sources = generate_repo(repo)
@@ -94,10 +94,15 @@ class Repositories < Recipe
     sources
   end
 
-  def add_ppa(ppa)
+  def add_ppa(repo)
     return false unless @node.install_package('python-software-properties', :indent => 2)
     msg = @node.messages.add('running add-apt-repository', :indent => 2)
-    msg.parse_result(@node.exec("add-apt-repository -y ppa:#{ppa}")[:exit_code])
+    cmd = "add-apt-repository -y ppa:#{repo['ppa']}"
+    if repo['keyserver']
+      @node.messages.add("using custom keyserver '#{repo['keyserver']}'").ok
+      cmd << " -k #{repo['keyserver']}"
+    end
+    msg.parse_result(@node.exec(cmd)[:exit_code])
   end
 
   def generate_repo(repo)
