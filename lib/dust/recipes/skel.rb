@@ -4,8 +4,8 @@ class Skel < Recipe
     @config.to_array.each do |user|
       @node.messages.add("deploying homedir skeleton for #{user}\n")
       Dir["#{@template_path}/.*"].each do |file|
-        next unless File.file? file
-        @node.deploy_file file, "/#{@node.get_home user}/#{File.basename file}", { :binding => binding, :indent => 2 }
+        next unless File.file?(file)
+        @node.deploy_file(file, "#{@node.get_home(user)}/#{File.basename(file)}", { :binding => binding, :indent => 2 })
       end
     end
   end
