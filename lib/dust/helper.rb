@@ -2,8 +2,7 @@ class Object
   # turns an object into an array
   # this is needed, since 1.9 doesnt support "string".to_a and "string".each anymore
   def to_array
-    return [ self ] unless self.is_a? Array
-    return self
+    Array(self)
   end
 end
 
