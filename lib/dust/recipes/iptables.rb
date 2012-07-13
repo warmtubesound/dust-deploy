@@ -263,14 +263,14 @@ class Iptables < Recipe
   def workaround_setup
     # openwrt always needs the workaround
     if @node.uses_opkg?
-      @workaround = { 'path' => '/etc/firewall.sh' }
+      @workaround ||= { 'path' => '/etc/firewall.sh' }
 
     # iptables-persistent < version 0.5.1 doesn't support ipv6
     # so doing a workaround
     elsif @node.uses_apt? and @ip_version == 6
       unless @node.package_min_version?('iptables-persistent', '0.5.1', :quiet => true)
         @node.messages.add('iptables-persistent too old (< 0.5.1), using workaround for ipv6').warning
-        @workaround = { 'path' => '/etc/network/if-pre-up.d/ip6tables' }
+        @workaround ||= { 'path' => '/etc/network/if-pre-up.d/ip6tables' }
       end
     end
 
