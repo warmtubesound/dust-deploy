@@ -314,32 +314,66 @@ module Dust
       msg.failed
     end
 
-    def install_package package, options = {}
-      options = default_options.merge options
+    def install_package(package, options = {})
+      options = default_options.merge(options)
       options[:env] ||= ''
 
-      if package_installed? package, :quiet => true
+      if package_installed?(package, :quiet => true)
         return messages.add("package #{package} already installed", options).ok
       end
 
-      msg = messages.add("installing #{package}", options)
+      # if package is an url, download and install the package file
+      if package =~ /^(http:\/\/|https:\/\/|ftp:\/\/)/
+        if uses_apt?
+          messages.add("installing #{package}\n", options)
+          return false unless install_package('wget')
 
-      if uses_apt?
-        exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
-      elsif uses_emerge?
-        exec "#{options[:env]} emerge #{package}"
-      elsif uses_rpm?
-        exec "yum install -y #{package}"
-      elsif uses_pacman?
-        exec "echo y |pacman -S #{package}"
-      elsif uses_opkg?
-        exec "opkg install #{package}"
+          msg = messages.add('downloading package', options.merge(:indent => options[:indent] + 1))
+
+          # creating temporary file
+          tmpfile = mktemp
+          return msg.failed('could not create temporary file') unless tmpfile
+
+          msg.parse_result(exec("wget #{package} -O #{tmpfile}")[:exit_code])
+
+          msg = messages.add('installing package', options.merge(:indent => options[:indent] + 1))
+          ret = msg.parse_result(exec("dpkg -i #{tmpfile}")[:exit_code])
+
+          msg = messages.add('deleting downloaded file', options.merge(:indent => options[:indent] + 1))
+          msg.parse_result(rm(tmpfile, :quiet => true))
+
+          return ret
+
+        elsif uses_rpm?
+          msg = messages.add("installing #{package}", options)                             
+          return msg.parse_result(exec("rpm -U #{package}")[:exit_code])
+
+        else
+          return msg.failed("\ninstalling packages from url not yet supported " +
+                            "for your distribution. feel free to contribute!").failed
+        end
+
+      # package is not an url, use package manager
       else
-        return msg.failed("install_package only supports apt, emerge and yum systems at the moment")
-      end
+        msg = messages.add("installing #{package}", options)
 
-      # check if package actually was installed
-      msg.parse_result(package_installed?(package, :quiet => true))
+        if uses_apt?
+          exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
+        elsif uses_emerge?
+          exec "#{options[:env]} emerge #{package}"
+        elsif uses_rpm?
+          exec "yum install -y #{package}"
+        elsif uses_pacman?
+          exec "echo y |pacman -S #{package}"
+        elsif uses_opkg?
+          exec "opkg install #{package}"
+        else
+          return msg.failed("install_package only supports apt, emerge and yum systems at the moment")
+        end
+
+        # check if package actually was installed
+        return msg.parse_result(package_installed?(package, :quiet => true))
+      end
     end
 
     # check if installed package is at least version min_version
