@@ -1,6 +1,15 @@
 Changelog
 =============
 
+0.13.18
+------------
+
+-  adds support for ppa-repositories
+-  fixes small bug with iptables ipv6 workaround
+-  newrelic now works with non-apt systems
+-  packages recipe now accepts https, http and ftp urls
+
+
 0.13.17
 ------------
 
