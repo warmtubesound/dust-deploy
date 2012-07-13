@@ -163,13 +163,8 @@ module Dust
 
       # if in sudo mode, copy file to temporary place, then move using sudo
       if @node['sudo']
-        ret = exec 'mktemp --tmpdir dust.XXXXXXXXXX'
-        if ret[:exit_code] != 0
-          msg.failed('could not create temporary file (needed for sudo)')
-          return false
-        end
-
-        tmpfile = ret[:stdout].chomp
+        tmpfile = mktemp
+        return msg.failed('could not create temporary file (needed for sudo)') unless tmpfile
 
         # allow user to write file without sudo (for scp)
         # then change file back to root, and copy to the destination
@@ -758,6 +753,13 @@ module Dust
       else
         messages.add("'#{file}' was not found.", options).failed
       end
+    end
+
+    # create a temporary file
+    def mktemp
+      ret = exec('mktemp --tmpdir dust.XXXXXXXXXX')
+      return false if ret[:exit_code] != 0
+      ret[:stdout].chomp
     end
 
 
