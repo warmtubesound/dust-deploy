@@ -40,7 +40,6 @@ class Nginx < Recipe
 
   desc 'nginx:status', 'displays nginx status'
   def status
-    return unless @node.package_installed? 'nginx'
     @node.print_service_status 'nginx'
   end
 end
