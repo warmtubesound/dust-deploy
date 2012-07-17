@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'net/ssh'
 require 'net/scp'
 require 'net/ssh/proxy/socks5'
@@ -690,10 +689,10 @@ module Dust
       service service, 'reload', options
     end
 
-    def print_service_status service, options = {}
-      options = default_options.merge options
-      ret = service service, 'status', options
-      messages.print_output(ret, options)
+    def print_service_status(service, options = {})
+      options = default_options.merge(:indent => 0).merge(options)
+      ret = service(service, 'status', options)
+      messages.add('', options).print_output(ret)
       ret
     end
 
