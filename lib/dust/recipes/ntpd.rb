@@ -4,7 +4,7 @@ class Ntpd < Recipe
     # warn if other ntp package is installed
     [ 'openntpd', 'chrony' ].each do |package|
       if @node.package_installed? package, :quiet => true
-        @node.messages.add("#{package} installed, might conflict with ntpd, might be deleted").warning
+        @node.messages.add("#{package} installed, might conflict with ntpd, might get deleted").warning
       end
     end
 
