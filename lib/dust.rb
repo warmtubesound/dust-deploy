@@ -1,3 +1,4 @@
+require 'dust/runner'
 require 'dust/version'
 require 'dust/helper'
 require 'dust/print_status'

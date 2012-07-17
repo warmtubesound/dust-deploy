@@ -1,3 +1,5 @@
+require 'thor'
+
 class Recipe < Thor
 
   desc 'prepare', 'prepare recipe (do not use manually)'
