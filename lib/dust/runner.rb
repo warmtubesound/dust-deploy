@@ -12,16 +12,25 @@ module  Dust
     default_task :list
     check_unknown_options!
 
-    desc 'deploy', 'deploy all recipes to the node(s) specified in server.yaml or to all nodes defined in ./nodes/'
+    # default options for all tasks
+    def self.default_options
+      method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
+      method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
+      method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
+      method_option 'parallel', :type => :boolean, :desc => 'deploy to all hosts at the same time using threads'
+      method_option 'summary', :type => :string, :desc => 'print summary of all events (all, warning, failed)'
+    end
 
-    method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
-    method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
-    method_option 'recipes', :type => :array, :desc => 'only deploy these recipes'
-    method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
+    def self.recipe_options
+      method_option 'recipes', :type => :array, :desc => 'only deploy these recipes'
+    end
+
+
+    desc 'deploy', 'deploy all recipes to the node(s) specified in server.yaml or to all nodes defined in ./nodes/'
+    default_options
+    recipe_options
     method_option 'restart', :type => :boolean, :desc => 'restart services after deploy'
     method_option 'reload', :type => :boolean, :desc => 'reload services after deploy'
-    method_option 'parallel', :type => :boolean, :desc => 'deploy to all hosts at the same time using threads'
-    method_option 'summary', :type => :string, :desc => 'print summary of all events (all, warning, failed)'
 
     def deploy
       return unless check_dust_dir
@@ -58,13 +67,8 @@ module  Dust
 
 
     desc 'status', 'display status of recipes specified by filter'
-
-    method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
-    method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
-    method_option 'recipes', :type => :array, :desc => 'only deploy these recipes'
-    method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
-    method_option 'parallel', :type => :boolean, :desc => 'deploy to all hosts at the same time using threads'
-    method_option 'summary', :type => :string, :desc => 'print summary of all events (all, warning, failed)'
+    default_options
+    recipe_options
 
     def status
       return unless check_dust_dir
@@ -101,12 +105,7 @@ module  Dust
 
 
     desc 'system_update', 'perform a full system upgrade (using aptitude, emerge, yum)'
-
-    method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
-    method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
-    method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
-    method_option 'parallel', :type => :boolean, :desc => 'deploy to all hosts at the same time using threads'
-    method_option 'summary', :type => :string, :desc => 'print summary of all events (all, warning, failed)'
+    default_options
 
     def system_update
       return unless check_dust_dir
@@ -144,12 +143,7 @@ module  Dust
 
 
     desc 'exec <command>', 'run a command on the server'
-
-    method_option 'yaml', :type => :string, :desc => 'use only this server.yaml'
-    method_option 'filter', :type => :hash, :desc => 'only deploy to these hosts (e.g. environment:staging)'
-    method_option 'proxy', :type => :string, :desc => 'socks proxy to use'
-    method_option 'parallel', :type => :boolean, :desc => 'deploy to all hosts at the same time using threads'
-    method_option 'summary', :type => :string, :desc => 'print summary of all events (all, warning, failed)'
+    default_options
 
     def exec cmd, yaml=''
       return unless check_dust_dir
