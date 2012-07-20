@@ -85,19 +85,20 @@ module Dust
 
             # only send password if sudo mode is enabled,
             # and only send password once in a session (trying to prevent attacks reading out the password)
-            if @node['sudo'] and not sudo_authenticated
-              # skip everything till password is prompted
-              next unless data =~ /^\[sudo\] password for #{@node['user']}/
-              channel.send_data "#{@node['password']}\n"
-              sudo_authenticated = true
+            if @node['sudo'] and data =~ /^\[sudo\] password for #{@node['user']}/
 
-            else
               # we're already authenticated, so raise an error if password prompt comes up again
-              if @node['sudo'] and data =~ /^\[sudo\] password for #{@node['user']}/
+              if sudo_authenticated
                 messages.add(data.red + "\n", :indent => 0) if options[:live] and not data.empty?
                 return { :stdout => '', :stderr => data, :exit_code => -1, :exit_signal => nil }
+
+              # we're not authenticated yet, send password
+              else
+                channel.send_data "#{@node['password']}\n"
+                sudo_authenticated = true
               end
 
+            else
               stdout += data
               messages.add(data.green, :indent => 0) if options[:live] and not data.empty?
             end
