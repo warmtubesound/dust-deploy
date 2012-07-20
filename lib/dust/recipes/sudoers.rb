@@ -3,8 +3,6 @@ class Sudoers < Recipe
   def deploy 
     return unless @node.install_package 'sudo'
     
-    remove_rules
-    
     @config.each do |name, rule|
       @node.messages.add("deploying sudo rules '#{name}'\n")
       
@@ -25,21 +23,32 @@ class Sudoers < Recipe
         end
       end
       
-      deploy_rule name, file
+      deploy_rule(name, file)
     end
     
+    remove_other_rules
   end
   
 
   private
   
-  def remove_rules
-    @node.rm '/etc/sudoers.d/*'
+  def remove_other_rules
+    @node.messages.add("deleting old rules\n")
+    ret = @node.exec('ls /etc/sudoers.d/* |cat')
+    if ret[:exit_code] != 0
+      return @node.messages.add('couldn\'t get installed rule list, skipping deletion of old rules').warning
+    end
+
+    # delete file if not in config
+    ret[:stdout].each_line do |file|
+      file.chomp!
+      @node.rm(file, :indent => 2) unless @config.keys.include?(File.basename(file))
+    end
   end
   
-  def deploy_rule name, file
-    @node.write "/etc/sudoers.d/#{name}", file, :indent => 2
-    @node.chmod '0440', "/etc/sudoers.d/#{name}", :indent => 2
-    @node.chown 'root:root', "/etc/sudoers.d/#{name}", :indent => 2    
+  def deploy_rule(name, file)
+    @node.write("/etc/sudoers.d/#{name}", file, :indent => 2)
+    @node.chmod('0440', "/etc/sudoers.d/#{name}", :indent => 2)
+    @node.chown('root:root', "/etc/sudoers.d/#{name}", :indent => 2)
   end
 end
