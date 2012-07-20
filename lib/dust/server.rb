@@ -84,19 +84,18 @@ module Dust
           channel.on_data do |ch, data|
             # only send password if sudo mode is enabled,
             # and only send password once in a session (trying to prevent attacks reading out the password)
-            if @node['sudo'] and data =~ /\[sudo\] password for #{@node['user']}/
+            if data =~ /\[sudo\] password for #{@node['user']}/
 
               raise 'password requested, but none given in config!' if @node['password'].empty?
               raise 'already sent password, but sudo requested the password again. (wrong password?)' if sudo_authenticated
 
               # we're not authenticated yet, send password
-              else
               channel.send_data "#{@node['password']}\n"
               sudo_authenticated = true
 
             else
-              # skip everything until authenticated
-              next unless sudo_authenticated
+              # skip everything util authenticated (if sudo is used and password given in config)
+              next if @node['sudo'] and not @node['password'].empty? and not sudo_authenticated
 
               stdout += data
               messages.add(data.green, :indent => 0) if options[:live] and not data.empty?
@@ -374,7 +373,7 @@ module Dust
         elsif uses_opkg?
           exec "opkg install #{package}"
         else
-          return msg.failed("install_package only supports apt, emerge and yum systems at the moment")
+          return msg.failed("\ninstall_package only supports apt, emerge and yum systems at the moment")
         end
 
         # check if package actually was installed
