@@ -82,23 +82,22 @@ module Dust
           abort "FAILED: couldn't execute command (ssh.channel.exec)" unless success
 
           channel.on_data do |ch, data|
-
             # only send password if sudo mode is enabled,
             # and only send password once in a session (trying to prevent attacks reading out the password)
-            if @node['sudo'] and data =~ /^\[sudo\] password for #{@node['user']}/
+            if @node['sudo'] and data =~ /\[sudo\] password for #{@node['user']}/
 
-              # we're already authenticated, so raise an error if password prompt comes up again
-              if sudo_authenticated
-                messages.add(data.red + "\n", :indent => 0) if options[:live] and not data.empty?
-                return { :stdout => '', :stderr => data, :exit_code => -1, :exit_signal => nil }
+              raise 'password requested, but none given in config!' if @node['password'].empty?
+              raise 'already sent password, but sudo requested the password again. (wrong password?)' if sudo_authenticated
 
               # we're not authenticated yet, send password
               else
-                channel.send_data "#{@node['password']}\n"
-                sudo_authenticated = true
-              end
+              channel.send_data "#{@node['password']}\n"
+              sudo_authenticated = true
 
             else
+              # skip everything until authenticated
+              next unless sudo_authenticated
+
               stdout += data
               messages.add(data.green, :indent => 0) if options[:live] and not data.empty?
             end
