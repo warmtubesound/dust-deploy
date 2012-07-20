@@ -90,7 +90,14 @@ module Dust
               next unless data =~ /^\[sudo\] password for #{@node['user']}/
               channel.send_data "#{@node['password']}\n"
               sudo_authenticated = true
+
             else
+              # we're already authenticated, so raise an error if password prompt comes up again
+              if @node['sudo'] and data =~ /^\[sudo\] password for #{@node['user']}/
+                messages.add(data.red + "\n", :indent => 0) if options[:live] and not data.empty?
+                return { :stdout => '', :stderr => data, :exit_code => -1, :exit_signal => nil }
+              end
+
               stdout += data
               messages.add(data.green, :indent => 0) if options[:live] and not data.empty?
             end
