@@ -146,11 +146,11 @@ module Dust
       msg.parse_result(write(destination, content, :quiet => true))
     end
 
-    def scp source, destination, options = {}
+    def scp(source, destination, options = {})
       options = default_options.merge options
 
       # make sure scp is installed on client
-      install_package 'openssh-clients', :quiet => true if uses_rpm?
+      install_package('openssh-clients', :quiet => true) if uses_rpm?
 
       msg = messages.add("deploying #{File.basename source}", options)
 
@@ -158,9 +158,9 @@ module Dust
       is_dir = dir_exists?(destination, :quiet => true)
 
       # save permissions if the file already exists
-      ret = exec "stat -c %a:%u:%g #{destination}"
+      ret = exec("stat -c %a:%u:%g #{destination}")
       if ret[:exit_code] == 0 and not is_dir
-        permissions, user, group = ret[:stdout].chomp.split ':'
+        permissions, user, group = ret[:stdout].chomp.split(':')
       else
         # files = 644, dirs = 755
         permissions = 'ug-x,o-wx,u=rwX,g=rX,o=rX'
@@ -173,9 +173,12 @@ module Dust
 
         # allow user to write file without sudo (for scp)
         # then change file back to root, and copy to the destination
-        chown @node['user'], tmpfile, :quiet => true
-        @ssh.scp.upload! source, tmpfile
-        chown 'root', tmpfile, :quiet => true
+        chown(@node['user'], tmpfile, :quiet => true)
+        @ssh.scp.upload!(source, tmpfile)
+
+        # set file permissions
+        chown("#{user}:#{group}", tmpfile, :quiet => true) if user and group
+        chmod(permissions, tmpfile, :quiet => true)
 
         # if destination is a directory, append real filename
         destination = "#{destination}/#{File.basename(source)}" if is_dir
@@ -184,15 +187,15 @@ module Dust
         msg.parse_result(exec("mv -f #{tmpfile} #{destination}")[:exit_code])
 
       else
-        @ssh.scp.upload! source, destination
+        @ssh.scp.upload!(source, destination)
         msg.ok
+
+        # set file permissions
+        chown("#{user}:#{group}", destination, :quiet => true) if user and group
+        chmod(permissions, destination, :quiet => true)
       end
 
-      # set file permissions
-      chown "#{user}:#{group}", destination, :quiet => true if user and group
-      chmod permissions, destination, :quiet => true
-
-      restorecon destination, options # restore SELinux labels
+      restorecon(destination, options) # restore SELinux labels
     end
 
     # download a file (sudo not yet supported)
