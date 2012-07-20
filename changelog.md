@@ -1,6 +1,15 @@
 Changelog
 =============
 
+0.14.0
+------------
+
+-  migrates to new runner.rb
+-  fixes bug in print_service_status
+-  checks if sudo password is wrong (and raises an error)
+-  fixes sudoers recipe when using with sudo (was deleting its own rules)
+
+
 0.13.18
 ------------
 
