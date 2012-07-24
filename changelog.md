@@ -1,6 +1,16 @@
 Changelog
 =============
 
+0.14.1
+------------
+
+-  removes ntpd recipe
+-  adds chrony recipe
+
+    recipes:
+      chrony: enabled
+
+
 0.14.0
 ------------
 
