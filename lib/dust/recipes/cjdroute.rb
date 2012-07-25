@@ -47,6 +47,17 @@ class Cjdroute< Recipe
   def public_peers
     # list of public peers, taken from https://wiki.projectmeshnet.org/Public_peers
     {
+      # greys nodes
+      '199.180.252.227:19071' => {
+        'password' => 'public_JFh4rX0R1jm6a7eKWCzD',
+        'publicKey' => '425bcpr9ns0jpuh9ffx1lbbktkd3tpln16jzs9sgbjdkvfg25zv0.k'
+      },
+
+      '80.83.121.61:19071' => {
+        'password' => 'public_2bHnV12c5HRgKddJ1ebv',
+        'publicKey' => 'n5502gtrr9zhj1m0lxm151fqd5mctw68hp64m61dj1mx7w7kvr30.k'
+      },
+
       # derps nodes 
       '173.255.219.67:10000' => {
         'password' => 'null',
