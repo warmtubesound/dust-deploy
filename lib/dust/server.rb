@@ -713,19 +713,38 @@ module Dust
       msg.parse_result(exec("id #{user}")[:exit_code])
     end
 
-    # create a user
-    def create_user user, options = {}
-      options = default_options.merge options
-      options[:home] ||= nil
-      options[:shell] ||= nil
+    # manages users (create, modify)
+    def manage_user(user, options = {})
+      options = default_options.merge(options)
+      options = { 'home' => nil, 'shell' => nil, 'uid' => nil,
+                  'gid' => nil, 'groups' => nil, 'system' => false }.merge(options)
 
-      return true if user_exists? user, options
+      if user_exists?(user, :quiet => true)
+        args  = ""
+        args << " --move-home --home #{options['home']}" if options['home']
+        args << " --shell #{options['shell']}" if options['shell']
+        args << " --uid #{options['uid']}" if options['uid']
+        args << " --gid #{options['gid']}" if options['gid']
+        args << " --append --groups #{Array(options['groups']).join(',')}" if options['groups']
 
-      msg = messages.add("creating user #{user}", :indent => options[:indent])
-      cmd = "useradd #{user} -m"
-      cmd += " -d #{options[:home]}" if options[:home]
-      cmd += " -s #{options[:shell]}" if options[:shell]
-      msg.parse_result(exec(cmd)[:exit_code])
+        unless args.empty?
+          msg = messages.add("modifying user #{user}", :indent => options[:indent])
+          return msg.parse_result(exec("usermod #{user} #{args}")[:exit_code])
+        end
+
+      else
+        args =  ""
+        args =  "--create-home" unless options['system']
+        args << " --system" if options['system']
+        args << " --home #{options['home']}" if options['home'] and not options['system']
+        args << " --shell #{options['shell']}" if options['shell']
+        args << " --uid #{options['uid']}" if options['uid']
+        args << " --gid #{options['gid']}" if options['gid']
+        args << " --groups #{Array(options['groups']).join(',')}" if options['groups']
+
+        msg = messages.add("creating user #{user}", :indent => options[:indent])
+        return msg.parse_result(exec("useradd #{user} #{args}")[:exit_code])
+      end
     end
 
     # returns the home directory of this user
