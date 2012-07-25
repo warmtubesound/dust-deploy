@@ -716,8 +716,18 @@ module Dust
     # manages users (create, modify)
     def manage_user(user, options = {})
       options = default_options.merge(options)
-      options = { 'home' => nil, 'shell' => nil, 'uid' => nil,
+      options = { 'home' => nil, 'shell' => nil, 'uid' => nil, 'remove' => false,
                   'gid' => nil, 'groups' => nil, 'system' => false }.merge(options)
+
+      # delete user from system
+      if options['remove']
+        if user_exists?(user, :quiet => true)
+           msg = messages.add("deleting user #{user} from system", :indent => options[:indent])
+           return msg.parse_result(exec("userdel --remove #{user}")[:exit_code])
+        end
+
+        return messages.add("user #{user} not present in system").ok
+      end
 
       if user_exists?(user, :quiet => true)
         args  = ""
