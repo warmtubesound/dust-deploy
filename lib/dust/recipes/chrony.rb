@@ -9,7 +9,7 @@ class Chrony < Recipe
     end
 
     # install package
-    @node.install_package('chrony')
+    return false unless @node.install_package('chrony')
 
     # set config file and service name according to distribution used
     if @node.uses_apt?
@@ -52,9 +52,9 @@ class Chrony < Recipe
       'logdir' => '/var/log/chrony',
       'logchange' => 0.5,
       'maxupdateskew' => 100.0,       # Stop bad estimates upsetting machine clock.
-      'dumponexit' => '',             # Dump measurements when daemon exits.
-      'dumpdir' => '/var/lib/chrony',
-      'rtconutc' => ''                # CMOS clock is on UTC (GMT)
+#      'dumponexit' => '',             # Dump measurements when daemon exits.
+#      'dumpdir' => '/var/lib/chrony',
+#      'rtconutc' => ''                # CMOS clock is on UTC (GMT)
     }
 
     if @node.uses_rpm?
