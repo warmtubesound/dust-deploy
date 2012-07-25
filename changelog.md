@@ -1,6 +1,21 @@
 Changelog
 =============
 
+0.15.0
+------------
+
+-  node.create_user -> node.migrate_user (supports now more options, make sure to migrate from :home -> 'home' if you use options
+-  introduces users recipe
+-  removes ssh_authorized_keys in favor of new users recipe (migrate your .yaml files!)
+
+    recipes:
+      users:
+        myuser: { ssh_keys: kk, chmod: 0750, authorized_keys: [ user1, user2 ] }
+        deploy: { shell: /bin/bash, home: /var/www, ssh_keys: deploy, skel: deploy }
+        daemon: { system: true }
+        unwanted_user: { remove: true }
+
+
 0.14.1
 ------------
 
