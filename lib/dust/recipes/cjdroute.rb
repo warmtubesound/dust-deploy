@@ -11,21 +11,23 @@ class Cjdroute< Recipe
 
     # clean up building directory, if --restart is given
     # using --restart, since there's no --cleanup
-    return unless make_clean if @options.restart?
+    # return unless make_clean if @options.restart?
 
     # compiling action
     return unless run_make
 
-    stop_cjdroute
-
-    # copy binary
-    return unless @node.mkdir @config['bin_dir']
-    return unless @node.cp "#{@config['build_dir']}/build/cjdroute", "#{@config['bin_dir']}/cjdroute"
-
     # create the config file and place it into etc_dir
     return unless generate_config
 
-    start_cjdroute
+    if options.restart?
+      stop_cjdroute
+
+      # copy binary
+      return unless @node.mkdir @config['bin_dir']
+      return unless @node.cp "#{@config['build_dir']}/build/cjdroute", "#{@config['bin_dir']}/cjdroute"
+
+      start_cjdroute
+    end
   end
 
 
