@@ -22,6 +22,9 @@ class Chrony < Recipe
 
     @node.write(config, generate_config)
 
+    # centos systems don't use -r by default
+    @node.write('/etc/sysconfig/chronyd', 'OPTIONS="-u chrony -r"' + "\n") if @node.uses_rpm?
+
     @node.autostart_service(service)
     @node.restart_service(service) if options.restart?
   end
