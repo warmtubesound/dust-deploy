@@ -1,6 +1,14 @@
 Changelog
 =============
 
+0.15.1
+------------
+
+-  updates cjdroute public peers
+-  readds dump option to chrony default config
+-  chrony adds -r option on centos systems (apt systems use it by default)
+
+
 0.15.0
 ------------
 
