@@ -52,9 +52,8 @@ class Chrony < Recipe
       'logdir' => '/var/log/chrony',
       'logchange' => 0.5,
       'maxupdateskew' => 100.0,       # Stop bad estimates upsetting machine clock.
-#      'dumponexit' => '',             # Dump measurements when daemon exits.
-#      'dumpdir' => '/var/lib/chrony',
-#      'rtconutc' => ''                # CMOS clock is on UTC (GMT)
+      'dumponexit' => '',             # Dump measurements when daemon exits.
+      'dumpdir' => '/var/lib/chrony'
     }
 
     if @node.uses_rpm?
