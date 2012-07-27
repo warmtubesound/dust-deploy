@@ -46,10 +46,10 @@ module  Dust
       @nodes.each_with_index do |node, i|
         if $parallel
           threads[i] = Thread.new do
-            Thread.current['hostname'] = node['hostname'] if run_recipes node, 'deploy'
+            Thread.current['hostname'] = node['hostname'] if run_recipes(node, 'deploy')
           end
         else
-          run_recipes node, 'deploy'
+          run_recipes(node, 'deploy')
         end
       end
 
@@ -84,10 +84,10 @@ module  Dust
       @nodes.each_with_index do |node, i|
         if $parallel
           threads[i] = Thread.new do
-            Thread.current['hostname'] = node['hostname'] if run_recipes node, 'status'
+            Thread.current['hostname'] = node['hostname'] if run_recipes(node, 'status')
           end
         else
-          run_recipes node, 'status'
+          run_recipes(node, 'status')
         end
       end
 
@@ -182,9 +182,9 @@ module  Dust
 
     # creates directory skeleton for a dust setup
     desc 'new <name>', 'creates a dust directory skeleton for your network'
-    def new name
-      Dust.print_msg "spawning new dust directory skeleton with examples into '#{name}.dust'"
-      FileUtils.cp_r File.dirname(__FILE__) + '/examples', "#{name}.dust"
+    def new(name)
+      Dust.print_msg("spawning new dust directory skeleton with examples into '#{name}.dust'")
+      FileUtils.cp_r(File.dirname(__FILE__) + '/examples', "#{name}.dust")
       Dust.print_ok
     end
 
@@ -203,7 +203,7 @@ module  Dust
         return false
       end
 
-      unless File.directory? './nodes'
+      unless File.directory?('./nodes')
         Dust.print_failed 'could not find \'nodes\' folder in your dust directory. cannot continue.'
         return false
       end
@@ -218,7 +218,7 @@ module  Dust
       # skip this node if there are no recipes found
       return false unless node['recipes']
 
-      recipes = generate_recipes node, context
+      recipes = generate_recipes(node, context)
 
       # skip this node unless we're actually having recipes to cook
       return false if recipes.empty?
@@ -230,7 +230,7 @@ module  Dust
       # runs the method with the recipe name, defined and included in recipe/*.rb
       # call recipes for each recipe that is defined for this node
       recipes.each do |recipe, config|
-        send recipe, 'prepare', node['server'], recipe, context, config, options
+        send(recipe, 'prepare', node['server'], recipe, context, config, options)
       end
 
       node['server'].disconnect
@@ -252,7 +252,7 @@ module  Dust
     end
 
     # generate list of recipes for this node
-    def generate_recipes node, context
+    def generate_recipes(node, context)
       recipes = {}
       node['recipes'].each do |recipe, config|
 
@@ -263,9 +263,9 @@ module  Dust
         next if config == 'disabled' or config.is_a? FalseClass
 
         # check if method and thor task actually exist
-        k = Thor::Util.find_by_namespace recipe
+        k = Thor::Util.find_by_namespace(recipe)
         next unless k
-        next unless k.method_defined? context
+        next unless k.method_defined?(context)
 
         recipes[recipe] = config
       end
@@ -308,9 +308,9 @@ module  Dust
       # if the argument is a directory, load yaml files in this directory
       # if the argument is a file, load the file.
       if options['yaml']
-        if File.directory? options['yaml']
+        if File.directory?(options['yaml'])
           yaml_files = Dir["#{options['yaml']}/**/*.yaml"]
-        elsif File.exists? options['yaml']
+        elsif File.exists?(options['yaml'])
           yaml_files = options['yaml']
         end
       else
@@ -356,7 +356,7 @@ module  Dust
 
           # if hostname is a valid ip address, don't add domain
           # so we can connect via ip address only
-          unless IPAddress.valid? hostname
+          unless IPAddress.valid?(hostname)
             n['fqdn'] += '.' + n['domain'] if n['domain']
           end
 
@@ -364,7 +364,7 @@ module  Dust
           n['proxy'] = options['proxy'] if options['proxy']
 
           # add this node to the global node array
-          @nodes.push n unless filtered? n
+          @nodes.push(n) unless filtered?(n)
         end
       end
     end
@@ -372,7 +372,7 @@ module  Dust
     # checks if this node was filtered out by command line argument
     # e.g. --filter environment:staging filters out all machines but
     # those in the environment staging
-    def filtered? node
+    def filtered?(node)
 
       # if filter is not specified, instantly return false
       return false unless options['filter']
