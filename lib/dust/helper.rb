@@ -43,7 +43,7 @@ class Hash
 
   # converts each value to an array, so .each and .combine won't get hickups
   def values_to_array!
-    self.keys.each { |k| self[k] = [ self[k] ] unless self[k].is_a? Array }
+    self.keys.each { |k| self[k] = Array(self[k]) }
   end
 
   # converts each value that is a boolean to 'yes' resp. 'no' strings
