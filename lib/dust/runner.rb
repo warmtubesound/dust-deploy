@@ -35,7 +35,7 @@ module  Dust
     def deploy
       return unless check_dust_dir
       initialize_thorfiles
-      Dust.print_failed 'no servers match this filter' if load_servers.empty?
+      puts 'no servers match this filter'.red if load_servers.empty?
 
       # set global variables
       $summary = options['summary']
@@ -73,7 +73,7 @@ module  Dust
     def status
       return unless check_dust_dir
       initialize_thorfiles
-      Dust.print_failed 'no servers match this filter' if load_servers.empty?
+      puts 'no servers match this filter'.red if load_servers.empty?
 
       # set global variables
       $summary = options['summary']
@@ -110,7 +110,7 @@ module  Dust
     def system_update
       return unless check_dust_dir
       initialize_thorfiles
-      Dust.print_failed 'no servers match this filter' if load_servers.empty?
+      puts 'no servers match this filter'.red if load_servers.empty?
 
       # set global variables
       $summary = options['summary']
@@ -148,7 +148,7 @@ module  Dust
     def exec cmd, yaml=''
       return unless check_dust_dir
       initialize_thorfiles
-      Dust.print_failed 'no servers match this filter' if load_servers.empty?
+      puts 'no servers match this filter'.red if load_servers.empty?
 
       # set global variables
       $summary = options['summary']
@@ -183,9 +183,8 @@ module  Dust
     # creates directory skeleton for a dust setup
     desc 'new <name>', 'creates a dust directory skeleton for your network'
     def new(name)
-      Dust.print_msg("spawning new dust directory skeleton with examples into '#{name}.dust'")
+      puts "spawning new dust directory skeleton with examples into '#{name}.dust'"
       FileUtils.cp_r(File.dirname(__FILE__) + '/examples', "#{name}.dust")
-      Dust.print_ok
     end
 
     desc 'version', 'displays version number'
@@ -198,13 +197,13 @@ module  Dust
 
     def check_dust_dir
       if Dir.pwd.split('.').last != 'dust'
-        Dust.print_failed 'current directory does not end with .dust, are you in your dust directory?'
-        Dust.print_msg "try running 'dust new mynetwork' to let me create one for you with tons of examples!\n", :indent => 0
+        puts 'current directory does not end with .dust, are you in your dust directory?'.red
+        puts "try running 'dust new mynetwork' to let me create one for you with tons of examples!\n"
         return false
       end
 
       unless File.directory?('./nodes')
-        Dust.print_failed 'could not find \'nodes\' folder in your dust directory. cannot continue.'
+        puts 'could not find \'nodes\' folder in your dust directory. cannot continue.'.red
         return false
       end
 
@@ -318,7 +317,7 @@ module  Dust
       end
 
       unless yaml_files
-        Dust.print_failed "#{yaml} doesn't exist. exiting."
+        puts "#{yaml} doesn't exist. exiting.".red
         exit
       end
 

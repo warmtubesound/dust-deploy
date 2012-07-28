@@ -10,8 +10,8 @@ class Pacemaker < Recipe
 
     # return if no authkey is given
     unless @config['authkey']
-      return ::Dust.print_failed 'no authkey given. generate it using "corosync-keygen" ' +
-                                 'and convert it to base64 using "base64 -w0 /etc/corosync/authkey"'
+      return @node.messages.add('no authkey given. generate it using "corosync-keygen" ' +
+                                'and convert it to base64 using "base64 -w0 /etc/corosync/authkey"').failed
     end
 
     @node.collect_facts
