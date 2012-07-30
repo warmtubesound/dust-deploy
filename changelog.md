@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.15.2
+------------
+
+-  fixes a bug in node.manage_user, now returns correctly if user is already set up
+-  node.manage_user now honors options correctly
+
+
 0.15.1
 ------------
 
