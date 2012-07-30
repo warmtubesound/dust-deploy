@@ -34,8 +34,8 @@ class Sysctl < Recipe
       sysctl_conf << "#{key} = #{value}\n"
     end
 
-    msg = @node.messages.add("saving settings to /etc/sysctl.d/10-#{name}.conf", :indent => 2)
-    msg.parse_result(@node.write("/etc/sysctl.d/10-#{name}.conf", sysctl_conf, :quiet => true))
+    msg = @node.messages.add("saving settings to /etc/sysctl.d/#{name}.conf", :indent => 2)
+    msg.parse_result(@node.write("/etc/sysctl.d/#{name}.conf", sysctl_conf, :quiet => true))
   end
 
 
