@@ -722,11 +722,11 @@ module Dust
       # delete user from system
       if options['remove']
         if user_exists?(user, :quiet => true)
-           msg = messages.add("deleting user #{user} from system", :indent => options[:indent])
+           msg = messages.add("deleting user #{user} from system", { :indent => options[:indent] }.merge(options))
            return msg.parse_result(exec("userdel --remove #{user}")[:exit_code])
         end
 
-        return messages.add("user #{user} not present in system").ok
+        return messages.add("user #{user} not present in system", options).ok
       end
 
       if user_exists?(user, :quiet => true)
@@ -737,8 +737,10 @@ module Dust
         args << " --gid #{options['gid']}" if options['gid']
         args << " --append --groups #{Array(options['groups']).join(',')}" if options['groups']
 
-        unless args.empty?
-          msg = messages.add("modifying user #{user}", :indent => options[:indent])
+        if args.empty?
+          return messages.add("user #{user} already set up correctly", options).ok
+        else
+          msg = messages.add("modifying user #{user}", { :indent => options[:indent] }.merge(options))
           return msg.parse_result(exec("usermod #{user} #{args}")[:exit_code])
         end
 
@@ -752,7 +754,7 @@ module Dust
         args << " --gid #{options['gid']}" if options['gid']
         args << " --groups #{Array(options['groups']).join(',')}" if options['groups']
 
-        msg = messages.add("creating user #{user}", :indent => options[:indent])
+        msg = messages.add("creating user #{user}", { :indent => options[:indent] }.merge(options))
         return msg.parse_result(exec("useradd #{user} #{args}")[:exit_code])
       end
     end
