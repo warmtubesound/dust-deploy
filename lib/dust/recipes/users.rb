@@ -26,7 +26,7 @@ class Users < Recipe
     Dir["#{@template_path}/#{key_dir}/*"].each do |file|
       destination = "#{ssh_dir}/#{File.basename(file)}"
       @node.scp(file, destination, :indent => 2)
-      @node.chown("#{user}:#{user}", destination)
+      @node.chown("#{user}:#{@node.get_gid(user)}", destination)
 
       # chmod private key
       if File.basename(file) =~ /^(id_rsa|id_dsa|id_ecdsa)$/
@@ -42,13 +42,13 @@ class Users < Recipe
     ssh_dir = create_ssh_dir(user)
     authorized_keys = generate_authorized_keys(ssh_users)
     @node.write("#{ssh_dir}/authorized_keys", authorized_keys)
-    @node.chown("#{user}:#{user}", "#{ssh_dir}/authorized_keys")
+    @node.chown("#{user}:#{@node.get_gid(user)}", "#{ssh_dir}/authorized_keys")
   end
 
   def create_ssh_dir(user)
     ssh_dir = @node.get_home(user) + '/.ssh'
     @node.mkdir(ssh_dir)
-    @node.chown("#{user}:#{user}", ssh_dir)
+    @node.chown("#{user}:#{@node.get_gid(user)}", ssh_dir)
     ssh_dir
   end
 

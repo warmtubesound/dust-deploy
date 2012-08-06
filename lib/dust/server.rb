@@ -785,6 +785,19 @@ module Dust
       end
     end
 
+    # returns primary group id of this user
+    def get_gid(user, options = {})
+      options = default_options(:quiet => true).merge(options)
+
+      msg = messages.add("getting primary gid of #{user}", options)
+      ret = exec("getent passwd |cut -d':' -f1,4 |grep '^#{user}' |head -n1 |cut -d: -f2")
+      if msg.parse_result(ret[:exit_code])
+        return ret[:stdout].chomp
+      else
+        return false
+      end
+    end
+
     # collect additional system facts using puppets facter
     def collect_facts options = {}
       options = default_options.merge options

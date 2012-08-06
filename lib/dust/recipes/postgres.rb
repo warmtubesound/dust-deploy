@@ -198,8 +198,10 @@ class Postgres < Recipe
 
   # give the configured dbuser the data_directory
   def set_permissions
-    @node.chown @config['dbuser'], @config['postgresql.conf']['data_directory'] if @config['dbuser']
     @node.chmod 'u+Xrw,g-rwx,o-rwx', @config['postgresql.conf']['data_directory']
+    if @config['dbuser']
+      @node.chown("#{@config['dbuser']}:#{@node.get_gid(@config['dbuser'])}", @config['postgresql.conf']['data_directory'])
+    end
   end
 
   # deploy the pacemaker script
