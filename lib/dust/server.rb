@@ -760,11 +760,11 @@ module Dust
     end
 
     # returns the home directory of this user
-    def get_home user, options = {}
-      options = default_options(:quiet => true).merge options
+    def get_home(user, options = {})
+      options = default_options(:quiet => true).merge(options)
 
       msg = messages.add("getting home directory of #{user}", options)
-      ret = exec "getent passwd |cut -d':' -f1,6 |grep '^#{user}' |head -n1 |cut -d: -f2"
+      ret = exec("getent passwd |cut -d':' -f1,6 |grep '^#{user}' |head -n1 |cut -d: -f2")
       if msg.parse_result(ret[:exit_code])
         return ret[:stdout].chomp
       else
@@ -773,11 +773,11 @@ module Dust
     end
 
     # returns shell of this user
-    def get_shell user, options = {}
-      options = default_options(:quiet => true).merge options
+    def get_shell(user, options = {})
+      options = default_options(:quiet => true).merge(options)
 
       msg = messages.add("getting shell of #{user}", options)
-      ret = exec "getent passwd |cut -d':' -f1,7 |grep '^#{user}' |head -n1 |cut -d: -f2"
+      ret = exec("getent passwd |cut -d':' -f1,7 |grep '^#{user}' |head -n1 |cut -d: -f2")
       if msg.parse_result(ret[:exit_code])
         return ret[:stdout].chomp
       else

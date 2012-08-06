@@ -337,9 +337,9 @@ module  Dust
           inherited = {}
           node.delete('inherits').each do |file|
             template = YAML.load ERB.new( File.read("./nodes/#{file}.yaml"), nil, '%<>').result
-            inherited.deep_merge! template
+            inherited.deep_merge!(template)
           end
-          node = inherited.deep_merge node
+          node = inherited.deep_merge(node)
         end
 
         # if more than one hostname is specified, create a node

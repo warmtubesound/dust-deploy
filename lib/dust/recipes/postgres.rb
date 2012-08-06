@@ -20,25 +20,25 @@ class Postgres < Recipe
     set_permissions
 
     # configure pacemaker profile
-    if @config['profile'].to_array.include? 'pacemaker'
-      deploy_pacemaker_script if @node.package_installed? 'pacemaker'
+    if @config['profile'].to_array.include?('pacemaker')
+      deploy_pacemaker_script if @node.package_installed?('pacemaker')
     end
 
     # configure zabbix profile
-    if @config['profile'].to_array.include? 'zabbix'
+    if @config['profile'].to_array.include?('zabbix')
       configure_for_zabbix if zabbix_installed?
     end
 
     # reload/restart postgres if command line option is given
-    @node.restart_service @config['service_name'] if options.restart?
-    @node.reload_service @config['service_name'] if options.reload?
+    @node.restart_service(@config['service_name']) if options.restart?
+    @node.reload_service(@config['service_name']) if options.reload?
   end
 
   desc 'postgres:status', 'displays status of postgres cluster'
   def status
-    return unless @node.package_installed? [ 'postgresql-server', "postgresql-#{@config['version']}" ]
+    return unless @node.package_installed?([ 'postgresql-server', "postgresql-#{@config['version']}" ])
     set_default_directories
-    @node.print_service_status @config['service_name']
+    @node.print_service_status(@config['service_name'])
   end
 
 
@@ -55,7 +55,7 @@ class Postgres < Recipe
       return @node.messages.add('os not supported, please specify "package: <package name>" in your config').failed
     end
 
-    @node.install_package package
+    @node.install_package(package)
   end
 
   # set conf-dir and data-dir as well as service-name
@@ -85,25 +85,30 @@ class Postgres < Recipe
 
   # deploy postgresql.conf, pg_hba.conf and pg_ident.conf
   def deploy_config
-    @node.write "#{@config['conf_directory']}/postgresql.conf", generate_postgresql_conf
-    @node.write "#{@config['conf_directory']}/pg_hba.conf", generate_pg_hba_conf
-    @node.write "#{@config['conf_directory']}/pg_ident.conf", generate_pg_ident_conf
+    @node.write("#{@config['conf_directory']}/postgresql.conf", generate_postgresql_conf)
+    @node.write("#{@config['conf_directory']}/pg_hba.conf", generate_pg_hba_conf)
+    @node.write( "#{@config['conf_directory']}/pg_ident.conf", generate_pg_ident_conf)
   end
 
   # copy recovery.conf to either recovery.conf or recovery.done
   # depending on which file already exists.
   def deploy_recovery
-    if @node.file_exists? "#{@config['postgresql.conf']['data_directory']}/recovery.conf", :quiet => true
-      @node.write "#{@config['postgresql.conf']['data_directory']}/recovery.conf", generate_recovery_conf
+    if @node.file_exists?("#{@config['postgresql.conf']['data_directory']}/recovery.conf", :quiet => true)
+      @node.write("#{@config['postgresql.conf']['data_directory']}/recovery.conf", generate_recovery_conf)
     else
-      @node.write "#{@config['postgresql.conf']['data_directory']}/recovery.done", generate_recovery_conf
+      @node.write("#{@config['postgresql.conf']['data_directory']}/recovery.done", generate_recovery_conf)
     end
   end
 
   # deploy certificates to data-dir
   def deploy_certificates
-    @node.deploy_file "#{@template_path}/#{@config['server.crt']}", "#{@config['postgresql.conf']['data_directory']}/server.crt", :binding => binding
-    @node.deploy_file "#{@template_path}/#{@config['server.key']}", "#{@config['postgresql.conf']['data_directory']}/server.key", :binding => binding
+    @node.deploy_file("#{@template_path}/#{@config['server.crt']}",
+                      "#{@config['postgresql.conf']['data_directory']}/server.crt",
+                      :binding => binding)
+
+    @node.deploy_file("#{@template_path}/#{@config['server.key']}",
+                      "#{@config['postgresql.conf']['data_directory']}/server.key",
+                      :binding => binding)
   end
 
   # default settings for postgresql.conf
@@ -122,10 +127,10 @@ class Postgres < Recipe
 
   def generate_postgresql_conf
     @config['postgresql.conf'] ||= {}
-    @config['postgresql.conf'] = default_postgres_conf.merge @config['postgresql.conf']
+    @config['postgresql.conf'] = default_postgres_conf.merge(@config['postgresql.conf'])
 
     # calculate values if dedicated profile is given
-    profile_dedicated if @config['profile'].to_array.include? 'dedicated'
+    profile_dedicated if @config['profile'].to_array.include?('dedicated')
 
     postgresql_conf = ''
     @config['postgresql.conf'].each do |key, value|
@@ -150,18 +155,18 @@ class Postgres < Recipe
 
   def generate_pg_hba_conf
     @config['pg_hba.conf'] ||= [ 'local   all         postgres                trust' ]
-    @config['pg_hba.conf'].join "\n"
+    @config['pg_hba.conf'].join("\n")
   end
 
   def generate_pg_ident_conf
     @config['pg_ident.conf'] ||= []
-    @config['pg_ident.conf'].join "\n"
+    @config['pg_ident.conf'].join("\n")
   end
 
   # try to find good values (but don't overwrite if set in config file) for
   # shared_buffers, work_mem and maintenance_work_mem, effective_cache_size and wal_buffers
   def profile_dedicated
-    @node.collect_facts :quiet => true
+    @node.collect_facts(:quiet => true)
     system_mem = ::Dust.convert_size(@node['memorysize']).to_f
 
     msg = @node.messages.add("calculating recommended settings for a dedicated databse server with #{kb2mb system_mem} ram\n")
@@ -198,24 +203,24 @@ class Postgres < Recipe
 
   # give the configured dbuser the data_directory
   def set_permissions
-    @node.chmod 'u+Xrw,g-rwx,o-rwx', @config['postgresql.conf']['data_directory']
     if @config['dbuser']
       @node.chown("#{@config['dbuser']}:#{@node.get_gid(@config['dbuser'])}", @config['postgresql.conf']['data_directory'])
     end
+    @node.chmod('u+Xrw,g-rwx,o-rwx', @config['postgresql.conf']['data_directory'])
   end
 
   # deploy the pacemaker script
   def deploy_pacemaker_script
-    @node.deploy_file "#{@template_path}/pacemaker.sh", "#{@config['conf_directory']}/pacemaker.sh", :binding => binding
-    @node.chmod '755', "#{@config['conf_directory']}/pacemaker.sh"
+    @node.deploy_file("#{@template_path}/pacemaker.sh", "#{@config['conf_directory']}/pacemaker.sh", :binding => binding)
+    @node.chmod('755', "#{@config['conf_directory']}/pacemaker.sh")
   end
 
   # check if zabbix is installed
   def zabbix_installed?
     if @node.uses_emerge?
-      return @node.package_installed? 'zabbix', :quiet => true
+      return @node.package_installed?('zabbix', :quiet => true)
     else
-      return @node.package_installed? 'zabbix-agent', :quiet => true
+      return @node.package_installed?('zabbix-agent', :quiet => true)
     end
   end
 
@@ -227,7 +232,7 @@ class Postgres < Recipe
     msg = @node.messages.add('adding zabbix user to postgres group', :indent => 2)
     msg.parse_result(@node.exec('usermod -a -G postgres zabbix')[:exit_code])
 
-    if is_master? :indent => 2
+    if is_master?(:indent => 2)
       msg = @node.messages.add('checking if zabbix user exists in postgres', :indent => 3)
       ret = msg.parse_result(@node.exec('psql -U postgres -c ' +
                                            '  "SELECT usename FROM pg_user WHERE usename = \'zabbix\'"' +
@@ -245,9 +250,9 @@ class Postgres < Recipe
   end
 
   # checks if this server is a postgres master
-  def is_master? options = {}
+  def is_master?(options = {})
     msg = @node.messages.add('checking if this host is the postgres master: ', options)
-    if @node.file_exists? "#{@config['postgresql.conf']['data_directory']}/recovery.done", :quiet => true
+    if @node.file_exists?("#{@config['postgresql.conf']['data_directory']}/recovery.done", :quiet => true)
       msg.ok('yes')
       return true
       else
