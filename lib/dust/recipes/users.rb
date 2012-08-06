@@ -40,7 +40,10 @@ class Users < Recipe
   def deploy_authorized_keys(user, ssh_users)
     @node.messages.add("generating authorized_keys for #{user}\n")
     ssh_dir = create_ssh_dir(user)
+
     authorized_keys = generate_authorized_keys(ssh_users)
+    return false unless authorized_keys
+
     @node.write("#{ssh_dir}/authorized_keys", authorized_keys)
     @node.chown("#{user}:#{@node.get_gid(user)}", "#{ssh_dir}/authorized_keys")
   end
@@ -54,11 +57,19 @@ class Users < Recipe
 
   def generate_authorized_keys(ssh_users)
     # load users and their ssh keys from yaml file
+    unless File.exists?("#{@template_path}/public_keys.yaml")
+      return @node.messages.add("#{@template_path}/public_keys.yaml not present").failed
+    end
+
     users = YAML.load_file("#{@template_path}/public_keys.yaml")
     authorized_keys = ''
 
     # create the authorized_keys hash for this user
     ssh_users.to_array.each do |ssh_user|
+      unless users[ssh_user]
+        return @node.messages.add("#{ssh_user} cannot be found in #{@template_path}/public_keys.yaml").failed
+      end
+
       users[ssh_user]['name'] ||= ssh_user
       msg = @node.messages.add("adding user #{users[ssh_user]['name']}", :indent => 2)
       users[ssh_user]['keys'].each do |key|
