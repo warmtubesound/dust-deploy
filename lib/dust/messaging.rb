@@ -45,6 +45,9 @@ module Dust
         l = [ 'warning', 'failed' ]
       when 'failed'
         l = [ 'failed' ]
+      else
+        puts "WARNING: unknown error level '#{level}', using 'all'".yellow
+        l = [ 'none', 'ok', 'warning', 'failed' ]
       end
 
       errors = {}
