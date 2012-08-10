@@ -232,6 +232,28 @@ module Dust
       msg.parse_result(exec("chown -R #{user} #{file}")[:exit_code])
     end
 
+    def chcon(permissions, file, options = {})
+      options = default_options.merge(options)
+
+      # just return if selinux is not enabled
+      return true unless selinuxenabled?
+
+      args  = ""
+      args << " --type #{permissions['type']}" if permissions['type']
+      args << " --recursive #{permissions['recursive']}" if permissions['recursive']
+      args << " --user #{permissions['user']}" if permissions['user']
+      args << " --range #{permissions['range']}" if permissions['range']
+      args << " --role #{permissions['role']}" if permissions['role']
+
+      msg = messages.add("setting selinux permissions of #{File.basename file}", options)
+      msg.parse_result(exec("chcon #{args} #{file}")[:exit_code])
+    end
+
+    def selinuxenabled?
+      return true if exec('selinuxenabled')[:exit_code] == 0
+      false
+    end
+
     def rm file, options = {}
       options = default_options.merge options
 
@@ -275,12 +297,11 @@ module Dust
     def restorecon path, options = {}
       options = default_options.merge options
 
-      # if restorecon is not installed, just return true
-      ret = exec 'which restorecon'
-      return true unless ret[:exit_code] == 0
+      # if selinux is not enabled, just return
+      return true unless selinuxenabled?
 
       msg = messages.add("restoring selinux labels for #{path}", options)
-      msg.parse_result(exec("#{ret[:stdout].chomp} -R #{path}")[:exit_code])
+      msg.parse_result(exec("restorecon -R #{path}")[:exit_code])
     end
 
     def get_system_users options = {}
@@ -738,10 +759,10 @@ module Dust
         args << " --append --groups #{Array(options['groups']).join(',')}" if options['groups']
 
         if args.empty?
-          return messages.add("user #{user} already set up correctly", options).ok
+          ret = messages.add("user #{user} already set up correctly", options).ok
         else
           msg = messages.add("modifying user #{user}", { :indent => options[:indent] }.merge(options))
-          return msg.parse_result(exec("usermod #{user} #{args}")[:exit_code])
+          ret = msg.parse_result(exec("usermod #{args} #{user}")[:exit_code])
         end
 
       else
@@ -755,8 +776,12 @@ module Dust
         args << " --groups #{Array(options['groups']).join(',')}" if options['groups']
 
         msg = messages.add("creating user #{user}", { :indent => options[:indent] }.merge(options))
-        return msg.parse_result(exec("useradd #{user} #{args}")[:exit_code])
+        ret = msg.parse_result(exec("useradd #{user} #{args}")[:exit_code])
       end
+
+      # set selinux permissions
+      chcon({ 'type' => 'user_home_dir_t' }, get_home(user), options)
+      return ret
     end
 
     # returns the home directory of this user
