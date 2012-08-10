@@ -46,12 +46,14 @@ class Users < Recipe
 
     @node.write("#{ssh_dir}/authorized_keys", authorized_keys)
     @node.chown("#{user}:#{@node.get_gid(user)}", "#{ssh_dir}/authorized_keys")
+    @node.chcon({ 'type' => 'ssh_home_t' }, "#{ssh_dir}/authorized_keys")
   end
 
   def create_ssh_dir(user)
     ssh_dir = @node.get_home(user) + '/.ssh'
     @node.mkdir(ssh_dir)
     @node.chown("#{user}:#{@node.get_gid(user)}", ssh_dir)
+    @node.chcon({ 'type' => 'ssh_home_t' }, ssh_dir)
     ssh_dir
   end
 
