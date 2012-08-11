@@ -9,10 +9,6 @@ class Cjdroute< Recipe
     return unless install_dependencies
     return unless get_latest_version
 
-    # clean up building directory, if --restart is given
-    # using --restart, since there's no --cleanup
-    # return unless make_clean if @options.restart?
-
     # compiling action
     return unless run_make
 
@@ -23,8 +19,8 @@ class Cjdroute< Recipe
       stop_cjdroute
 
       # copy binary
-      return unless @node.mkdir @config['bin_dir']
-      return unless @node.cp "#{@config['build_dir']}/build/cjdroute", "#{@config['bin_dir']}/cjdroute"
+      return unless @node.mkdir(@config['bin_dir'])
+      return unless @node.cp("#{@config['build_dir']}/cjdroute", "#{@config['bin_dir']}/cjdroute")
 
       start_cjdroute
     end
@@ -103,23 +99,23 @@ class Cjdroute< Recipe
   def install_dependencies
     @node.messages.add("installing build dependencies\n")
 
-    return false unless @node.install_package 'cmake', :indent => 2
+    return false unless @node.install_package('cmake', :indent => 2)
 
     # check cmake version
-    ret = @node.exec 'cmake --version'
+    ret = @node.exec('cmake --version')
     ver = ret[:stdout].match(/2.[0-9]/)[0].to_f
     return @node.messages.add('cjdroute requires cmake 2.8 or higher').failed if ver < 2.8
 
 
     if @node.uses_apt?
-      return false unless @node.install_package 'git-core', :indent => 2
-      return false unless @node.install_package 'build-essential', :indent => 2
-      return false unless @node.install_package 'psmisc', :indent => 2
-      return false unless @node.install_package 'coreutils', :indent => 2
+      return false unless @node.install_package('git-core', :indent => 2)
+      return false unless @node.install_package('build-essential', :indent => 2)
+      return false unless @node.install_package('psmisc', :indent => 2)
+      return false unless @node.install_package('coreutils', :indent => 2)
     else
-      return false unless @node.install_package 'git', :indent => 2
-      return false unless @node.install_package 'gcc', :indent => 2
-      return false unless @node.install_package 'make', :indent => 2
+      return false unless @node.install_package('git', :indent => 2)
+      return false unless @node.install_package('gcc', :indent => 2)
+      return false unless @node.install_package('make', :indent => 2)
     end
 
     true
@@ -127,10 +123,10 @@ class Cjdroute< Recipe
 
   # gets/updates latest version from cjdns git repository
   def get_latest_version
-    if @node.dir_exists? @config['build_dir'], :quiet => true
+    if @node.dir_exists?(@config['build_dir'], :quiet => true)
 
       # check if build directory is maintained by git
-      unless @node.dir_exists? "#{@config['build_dir']}/.git", :quiet => true
+      unless @node.dir_exists?("#{@config['build_dir']}/.git", :quiet => true)
         return @node.messages.add("#{@config['build_dir']} doesn't appear to be a git repository").failed
       end
 
@@ -145,7 +141,7 @@ class Cjdroute< Recipe
 
     else
       # create build directory
-      unless @node.mkdir @config['build_dir']
+      unless @node.mkdir(@config['build_dir'])
         return @node.messages.add("couldn't create build directory #{@config['build_dir']}").failed
       end
 
@@ -164,12 +160,6 @@ class Cjdroute< Recipe
     true
   end
 
-  # remove and recreate building directory
-  def make_clean
-    msg = @node.messages.add('cleaning up')
-    msg.parse_result(@node.exec("rm -rf #{@config['build_dir']}/build")[:exit_code])
-  end
-
   def run_make
     msg = @node.messages.add('compiling cjdns')
     msg.parse_result(@node.exec("export Log_LEVEL=#{@config['loglevel']}; cd #{@config['build_dir']}; ./do", :live => true)[:exit_code])
@@ -183,11 +173,11 @@ class Cjdroute< Recipe
     end
 
     msg = @node.messages.add('generating config file')
-    ret = @node.exec("#{@config['bin_dir']}/cjdroute --genconf")
+    ret = @node.exec("#{@config['build_dir']}/cjdroute --genconf")
     return false unless msg.parse_result(ret[:exit_code])
 
     # parse generated json
-    cjdroute_conf = JSON.parse ret[:stdout]
+    cjdroute_conf = JSON.parse(ret[:stdout])
 
     # add some public peers, so we can get started directly
     msg = @node.messages.add('adding public peers', :indent => 2)
@@ -197,8 +187,8 @@ class Cjdroute< Recipe
     # exchange tun0 with configured tun device
     cjdroute_conf['router']['interface']['tunDevice'] = @config['tun']
 
-    return false unless @node.mkdir @config['etc_dir']
-    return @node.write "#{@config['etc_dir']}/cjdroute.conf", JSON.pretty_generate(cjdroute_conf)
+    return false unless @node.mkdir(@config['etc_dir'])
+    return @node.write("#{@config['etc_dir']}/cjdroute.conf", JSON.pretty_generate(cjdroute_conf))
   end
 
   # kill any cjdroute processes that might be running
