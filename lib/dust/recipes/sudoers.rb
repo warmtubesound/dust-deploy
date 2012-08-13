@@ -33,17 +33,22 @@ class Sudoers < Recipe
   private
   
   def remove_other_rules
-    @node.messages.add("deleting old rules\n")
+    msg = @node.messages.add("removing non-dust rules\n")
     ret = @node.exec('ls /etc/sudoers.d/* |cat')
     if ret[:exit_code] != 0
       return @node.messages.add('couldn\'t get installed rule list, skipping deletion of old rules').warning
     end
 
-    # delete file if not in config
+    # get unmaintained rules
+    old_rules = []
     ret[:stdout].each_line do |file|
       file.chomp!
-      @node.rm(file, :indent => 2) unless @config.keys.include?(File.basename(file))
+      old_rules << file unless @config.keys.include?(File.basename(file))
     end
+
+    # delete old rules, or display message that none were found
+    old_rules.each { |file| @node.rm(file, :indent => 2) }
+    @node.messages.add('none found', :indent => 2).ok if old_rules.empty?
   end
   
   def deploy_rule(name, file)
