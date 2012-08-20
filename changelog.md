@@ -1,6 +1,36 @@
 Changelog
 =============
 
+0.16.0
+------------
+
+-  fixes an issue where the user was set to the sudo user when using node.scp, now defaults to root:root
+-  updates and fixes for cjdroute recipe
+-  adds node.selinuxenabled? and node.chcon
+-  users recipe now changes selinux content of home and ssh dirs
+-  improves motd recipe, now supports update-motd as well. there are three possible ways of maintaining the motd now:
+   using a motd string in the config file, and static file or a ERB template file. for more information see:
+   https://github.com/kechagia/dust-deploy/wiki/motd
+
+-  introduces node.get_gid()
+-  users recipe now chowns to primary gid
+-  users recipe now checks if public_keys.yaml and the requested user is actually present
+-  removes the leading 10- from sysctl.d files, so they can be set individually if needed
+-  sysctl recipe only applies rules directly if --restart is given
+-  also enables support for multiple files, please migrate
+
+    recipes:
+      # old (deprecated)
+      sysctl:
+        key: value
+     
+      sysctl:
+        # new
+        name:
+          key: value
+        othername: { key: value }
+
+
 0.15.2
 ------------
 
