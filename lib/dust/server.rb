@@ -164,6 +164,8 @@ module Dust
       else
         # files = 644, dirs = 755
         permissions = 'ug-x,o-wx,u=rwX,g=rX,o=rX'
+        user = 'root'
+        group = 'root'
       end
 
       # if in sudo mode, copy file to temporary place, then move using sudo
