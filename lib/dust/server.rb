@@ -170,26 +170,32 @@ module Dust
 
       # if in sudo mode, copy file to temporary place, then move using sudo
       if @node['sudo']
-        tmpfile = mktemp
-        return msg.failed('could not create temporary file (needed for sudo)') unless tmpfile
+        tmpdir = mktemp(:type => 'directory')
+        return msg.failed('could not create temporary directory (needed for sudo)') unless tmpdir
+
+        # temporary destination in tmpdir
+        tmpdest = "#{tmpdir}/#{File.basename(destination)}"
 
         # allow user to write file without sudo (for scp)
         # then change file back to root, and copy to the destination
-        chown(@node['user'], tmpfile, :quiet => true)
-        @ssh.scp.upload!(source, tmpfile)
+        chown(@node['user'], tmpdir, :quiet => true)
+        @ssh.scp.upload!(source, tmpdest, :recursive => true)
 
         # set file permissions
-        chown("#{user}:#{group}", tmpfile, :quiet => true) if user and group
-        chmod(permissions, tmpfile, :quiet => true)
+        chown("#{user}:#{group}", tmpdest, :quiet => true) if user and group
+        chmod(permissions, tmpdest, :quiet => true)
 
         # if destination is a directory, append real filename
         destination = "#{destination}/#{File.basename(source)}" if is_dir
 
         # move the file from the temporary location to where it actually belongs
-        msg.parse_result(exec("mv -f #{tmpfile} #{destination}")[:exit_code])
+        msg.parse_result(exec("mv -f #{tmpdest} #{destination}")[:exit_code])
+
+        # remove temporary directory
+        rm(tmpdir, :quiet => true)
 
       else
-        @ssh.scp.upload!(source, destination)
+        @ssh.scp.upload!(source, destination, :recursive => true)
         msg.ok
 
         # set file permissions
