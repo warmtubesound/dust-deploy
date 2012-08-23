@@ -869,8 +869,15 @@ module Dust
     end
 
     # create a temporary file
-    def mktemp
-      ret = exec('mktemp --tmpdir dust.XXXXXXXXXX')
+    def mktemp(options = { :type => 'file' })
+      if options[:type] == 'file'
+        ret = exec('mktemp --tmpdir dust.XXXXXXXXXX')
+      elsif options[:type] == 'directory'
+        ret = exec('mktemp -d --tmpdir dust.XXXXXXXXXX')
+      else
+        return messages.add("mktemp: unknown type '#{options[:type]}'").failed
+      end
+
       return false if ret[:exit_code] != 0
       ret[:stdout].chomp
     end
