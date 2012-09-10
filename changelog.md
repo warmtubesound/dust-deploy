@@ -1,6 +1,14 @@
 Changelog
 =============
 
+0.16.1
+------------
+
+-  node.scp now supports recursive copying
+-  node.mktemp now supports :type => 'directory' option
+-  cjdroute recipe removed
+
+
 0.16.0
 ------------
 
