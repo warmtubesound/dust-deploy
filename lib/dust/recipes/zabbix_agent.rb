@@ -28,7 +28,7 @@ class ZabbixAgent < Recipe
     if @node.uses_apt?
       # debsecan is needed for zabbix checks (security updates)
       return false unless @node.install_package 'zabbix-agent'
-      return false unless @node.install_package 'debsecan'
+      return false unless @node.install_package 'debsecan' if @node.is_debian?
 
     elsif @node.uses_emerge?
       # glsa-check (part of gentoolkit) is needed for zabbix checks (security updates)
@@ -134,9 +134,12 @@ class ZabbixAgent < Recipe
 
   # check for security patches and system updates on emerge systems
   def enable_apt
-    [ 'debian.updates,aptitude search \'~U\' |wc -l',
-      'debian.security,debsecan --suite squeeze --only-fixed --format packages |wc -l'
-    ]
+    updates = [ 'apt.updates,aptitude search \'~U\' |wc -l' ]
+    if @node.is_debian?
+      @node.collect_facts
+      updates << "debian.security,debsecan --suite #{@node['lsbdistcodename']} --only-fixed --format packages |wc -l"
+    end
+    updates
   end
 
   # check for security patches and system updates on emerge systems

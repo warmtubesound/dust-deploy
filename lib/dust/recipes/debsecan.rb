@@ -3,7 +3,7 @@ class Debsecan < Recipe
   def deploy
     @node.collect_facts
 
-    if @node.is_os? ['ubuntu', 'debian']
+    if @node.is_debian?
       @node.install_package 'debsecan'
 
       msg = @node.messages.add('configuring debsecan')
