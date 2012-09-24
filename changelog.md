@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.16.2
+------------
+
+-  fixes a bug in node.get_home() and the skel recipe, resulting in files copied to / if the specified user doesn't exist
+-  adds centos support (automatic configuration) to postgres recipe
+
+
 0.16.1
 ------------
 
