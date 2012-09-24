@@ -6,7 +6,12 @@ class Postgres < Recipe
     # profile: [ dedicated|standard, zabbix, pacemaker ]
     # service_name: "service name for init scripts"
 
-    return @node.messages.add('please specify version in your config file, e.g. "version: 9.1"').failed unless @config['version']
+    if @node.uses_apt?
+      unless @config['version'] or @config['package']
+        return @node.messages.add('please specify version or package name in your config file, e.g. "version: 9.1"').failed
+      end
+    end
+
     return unless install_postgres
 
     # default cluster on debian-like systems is 'main'
@@ -47,12 +52,10 @@ class Postgres < Recipe
   def install_postgres
     if @config['package']
       package = @config['package']
-    elsif @node.uses_apt?
+    elsif @config['version']
       package = "postgresql-#{@config['version']}"
-    elsif @node.uses_emerge?
-      package = 'postgresql-server'
     else
-      return @node.messages.add('os not supported, please specify "package: <package name>" in your config').failed
+      package = 'postgresql-server'
     end
 
     @node.install_package(package)
@@ -63,19 +66,26 @@ class Postgres < Recipe
   def set_default_directories
     @config['postgresql.conf'] ||= {} # create empty config, unless present
 
-    if @config['cluster']
+    # rpm systems place the configuration in the data dir
+    if @node.uses_rpm?
+      @config['postgresql.conf']['data_directory'] ||= '/var/lib/pgsql/data'
+      @config['conf_directory'] ||= @config['postgresql.conf']['data_directory']
+
+    # apt systems specify a cluster for their postgres instances
+    elsif @node.uses_apt?
       @config['conf_directory'] ||= "/etc/postgresql/#{@config['version']}/#{@config['cluster']}"
       @config['postgresql.conf']['data_directory'] ||= "/var/lib/postgresql/#{@config['version']}/#{@config['cluster']}"
+
+    # other systems just use this defaults
     else
       @config['conf_directory'] ||= "/etc/postgresql-#{@config['version']}"
       @config['postgresql.conf']['data_directory'] ||= "/var/lib/postgresql/#{@config['version']}/data"
     end
 
+    # set the postgres service name
     if @node.uses_emerge?
       @config['service_name'] ||= "postgresql-#{@config['version']}"
     else
-      # on non-debian and non-emerge systems, print a warning since I'm not sure if service name is correct.
-      @node.messages.add('service_name not specified in config, defaulting to "postgresql"').warning unless @node.uses_apt?
       @config['service_name'] ||= 'postgresql'
     end
 
