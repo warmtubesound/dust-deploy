@@ -382,7 +382,7 @@ module Dust
           return ret
 
         elsif uses_rpm?
-          msg = messages.add("installing #{package}", options)                             
+          msg = messages.add("installing #{package}", options)
           return msg.parse_result(exec("rpm -U #{package}")[:exit_code])
 
         else
@@ -798,7 +798,7 @@ module Dust
 
       msg = messages.add("getting home directory of #{user}", options)
       ret = exec("getent passwd |cut -d':' -f1,6 |grep '^#{user}' |head -n1 |cut -d: -f2")
-      if msg.parse_result(ret[:exit_code])
+      if msg.parse_result(ret[:exit_code]) and not ret[:stdout].chomp.empty?
         return ret[:stdout].chomp
       else
         return false
