@@ -8,6 +8,10 @@ class Nginx < Recipe
       return unless @node.install_package(package)
     end
 
+    @node.mkdir('/etc/nginx')
+    @node.mkdir('/etc/nginx/sites-enabled')
+    @node.mkdir('/etc/nginx/sites-available')
+
     @node.deploy_file("#{@template_path}/nginx.conf", '/etc/nginx/nginx.conf', :binding => binding)
 
     # remove old sites that may be present
