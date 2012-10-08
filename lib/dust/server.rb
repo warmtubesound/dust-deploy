@@ -502,7 +502,16 @@ module Dust
       msg = messages.add('installing system updates', options)
 
       if uses_apt?
-        ret = exec 'DEBIAN_FRONTEND=noninteractive apt-get full-upgrade -y', options
+        if is_ubuntu?
+          if install_package('update-manager-core')
+            ret = exec 'do-release-upgrade -d -f DistUpgradeViewNonInteractive', options
+          else
+            msg.failed('could not install the update-manager package')
+            return false
+          end
+        else
+          ret = exec 'DEBIAN_FRONTEND=noninteractive apt-get full-upgrade -y', options
+        end
       elsif uses_emerge?
         ret = exec 'emerge -uND @world', options
       elsif uses_rpm?
