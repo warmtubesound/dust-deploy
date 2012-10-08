@@ -823,7 +823,7 @@ module Dust
       options = default_options(:quiet => true).merge(options)
 
       msg = messages.add("getting primary gid of #{user}", options)
-      ret = exec("getent passwd |cut -d':' -f1,4 |grep '^#{user}' |head -n1 |cut -d: -f2")
+      ret = exec("id -g #{user}")
       if msg.parse_result(ret[:exit_code])
         return ret[:stdout].chomp
       else
