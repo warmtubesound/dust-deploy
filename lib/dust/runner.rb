@@ -104,7 +104,7 @@ module  Dust
     end
 
 
-    desc 'system_update', 'perform a full system upgrade (using aptitude, emerge, yum)'
+    desc 'system_update', 'perform a full system upgrade (using apt-get, emerge, yum)'
     default_options
 
     def system_update

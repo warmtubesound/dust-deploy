@@ -134,7 +134,7 @@ class ZabbixAgent < Recipe
 
   # check for security patches and system updates on emerge systems
   def enable_apt
-    updates = [ 'apt.updates,aptitude search \'~U\' |wc -l' ]
+    updates = [ 'apt.updates,apt-cache search \'~U\' |wc -l' ]
     if @node.is_debian?
       @node.collect_facts
       updates << "debian.security,debsecan --suite #{@node['lsbdistcodename']} --only-fixed --format packages |wc -l"

@@ -62,7 +62,7 @@ you should see dust connecting to the node, checking if the requested packages a
 
 ## supported distributions
 
-dust works with **aptitude**, **yum**, **emerge**, **pacman** (since 0.10.3) and **opkg** (since 0.12.0) systems at the moment (testet with recent versions of **ubuntu**, **debian**, **gentoo**, **fedora**, **scientificlinux**, **centos** and **archlinux** as well as **openwrt**). should work on rhel without any problem, too.
+dust works with **apt-get**, **yum**, **emerge**, **pacman** (since 0.10.3) and **opkg** (since 0.12.0) systems at the moment (testet with recent versions of **ubuntu**, **debian**, **gentoo**, **fedora**, **scientificlinux**, **centos** and **archlinux** as well as **openwrt**). should work on rhel without any problem, too.
 
 
 ## contribute
