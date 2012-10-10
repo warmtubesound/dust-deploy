@@ -1,6 +1,22 @@
 Changelog
 =============
 
+0.16.3
+------------
+
+-  get_gid() is now more efficient
+-  nginx recipe now creates needed directories
+-  adds certificate support to nginx recipe
+   it will copy over certificates from templates/nginx/certs to /etc/nginx/certs
+
+    recipes:
+      nginx:
+        certs:
+          - www.example.com.key
+          - www.example.com.crt
+          - { cert-in-templates-dir: target-filename }
+
+
 0.16.2
 ------------
 
