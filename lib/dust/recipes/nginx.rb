@@ -1,8 +1,12 @@
+require 'erb'
+
 class Nginx < Recipe
   desc 'nginx:deploy', 'installs and configures nginx web server'
   def deploy
     # default package to install
     @config['package'] ||= 'nginx'
+    @config['user'] ||= 'nginx' if @node.uses_rpm?
+    @config['user'] ||= 'www-data' if @node.uses_apt?
 
     @config['package'].to_array.each do |package|
       return unless @node.install_package(package)
@@ -30,6 +34,37 @@ class Nginx < Recipe
         end
       end
     end
+
+    # deploy ssl certificates to /etc/nginx/certs
+    @config['certs'] ||= []
+    Array(@config['certs']).each do |file|
+      # file can either be
+      # a string 'file': file is just copied over
+      # a hash { 'source': 'target' } when source and target filename differ
+
+      if file.is_a? String
+        source = "#{@template_path}/certs/#{file}"
+        destination = "/etc/nginx/certs/#{File.basename(file)}"
+
+      elsif file.is_a? Hash
+        source = "#{@template_path}/certs/#{File.basename(file.keys.first)}"
+        destination = "/etc/nginx/certs/#{File.basename(file.values.first)}"
+
+      else
+        return @node.messages.add("#{file.inspect} is neither String nor Hash!").failed
+      end
+
+      unless File.exists?(source)
+        @node.messages.add("#{source} not found. skipping.").warning
+        next
+      end
+
+      @node.mkdir(File.dirname(destination))
+      @node.deploy_file(source, destination)
+      @node.chown("#{@config['user']}:#{@node.get_gid(@config['user'])}", destination)
+      @node.chmod('0600', destination)
+    end
+
 
     # check configuration and restart nginx
     msg = @node.messages.add('checking nginx configuration')
