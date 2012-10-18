@@ -12,6 +12,7 @@ class Skel < Recipe
       Dir["#{@template_path}/.*"].each do |file|
         next unless File.file?(file)
         @node.deploy_file(file, "#{home}/#{File.basename(file)}", { :binding => binding, :indent => 2 })
+        @node.chown("#{user}:#{@node.get_gid(user)}", "#{home}/#{File.basename(file)}")
       end
     end
   end
