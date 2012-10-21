@@ -8,7 +8,7 @@ recipes:
     dbuser: 'postgres:postgres'
 
     postgresql.conf:
-      listen_addresses: *
+      listen_addresses: '*'
       port: 5432
       ssl: on
       full_page_writes: on
