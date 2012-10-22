@@ -1,8 +1,11 @@
 class Mysql < Recipe
   desc 'mysql:deploy', 'installs and configures mysql database'
   def deploy
-    return unless @node.uses_apt? :quiet=>false
+    # apt/yum both use mysql-server
     @node.install_package 'mysql-server'
+
+    service = @node.uses_rpm? ? 'mysqld' : 'mysql'
+    config = @node.uses_rpm? ? '/etc/my.cnf' : '/etc/mysql/my.cnf'
 
     @config = default_config.deep_merge @config
 
@@ -12,66 +15,91 @@ class Mysql < Recipe
     @config['mysqld']['innodb_buffer_pool_size'] ||= get_innodb_buffer_pool_size
     @node.messages.add("set innodb buffer pool to '#{@config['mysqld']['innodb_buffer_pool_size']}'", :indent => 2).ok
 
-    @node.write '/etc/mysql/my.cnf', generate_my_cnf
+    @node.write(config, generate_my_cnf)
 
-    @node.restart_service 'mysql' if options.restart?
-    @node.reload_service 'mysql' if options.reload?
+    @node.restart_service(service) if options.restart?
+    @node.reload_service(service) if options.reload?
   end
 
   desc 'mysql:status', 'displays status of the mysql daemon'
   def status
     return unless @node.package_installed? 'mysql-server'
-    @node.print_service_status 'mysql'
+    @node.print_service_status('mysql')
   end
 
 
   private
 
   def default_config
-    { 'client' => {
+    my_cnf = {}
+
+    # overall defaults
+    my_cnf['mysqld'] = {
+      'bind-address' => '127.0.0.1',
+      'port' => 3306,
+      'user' => 'mysql',
+      'symbolic-links' => 0,
+      'skip-external-locking' => true,
+      'key_buffer' => '16M',
+      'max_allowed_packet' => '16M',
+      'thread_stack' => '192K',
+      'thread_cache_size' => 8,
+      'myisam-recover' => 'BACKUP',
+      'query_cache_limit' => '1M',
+      'query_cache_size' => '16M',
+      'expire_logs_days' => 10,
+      'max_binlog_size' => '100M',
+      'innodb_file_per_table' => 1,
+      'innodb_thread_concurrency' => 0,
+      'innodb_flush_log_at_trx_commit' => 1,
+      'innodb_additional_mem_pool_size' => '16M',
+      'innodb_log_buffer_size' => '4M'
+    }
+
+    my_cnf['mysqldump'] = {
+      'quick' => true,
+      'quote-names' => true,
+      'max_allowed_packet' => '16M'
+    }
+
+    my_cnf['mysql'] = {}
+
+    my_cnf['isamchk'] = {
+      'key_buffer' => '16M'
+    }
+
+    # debian specific
+    if @node.uses_apt?
+      my_cnf['client'] = {
         'port' => 3306,
         'socket' => '/var/run/mysqld/mysqld.sock'
-      },
-      'mysqld_safe' => {
+      }
+
+      my_cnf['mysqld_safe'] = {
         'socket' => '/var/run/mysqld/mysqld.sock',
         'nice' => 0
-      },
-      'mysqld' => {
-        'bind-address' => '127.0.0.1',
-        'port' => 3306,
-        'user' => 'mysql',
-        'pid-file' => '/var/run/mysqld/mysqld.pid',
-        'socket' => '/var/run/mysqld/mysqld.sock',
-        'language' => '/usr/share/mysql/english',
-        'basedir' => '/usr',
-        'datadir' => '/var/lib/mysql',
-        'tmpdir' => '/tmp',
-        'skip-external-locking' => true,
-        'key_buffer' => '16M',
-        'max_allowed_packet' => '16M',
-        'thread_stack' => '192K',
-        'thread_cache_size' => 8,
-        'myisam-recover' => 'BACKUP',
-        'query_cache_limit' => '1M',
-        'query_cache_size' => '16M',
-        'expire_logs_days' => 10,
-        'max_binlog_size' => '100M',
-        'innodb_file_per_table' => 1,
-        'innodb_thread_concurrency' => 0,
-        'innodb_flush_log_at_trx_commit' => 1,
-        'innodb_additional_mem_pool_size' => '16M',
-        'innodb_log_buffer_size' => '4M'
-      },
-      'mysqldump' => {
-        'quick' => true,
-        'quote-names' => true,
-        'max_allowed_packet' => '16M'
-      },
-      'mysql' => {},
-      'isamchk' => {
-        'key_buffer' => '16M',
       }
-    }
+
+      my_cnf['mysqld']['pid-file'] = '/var/run/mysqld/mysqld.pid'
+      my_cnf['mysqld']['socket'] = '/var/run/mysqld/mysqld.sock'
+      my_cnf['mysqld']['language'] = '/usr/share/mysql/english'
+      my_cnf['mysqld']['basedir'] = '/usr'
+      my_cnf['mysqld']['datadir'] = '/var/lib/mysql'
+      my_cnf['mysqld']['tmpdir'] = '/tmp'
+    end
+
+    # centos specific
+    if @node.uses_rpm?
+      my_cnf['mysqld_safe'] =  {
+        'log-error' => '/var/log/mysqld.log',
+        'pid-file' => '/var/run/mysqld/mysqld.pid'
+      }
+
+      my_cnf['mysqld']['datadir'] = '/var/lib/mysql'
+      my_cnf['mysqld']['socket'] = '/var/lib/mysql/mysql.sock'
+    end
+
+    my_cnf
   end
 
   def get_innodb_buffer_pool_size
@@ -100,8 +128,8 @@ class Mysql < Recipe
       my_cnf << "\n"
     end
 
-    # add includedir
-    my_cnf << "!includedir /etc/mysql/conf.d/\n"
+    # add includedir on debian/ubuntu
+    my_cnf << "!includedir /etc/mysql/conf.d/\n" if @node.uses_apt?
     my_cnf
   end
 end
