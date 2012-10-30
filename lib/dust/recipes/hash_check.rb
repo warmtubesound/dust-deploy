@@ -25,7 +25,7 @@ class HashCheck < Recipe
         ret = @node.exec("python -c \"import crypt; print(crypt.crypt('#{password}', '\\$#{method}\\$#{salt}\\$'));\"")
 
         unless ret[:exit_code] == 0
-          return msg.failed('error during hash creation (is python installed?)')
+          return @node.messages.add('error during hash creation (is python installed?)').failed
         end
         if hash == ret[:stdout].chomp
           @node.messages.add("user #{user} has a weak password! (#{password})", :indent => 2).failed
