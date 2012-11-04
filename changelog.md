@@ -1,6 +1,13 @@
 Changelog
 =============
 
+0.16.4
+------------
+
+-  adds support for RedHat to the mysql recipe
+-  fixes small bug in hash_check recipe
+
+
 0.16.3
 ------------
 
