@@ -321,7 +321,7 @@ module  Dust
         exit
       end
 
-      yaml_files.to_array.each do |file|
+      Array(yaml_files).each do |file|
         node = YAML.load ERB.new( File.read(file), nil, '%<>').result
 
         # if the file is empty, just skip it
@@ -344,7 +344,7 @@ module  Dust
 
         # if more than one hostname is specified, create a node
         # with the same settings for each hostname
-        node['hostname'].to_array.each do |hostname|
+        Array(node['hostname']).each do |hostname|
           n = node.clone
 
           # overwrite hostname with single hostname (in case there are multiple)
