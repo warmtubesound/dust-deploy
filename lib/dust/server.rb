@@ -1,4 +1,5 @@
-Dir['./server/*.rb'].each { |file| require file }
+# include all extensions
+Dir["#{File.dirname(__FILE__)}/server/*.rb"].each { |file| require file }
 
 module Dust
   class Server

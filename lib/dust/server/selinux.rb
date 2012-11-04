@@ -1,3 +1,5 @@
+require 'dust/server/ssh'
+
 module Dust
   class Server
     def selinuxenabled?
@@ -7,8 +9,8 @@ module Dust
 
     # check if restorecon (selinux) is available
     # if so, run it on "path" recursively
-    def restorecon path, options = {}
-      options = default_options.merge options
+    def restorecon(path, options={})
+      options = default_options.merge(options)
 
       # if selinux is not enabled, just return
       return true unless selinuxenabled?
@@ -17,7 +19,7 @@ module Dust
       msg.parse_result(exec("restorecon -R #{path}")[:exit_code])
     end
 
-    def chcon(permissions, file, options = {})
+    def chcon(permissions, file, options={})
       options = default_options.merge(options)
 
       # just return if selinux is not enabled

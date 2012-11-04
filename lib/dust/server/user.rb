@@ -1,7 +1,10 @@
+require 'dust/server/ssh'
+require 'dust/server/selinux'
+
 module Dust
   class Server
-    def get_system_users options = {}
-      options = default_options.merge options
+    def get_system_users(options={})
+      options = default_options.merge(options)
 
       msg = messages.add("getting all system users", options)
       ret = exec 'getent passwd |cut -d: -f1'
@@ -9,21 +12,21 @@ module Dust
 
       users = []
       ret[:stdout].each do |user|
-        users.push user.chomp
+        users.push(user.chomp)
       end
       users
     end
 
     # check whether a user exists on this node
-    def user_exists? user, options = {}
-      options = default_options.merge options
+    def user_exists? user, options={}
+      options = default_options.merge(options)
 
       msg = messages.add("checking if user #{user} exists", options)
       msg.parse_result(exec("id #{user}")[:exit_code])
     end
 
     # manages users (create, modify)
-    def manage_user(user, options = {})
+    def manage_user(user, options={})
       options = default_options.merge(options)
       options = { 'home' => nil, 'shell' => nil, 'uid' => nil, 'remove' => false,
                   'gid' => nil, 'groups' => nil, 'system' => false }.merge(options)
@@ -73,7 +76,7 @@ module Dust
     end
 
     # returns the home directory of this user
-    def get_home(user, options = {})
+    def get_home(user, options={})
       options = default_options(:quiet => true).merge(options)
 
       msg = messages.add("getting home directory of #{user}", options)
@@ -86,7 +89,7 @@ module Dust
     end
 
     # returns shell of this user
-    def get_shell(user, options = {})
+    def get_shell(user, options={})
       options = default_options(:quiet => true).merge(options)
 
       msg = messages.add("getting shell of #{user}", options)
@@ -99,7 +102,7 @@ module Dust
     end
 
     # returns primary group id of this user
-    def get_gid(user, options = {})
+    def get_gid(user, options={})
       options = default_options(:quiet => true).merge(options)
 
       msg = messages.add("getting primary gid of #{user}", options)

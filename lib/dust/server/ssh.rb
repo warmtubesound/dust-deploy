@@ -2,6 +2,11 @@ require 'net/ssh'
 require 'net/scp'
 require 'net/ssh/proxy/socks5'
 
+require 'dust/server/file'
+require 'dust/server/osdetect'
+require 'dust/server/package'
+require 'dust/server/selinux'
+
 module Dust
   class Server
     attr_reader :ssh
@@ -36,7 +41,7 @@ module Dust
       @ssh.close
     end
 
-    def exec command, options={:live => false, :as_user => false}
+    def exec(command, options={:live => false, :as_user => false})
       sudo_authenticated = false
       stdout = ''
       stderr = ''
@@ -103,8 +108,8 @@ module Dust
       { :stdout => stdout, :stderr => stderr, :exit_code => exit_code, :exit_signal => exit_signal }
     end
 
-    def scp(source, destination, options = {})
-      options = default_options.merge options
+    def scp(source, destination, options={})
+      options = default_options.merge(options)
 
       # make sure scp is installed on client
       install_package('openssh-clients', :quiet => true) if uses_rpm?
@@ -164,11 +169,11 @@ module Dust
     end
 
     # download a file (sudo not yet supported)
-    def download source, destination, options = {}
-      options = default_options.merge options
+    def download(source, destination, options={})
+      options = default_options.merge(options)
 
       # make sure scp is installed on client
-      install_package 'openssh-clients', :quiet => true if uses_rpm?
+      install_package('openssh-clients', :quiet => true) if uses_rpm?
 
       msg = messages.add("downloading #{File.basename source}", options)
       msg.parse_result(@ssh.scp.download!(source, destination))

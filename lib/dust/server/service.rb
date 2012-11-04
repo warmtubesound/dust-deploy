@@ -1,7 +1,9 @@
+require 'dust/server/ssh'
+
 module Dust
   class Server
-    def autostart_service service, options = {}
-      options = default_options.merge options
+    def autostart_service(service, options={})
+      options = default_options.merge(options)
 
       msg = messages.add("autostart #{service} on boot", options)
 
@@ -27,8 +29,8 @@ module Dust
     end
 
     # invoke 'command' on the service (e.g. @node.service 'postgresql', 'restart')
-    def service service, command, options = {}
-      options = default_options.merge options
+    def service(service, command, options={})
+      options = default_options.merge(options)
 
       return messages.add("service: '#{service}' unknown", options).failed unless service.is_a? String
 
@@ -58,19 +60,19 @@ module Dust
       ret
     end
 
-    def restart_service service, options = {}
-      options = default_options.merge options
+    def restart_service(service, options={})
+      options = default_options.merge(options)
 
-      service service, 'restart', options
+      service(service, 'restart', options)
     end
 
-    def reload_service service, options = {}
-      options = default_options.merge options
+    def reload_service(service, options={})
+      options = default_options.merge(options)
 
-      service service, 'reload', options
+      service(service, 'reload', options)
     end
 
-    def print_service_status(service, options = {})
+    def print_service_status(service, options={})
       options = default_options.merge(:indent => 0).merge(options)
       ret = service(service, 'status', options)
       messages.add('', options).print_output(ret)
