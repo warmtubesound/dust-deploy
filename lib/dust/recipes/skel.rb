@@ -1,7 +1,7 @@
 class Skel < Recipe
   desc 'skel:deploy', 'copy default configuration files to users home directory'
   def deploy
-    @config.to_array.each do |user|
+    Array(@config).each do |user|
       home = @node.get_home(user)
       unless home
         @node.messages.add("couldn't find home directory for user #{user}").failed

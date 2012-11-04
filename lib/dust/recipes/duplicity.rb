@@ -53,7 +53,7 @@ class Duplicity < Recipe
 
       # adjust and upload cronjob
       @node.messages.add("adjusting and deploying cronjob (scenario: #{scenario}, interval: #{config['interval']})\n")
-      config['options'].to_array.each { |option| @node.messages.add("adding option: #{option}", :indent => 2).ok }
+      Array(config['options']).each { |option| @node.messages.add("adding option: #{option}", :indent => 2).ok }
 
       @node.deploy_file "#{@template_path}/cronjob", cronjob_path, :binding => binding
 

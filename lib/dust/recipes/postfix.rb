@@ -4,7 +4,7 @@ class Postfix < Recipe
     @config = default_config.merge @config
     @config.boolean_to_string! # parse 'no/yes' as string, not as boolean
 
-    @config['package'].to_array.each do |package|
+    Array(@config['package']).each do |package|
       return unless @node.install_package(package)
     end
 
@@ -26,7 +26,7 @@ class Postfix < Recipe
                      "#{s['unpriv']}\t#{s['chroot']}\t#{s['wakeup']}\t" +
                      "#{s['maxproc']}\t#{s['command']}\n"
         if s['args']
-          s['args'].to_array.each { |a|  master_cf << "  #{a}\n" }
+          Array(s['args']).each { |a|  master_cf << "  #{a}\n" }
           master_cf << "\n"
         end
       end

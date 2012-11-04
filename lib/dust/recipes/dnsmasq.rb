@@ -12,7 +12,7 @@ class Dnsmasq < Recipe
       # this will be translated to
       # server=nameserver1
       # server=/yourdomain/yournameserver/
-      values.to_array.each do |value|
+      Array(values).each do |value|
 
         # dnsmasq has some settings which are just set without a value
         # in the node.yaml, this has to be specified using e.g.

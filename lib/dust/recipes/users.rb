@@ -67,7 +67,7 @@ class Users < Recipe
     authorized_keys = ''
 
     # create the authorized_keys hash for this user
-    ssh_users.to_array.each do |ssh_user|
+    Array(ssh_users).each do |ssh_user|
       unless users[ssh_user]
         return @node.messages.add("#{ssh_user} cannot be found in #{@template_path}/public_keys.yaml").failed
       end

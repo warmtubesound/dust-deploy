@@ -55,7 +55,7 @@ class Repositories < Recipe
 
     repo['release'] ||= @node['lsbdistcodename']
     repo['components'] ||= [ 'main' ]
-    repo['components'] = repo['components'].to_array.join(' ')
+    repo['components'] = Array(repo['components']).join(' ')
 
     # ||= doesn't work for booleans
     repo['source'] = repo['source'].nil? ? true : repo['source']
@@ -109,7 +109,7 @@ class Repositories < Recipe
   def generate_repo(repo)
     # add url to sources.list
     sources = ''
-    repo['release'].to_array.each do |release|
+    Array(repo['release']).each do |release|
       sources << "deb #{repo['url']} #{release} #{repo['components']}\n" if repo['binary']
       sources << "deb-src #{repo['url']} #{release} #{repo['components']}\n" if repo['source']
     end

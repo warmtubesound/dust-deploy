@@ -1,7 +1,7 @@
 class Apt < Recipe
   desc 'apt:deploy', 'configures apt/aptitude'
   def deploy
-    return unless @node.uses_apt? 
+    return unless @node.uses_apt?
 
     @config = default_config.merge @config
 
@@ -11,7 +11,7 @@ class Apt < Recipe
     @config.each do |name, settings|
       @node.messages.add("deploying apt settings #{name}\n")
       conf = ''
-      settings.to_array.each do |setting|
+      Array(settings).each do |setting|
         conf << "#{setting}\n"
       end
 
@@ -65,7 +65,7 @@ class Apt < Recipe
     end
 
     return if config.is_a? FalseClass or config == 'disabled'
-    
+
     @node.messages.add("deploying proxy configuration\n")
     proxy = "Acquire::http::Proxy \"#{config}\";\n"
 

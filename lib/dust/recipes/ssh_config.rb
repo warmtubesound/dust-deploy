@@ -37,10 +37,10 @@ class Ssh_config < Recipe
       if value.is_a? Hash
         ssh_config << "#{key}\n"
         value.each do |k, v|
-          v.to_array.each { |x| ssh_config << "    #{k} #{x}\n" }
+          Array(v).each { |x| ssh_config << "    #{k} #{x}\n" }
         end
       else
-        value.to_array.each { |x| ssh_config << "#{key} #{x}\n" }
+        Array(value).each { |x| ssh_config << "#{key} #{x}\n" }
       end
     end
     ssh_config

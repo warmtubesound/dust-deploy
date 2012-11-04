@@ -30,7 +30,7 @@ class ResolvConf < Recipe
       msg.ok
     end
 
-    @config['nameservers'].to_array.each do |nameserver|
+    Array(@config['nameservers']).each do |nameserver|
       msg = @node.messages.add("adding nameserver #{nameserver}", :indent => 2)
       config_file << "nameserver #{nameserver}\n"
       msg.ok

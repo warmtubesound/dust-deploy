@@ -66,11 +66,11 @@ class Sshd < Recipe
       if value.is_a? Hash
         value.each do |k, v|
           conditional_blocks << "#{key} #{k}\n"
-          v.to_array.each { |x, y| conditional_blocks << "    #{x} #{y}\n" }
+          Array(v).each { |x, y| conditional_blocks << "    #{x} #{y}\n" }
         end
 
       else
-        value.to_array.each { |value| @sshd_config << "#{key} #{value}\n" }
+        Array(value).each { |value| @sshd_config << "#{key} #{value}\n" }
       end
     end
 

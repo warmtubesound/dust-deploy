@@ -12,7 +12,7 @@ class Sysctl < Recipe
 
     # apply template sysctls
     if templates
-      templates.to_array.each do |template|
+      Array(templates).each do |template|
         @node.messages.add("configuring sysctls for template #{template}\n")
         apply template, self.send(template)
       end

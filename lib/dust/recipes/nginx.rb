@@ -8,7 +8,7 @@ class Nginx < Recipe
     @config['user'] ||= 'nginx' if @node.uses_rpm?
     @config['user'] ||= 'www-data' if @node.uses_apt?
 
-    @config['package'].to_array.each do |package|
+    Array(@config['package']).each do |package|
       return unless @node.install_package(package)
     end
 
@@ -24,7 +24,7 @@ class Nginx < Recipe
     msg.ok
 
     @config['sites'].each do |state, sites|
-      sites.to_array.each do |site|
+      Array(sites).each do |site|
         @node.deploy_file("#{@template_path}/sites/#{site}", "/etc/nginx/sites-available/#{site}", :binding => binding)
 
         # symlink to sites-enabled if this is listed as an enabled site

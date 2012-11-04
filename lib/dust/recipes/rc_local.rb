@@ -6,7 +6,7 @@ class RcLocal < Recipe
       @node.messages.add("configuring custom startup script\n")
 
       rc = ''
-      @config.to_array.each do |cmd|
+      Array(@config).each do |cmd|
         msg = @node.messages.add("adding command: #{cmd}", :indent => 2)
         rc << "#{cmd}\n"
         msg.ok

@@ -25,12 +25,12 @@ class Postgres < Recipe
     set_permissions
 
     # configure pacemaker profile
-    if @config['profile'].to_array.include?('pacemaker')
+    if Array(@config['profile']).include?('pacemaker')
       deploy_pacemaker_script if @node.package_installed?('pacemaker')
     end
 
     # configure zabbix profile
-    if @config['profile'].to_array.include?('zabbix')
+    if Array(@config['profile']).include?('zabbix')
       configure_for_zabbix if zabbix_installed?
     end
 
@@ -140,7 +140,7 @@ class Postgres < Recipe
     @config['postgresql.conf'] = default_postgres_conf.merge(@config['postgresql.conf'])
 
     # calculate values if dedicated profile is given
-    profile_dedicated if @config['profile'].to_array.include?('dedicated')
+    profile_dedicated if Array(@config['profile']).include?('dedicated')
 
     postgresql_conf = ''
     @config['postgresql.conf'].each do |key, value|

@@ -17,7 +17,7 @@ class Limits < Recipe
     @config.each do |name, rules|
       limits_conf = ''
       @node.messages.add("assembling system limits according to rule '#{name}'\n")
-      rules.to_array.each do |rule|
+      Array(rules).each do |rule|
 
         # check if entry is valid
         unless rule['domain']

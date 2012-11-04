@@ -9,7 +9,7 @@ class Dovecot < Recipe
     package = @config.delete('package')
     etc_dir = @config.delete('etc_dir')
 
-    package.to_array.each do |pkg|
+    Array(package).each do |pkg|
       return unless @node.install_package(pkg)
     end
 
