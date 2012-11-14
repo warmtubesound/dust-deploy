@@ -96,7 +96,12 @@ class Repositories < Recipe
   end
 
   def add_ppa(repo)
-    return false unless @node.install_package('python-software-properties', :indent => 2)
+    if @node['lsbdistrelease'].to_f >= 12.10
+      return false unless @node.install_package('software-properties-common', :indent => 2)
+    else
+      return false unless @node.install_package('python-software-properties', :indent => 2)
+    end
+
     msg = @node.messages.add('running add-apt-repository', :indent => 2)
     cmd = "add-apt-repository -y ppa:#{repo['ppa']}"
     if repo['keyserver']
