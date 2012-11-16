@@ -23,7 +23,6 @@ class Sshd < Recipe
   def default_config
     { 'Port' => 22,
       'Protocol' => 2,
-      'AcceptEnv' => 'LANG LC_*',
       'HostKey' => [ '/etc/ssh/ssh_host_dsa_key',
                      '/etc/ssh/ssh_host_ecdsa_key',
                       '/etc/ssh/ssh_host_rsa_key' ],
@@ -38,7 +37,7 @@ class Sshd < Recipe
 
   def generate_default_config
     @config.boolean_to_string!
-    @config = default_config.merge @config
+    @config = default_config.merge(@config)
 
     unless @config['sftp']
       @config['Subsystem'] ||= 'sftp /usr/lib/openssh/sftp-server' if @node.uses_apt?
