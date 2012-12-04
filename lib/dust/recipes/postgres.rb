@@ -34,6 +34,9 @@ class Postgres < Recipe
       configure_for_zabbix if zabbix_installed?
     end
 
+    # enable service to start at boot-time
+    @node.autostart_service(@config['service_name'])
+
     # reload/restart postgres if command line option is given
     @node.restart_service(@config['service_name']) if options.restart?
     @node.reload_service(@config['service_name']) if options.reload?
