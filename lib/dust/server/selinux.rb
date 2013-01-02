@@ -32,7 +32,7 @@ module Dust
       args << " --range #{permissions['range']}" if permissions['range']
       args << " --role #{permissions['role']}" if permissions['role']
 
-      msg = messages.add("setting selinux permissions of #{File.basename file}", options)
+      msg = messages.add("setting selinux permissions of #{File.basename(file)}", options)
       msg.parse_result(exec("chcon #{args} #{file}")[:exit_code])
     end
 
