@@ -1,6 +1,15 @@
 Changelog
 =============
 
+0.16.5
+------------
+
+-  fixes ppa support in repositories recipe for quantal
+-  removes support for .to_array helper, use Array() instead
+-  removes AcceptEnv directive from sshd default configuration
+-  automatically start postgres on boot
+
+
 0.16.4
 ------------
 
