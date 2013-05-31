@@ -1,5 +1,5 @@
 class Repositories < Recipe
-  desc 'repositories:deploy', 'configures package management repositories (aptitude, yum)'
+  desc 'repositories:deploy', 'configures package management repositories (apt-get, yum)'
   def deploy
     return unless @node.collect_facts
 

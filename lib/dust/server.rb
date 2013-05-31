@@ -19,6 +19,7 @@ module Dust
       @messages = Messages.new
     end
 
+
     private
 
     def method_missing method, *args, &block

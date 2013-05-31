@@ -1,5 +1,5 @@
 class Apt < Recipe
-  desc 'apt:deploy', 'configures apt/aptitude'
+  desc 'apt:deploy', 'configures apt'
   def deploy
     return unless @node.uses_apt?
 

@@ -72,7 +72,7 @@ module Dust
         msg = messages.add("installing #{package}", options)
 
         if uses_apt?
-          exec "DEBIAN_FRONTEND=noninteractive aptitude install -y #{package}"
+          exec "DEBIAN_FRONTEND=noninteractive apt-get install -y #{package}"
         elsif uses_emerge?
           exec "#{options[:env]} emerge #{package}"
         elsif uses_rpm?
@@ -127,7 +127,7 @@ module Dust
 
       msg = messages.add("removing #{package}", options)
       if uses_apt?
-        msg.parse_result(exec("DEBIAN_FRONTEND=noninteractive aptitude purge -y #{package}")[:exit_code])
+        msg.parse_result(exec("DEBIAN_FRONTEND=noninteractive apt-get purge -y #{package}")[:exit_code])
       elsif uses_emerge?
         msg.parse_result(exec("emerge --unmerge #{package}")[:exit_code])
       elsif uses_rpm?
@@ -147,7 +147,7 @@ module Dust
       msg = messages.add('updating system repositories', options)
 
       if uses_apt?
-        ret = exec('aptitude update', options)
+        ret = exec('apt-get update', options)
       elsif uses_emerge?
         ret = exec('emerge --sync', options)
       elsif uses_rpm?
@@ -179,7 +179,17 @@ module Dust
       msg = messages.add('installing system updates', options)
 
       if uses_apt?
-        ret = exec('DEBIAN_FRONTEND=noninteractive aptitude full-upgrade -y', options)
+        ret = exec 'DEBIAN_FRONTEND=noninteractive apt-get full-upgrade -y', options
+        if is_ubuntu?
+          if install_package('update-manager-core')
+            ret = exec 'do-release-upgrade -d -f DistUpgradeViewNonInteractive', options
+          else
+            msg.failed('could not install the update-manager package')
+            return false
+          end
+        else
+          ret = exec 'DEBIAN_FRONTEND=noninteractive apt-get full-upgrade -y', options
+        end
       elsif uses_emerge?
         ret = exec('emerge -uND @world', options)
       elsif uses_rpm?
