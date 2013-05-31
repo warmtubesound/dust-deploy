@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.version     = Dust::VERSION
   s.authors     = ["kris kechagia"]
   s.email       = ["kk@rndsec.net"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/kechagia/dust-deploy"
   s.summary     = %q{small server deployment tool for complex environments}
   s.description = %q{when puppet and chef suck because you want to be in control and sprinkle just cannot do enough for you}
 
