@@ -8,8 +8,8 @@ recipes:
     dbuser: 'postgres:postgres'
 
     postgresql.conf:
-      listen_addresses: *
-      port: 5432 
+      listen_addresses: '*'
+      port: 5432
       ssl: on
       full_page_writes: on
 
@@ -44,5 +44,6 @@ recipes:
           state: new
           in-interface: eth1
           source: 10.0.0.0/8
-          
+
   rc_local: blockdev --setra 8192 /dev/vda
+
