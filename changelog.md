@@ -8,6 +8,11 @@ Changelog
 -  removes support for .to_array helper, use Array() instead
 -  removes AcceptEnv directive from sshd default configuration
 -  automatically start postgres on boot
+-  fixes invalid yaml syntax in example (thank you Marcos Alejandro Vanetta)
+-  uses apt-get rather than aptitude (thank you Stuart Ellis)
+-  fails gracefully on debian system without facter [debsecan]  (thank you Stuart Ellis)
+-  uses ubuntu update-manager for system_update (thank you Stuart Ellis)
+
 
 
 0.16.4
